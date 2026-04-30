@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.androidx.baselineprofile)
     alias(libs.plugins.kotlin.android)
 }
 
@@ -59,6 +60,8 @@ android {
 }
 
 dependencies {
+    baselineProfile(project(":baselineprofile"))
+
     implementation(project(":core:ui"))
     implementation(project(":core:domain"))
     implementation(project(":core:storage"))
@@ -79,6 +82,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.androidx.profileinstaller)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

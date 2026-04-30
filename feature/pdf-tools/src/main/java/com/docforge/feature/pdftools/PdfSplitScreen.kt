@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.util.LruCache
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.remember
@@ -85,6 +87,7 @@ fun PdfSplitRoute(
         onReorderPages = viewModel::reorderPages,
         onDeletePages = viewModel::deletePages,
         onRotatePages = viewModel::rotatePages,
+        onSaveVisualWorkspace = viewModel::saveVisualWorkspace,
         onClearError = viewModel::clearError
     )
 }
@@ -111,16 +114,26 @@ fun PdfSplitScreen(
     onReorderPages: () -> Unit,
     onDeletePages: () -> Unit,
     onRotatePages: () -> Unit,
+    onSaveVisualWorkspace: (List<Int>, Map<Int, Int>) -> Unit,
     onClearError: () -> Unit
 ) {
     val context = LocalContext.current
     var thumbnailsError by remember(state.selectedUri) { mutableStateOf<String?>(null) }
     var selectedVisualPages by remember(state.selectedUri) { mutableStateOf<Set<Int>>(emptySet()) }
     var visualOrder by remember(state.selectedUri) { mutableStateOf<List<Int>>(emptyList()) }
+    var pendingRotationByPage by remember(state.selectedUri) { mutableStateOf<Map<Int, Int>>(emptyMap()) }
     var thumbnailQuality by remember { mutableStateOf(PdfSplitThumbnailQuality.MEDIUM) }
 
+    val thumbnailCacheSizeKb = remember {
+        ((Runtime.getRuntime().maxMemory() / 1024L) / 8L)
+            .toInt()
+            .coerceAtLeast(4 * 1024)
+    }
     val thumbnailCache = remember(state.selectedUri, thumbnailQuality) {
-        mutableStateMapOf<Int, Bitmap>()
+        BitmapThumbnailLruCache(thumbnailCacheSizeKb)
+    }
+    var thumbnailCacheVersion by remember(state.selectedUri, thumbnailQuality) {
+        mutableStateOf(0)
     }
     val thumbnailLoading = remember(state.selectedUri, thumbnailQuality) {
         mutableStateMapOf<Int, Boolean>()
@@ -142,12 +155,12 @@ fun PdfSplitScreen(
         }
         selectedVisualPages = emptySet()
         visualOrder = (1..pageCount).toList()
+        pendingRotationByPage = emptyMap()
     }
 
     DisposableEffect(thumbnailCache) {
         onDispose {
-            recycleBitmaps(thumbnailCache.values)
-            thumbnailCache.clear()
+            thumbnailCache.clearAndRecycle()
             thumbnailLoading.clear()
         }
     }
@@ -187,6 +200,10 @@ fun PdfSplitScreen(
         val selectedPdfUri = state.selectedUri
         val totalPages = state.pageCount
         if (selectedPdfUri != null && totalPages != null && totalPages > 0) {
+            val baselineVisualOrder = (1..totalPages).toList()
+            val hasPendingWorkspaceEdits =
+                visualOrder != baselineVisualOrder || pendingRotationByPage.isNotEmpty()
+
             Text("Visual Pages", fontWeight = FontWeight.SemiBold)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -200,12 +217,14 @@ fun PdfSplitScreen(
                 }
                 Button(
                     onClick = {
-                        visualOrder = (1..totalPages).toList()
+                        visualOrder = baselineVisualOrder
+                        pendingRotationByPage = emptyMap()
+                        selectedVisualPages = emptySet()
                         onReorderPagesChanged(visualOrder.joinToString(","))
                     },
                     enabled = !state.isProcessing
                 ) {
-                    Text("Reset Visual Order")
+                    Text("Reset Workspace")
                 }
                 Button(
                     onClick = {
@@ -223,22 +242,38 @@ fun PdfSplitScreen(
                         val pages = selectedVisualPages.toList().sorted()
                         if (pages.isNotEmpty()) {
                             onDeletePagesChanged(formatPageExpression(pages))
+                            val pageSet = pages.toSet()
+                            visualOrder = visualOrder.filterNot { page -> pageSet.contains(page) }
+                            pendingRotationByPage = pendingRotationByPage.filterKeys { key ->
+                                visualOrder.contains(key)
+                            }
+                            selectedVisualPages = emptySet()
                         }
                     },
                     enabled = !state.isProcessing && selectedVisualPages.isNotEmpty()
                 ) {
-                    Text("Selection -> Delete")
+                    Text("Queue Delete (0ms)")
                 }
                 Button(
                     onClick = {
                         val pages = selectedVisualPages.toList().sorted()
                         if (pages.isNotEmpty()) {
                             onRotatePagesChanged(formatPageExpression(pages))
+                            val updated = pendingRotationByPage.toMutableMap()
+                            pages.forEach { page ->
+                                val totalRotation = ((updated[page] ?: 0) + state.rotateDegrees) % 360
+                                if (totalRotation == 0) {
+                                    updated.remove(page)
+                                } else {
+                                    updated[page] = totalRotation
+                                }
+                            }
+                            pendingRotationByPage = updated
                         }
                     },
                     enabled = !state.isProcessing && selectedVisualPages.isNotEmpty()
                 ) {
-                    Text("Selection -> Rotate")
+                    Text("Queue Rotate (0ms)")
                 }
                 Button(
                     onClick = {
@@ -255,6 +290,26 @@ fun PdfSplitScreen(
                 ) {
                     Text("Visual Order -> Reorder")
                 }
+                Button(
+                    onClick = {
+                        onSaveVisualWorkspace(visualOrder, pendingRotationByPage)
+                    },
+                    enabled = !state.isProcessing && hasPendingWorkspaceEdits && visualOrder.isNotEmpty()
+                ) {
+                    Text("Save Workspace Edits")
+                }
+            }
+
+            if (pendingRotationByPage.isNotEmpty()) {
+                Text(
+                    "Pending rotations: ${
+                        pendingRotationByPage.entries
+                            .sortedBy { it.key }
+                            .joinToString(", ") { entry -> "p${entry.key}:${entry.value}°" }
+                    }",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
 
             Text("Thumbnail Quality", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
@@ -281,6 +336,7 @@ fun PdfSplitScreen(
             }
 
             val visualIndexByPage = visualOrder.withIndex().associate { it.value to it.index }
+            val cacheTick = thumbnailCacheVersion
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -288,12 +344,15 @@ fun PdfSplitScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(items = visualOrder, key = { page -> page }) { page ->
-                    val cachedThumbnail = thumbnailCache[page]
+                    // Keep item subscribed to LRU cache changes.
+                    val cachedThumbnail = remember(page, cacheTick) {
+                        thumbnailCache.get(page)
+                    }
                     val isLoading = thumbnailLoading[page] == true
                     LaunchedEffect(selectedPdfUri, page, thumbnailQuality, cachedThumbnail) {
                         suspend fun renderPageIfNeeded(targetPage: Int) {
                             if (targetPage !in 1..totalPages) return
-                            if (thumbnailCache[targetPage] != null) return
+                            if (thumbnailCache.get(targetPage) != null) return
                             if (thumbnailLoading[targetPage] == true) return
 
                             thumbnailLoading[targetPage] = true
@@ -306,21 +365,25 @@ fun PdfSplitScreen(
                                 )
                             }
                             if (rendered != null) {
-                                thumbnailCache[targetPage] = rendered
+                                val previous = thumbnailCache.put(targetPage, rendered)
+                                if (previous != null && previous !== rendered && !previous.isRecycled) {
+                                    previous.recycle()
+                                }
+                                thumbnailCacheVersion += 1
                             } else if (thumbnailsError == null) {
                                 thumbnailsError = "Some thumbnails could not be rendered."
                             }
                             thumbnailLoading.remove(targetPage)
                         }
 
-                        // Render current row and prefetch a small nearby window.
-                        renderPageIfNeeded(page)
-                        renderPageIfNeeded(page + 1)
-                        renderPageIfNeeded(page + 2)
-                        renderPageIfNeeded(page - 1)
+                        // Render current row and prefetch nearby pages for smoother scrolling.
+                        for (targetPage in (page - 2)..(page + 10)) {
+                            renderPageIfNeeded(targetPage)
+                        }
                     }
 
                     val selected = selectedVisualPages.contains(page)
+                    val pendingRotation = pendingRotationByPage[page] ?: 0
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -343,12 +406,14 @@ fun PdfSplitScreen(
                                 .border(1.dp, MaterialTheme.colorScheme.outline),
                             contentAlignment = Alignment.Center
                         ) {
-                            val thumb = thumbnailCache[page]
+                            val thumb = cachedThumbnail
                             if (thumb != null) {
                                 Image(
                                     bitmap = thumb.asImageBitmap(),
                                     contentDescription = "Page $page thumbnail",
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer { rotationZ = pendingRotation.toFloat() },
                                     contentScale = ContentScale.FillBounds
                                 )
                             } else {
@@ -363,6 +428,13 @@ fun PdfSplitScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text("Page $page", fontWeight = FontWeight.SemiBold)
+                            if (pendingRotation != 0) {
+                                Text(
+                                    "Queued rotation: ${pendingRotation}°",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             Text(
                                 if (selected) "Selected" else "Tap to select",
                                 style = MaterialTheme.typography.bodySmall,
@@ -600,10 +672,24 @@ private enum class PdfSplitThumbnailQuality(
     HIGH("High", 320)
 }
 
-private fun recycleBitmaps(bitmaps: Collection<Bitmap>) {
-    bitmaps.forEach { bitmap ->
-        if (!bitmap.isRecycled) {
-            bitmap.recycle()
+private class BitmapThumbnailLruCache(maxSizeKb: Int) : LruCache<Int, Bitmap>(maxSizeKb) {
+    override fun sizeOf(key: Int, value: Bitmap): Int {
+        return (value.byteCount / 1024).coerceAtLeast(1)
+    }
+
+    override fun entryRemoved(evicted: Boolean, key: Int, oldValue: Bitmap, newValue: Bitmap?) {
+        if (evicted && oldValue !== newValue && !oldValue.isRecycled) {
+            oldValue.recycle()
+        }
+    }
+
+    fun clearAndRecycle() {
+        val toRecycle = snapshot().values.toList()
+        evictAll()
+        toRecycle.forEach { bitmap ->
+            if (!bitmap.isRecycled) {
+                bitmap.recycle()
+            }
         }
     }
 }

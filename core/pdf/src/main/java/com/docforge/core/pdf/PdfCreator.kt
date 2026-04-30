@@ -11,9 +11,11 @@ import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.coroutines.coroutineContext
 import kotlin.math.roundToInt
 
 enum class PdfPageSize {
@@ -43,6 +45,7 @@ class PdfCreator(
         options: PdfCreationOptions
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(imageUris.isNotEmpty()) { "No input images selected." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
@@ -57,6 +60,7 @@ class PdfCreator(
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
         imageUris.forEachIndexed { index, uri ->
+            checkCancelled()
             val bitmap = decodeBitmap(uri)
                 ?: error("Failed to decode image: $uri")
 

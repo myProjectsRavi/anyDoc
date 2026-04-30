@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.BitmapRegionDecoder
+import android.graphics.Rect
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -107,7 +110,7 @@ fun ScannerRoute(
             val normalizedAndFiltered = withContext(Dispatchers.Default) {
                 uris.map { uri ->
                     val normalized = normalizeCapturedImage(context, uri, detector) ?: uri
-                    applyFilterToCapturedImage(context, normalized, state.selectedFilterMode) ?: normalized
+                    applyFilterToCapturedImage(context, normalized, state.selectedFilterMode, detector) ?: normalized
                 }
             }
             viewModel.onImagesImported(normalizedAndFiltered)
@@ -308,7 +311,7 @@ fun ScannerScreen(
                         onApplySelectedFilter = {
                             scope.launch {
                                 val filtered = withContext(Dispatchers.Default) {
-                                    applyFilterToCapturedImage(context, uri, state.selectedFilterMode)
+                                    applyFilterToCapturedImage(context, uri, state.selectedFilterMode, detector)
                                 }
                                 if (filtered != null) {
                                     onReplacePage(index, filtered, "Applied ${state.selectedFilterMode.name}")
@@ -424,7 +427,7 @@ private fun CameraCapturePanel(
                         ) ?: rawUri
                     }
                     val filtered = withContext(Dispatchers.Default) {
-                        applyFilterToCapturedImage(context, corrected, selectedFilterMode) ?: corrected
+                        applyFilterToCapturedImage(context, corrected, selectedFilterMode, detector) ?: corrected
                     }
                     captureError = null
                     onCaptured(filtered)
@@ -674,6 +677,7 @@ private fun bindCameraUseCases(
 
                 val analysisExecutor = Executors.newSingleThreadExecutor()
                 var lastAnalyzedAt = 0L
+                val lumaPlaneBuffers = LumaPlaneBuffers()
 
                 imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
                     try {
@@ -681,7 +685,7 @@ private fun bindCameraUseCases(
                         if (now - lastAnalyzedAt < 120L) return@setAnalyzer
                         lastAnalyzedAt = now
 
-                        val lumaBytes = extractLumaPlane(imageProxy)
+                        val lumaBytes = extractLumaPlane(imageProxy, lumaPlaneBuffers)
                         val rotation = normalizeRotation(imageProxy.imageInfo.rotationDegrees)
                         val frameWidth = if (rotation == 90 || rotation == 270) imageProxy.height else imageProxy.width
                         val frameHeight = if (rotation == 90 || rotation == 270) imageProxy.width else imageProxy.height
@@ -754,22 +758,37 @@ private fun takePictureToCache(
     )
 }
 
-private fun extractLumaPlane(imageProxy: ImageProxy): ByteArray {
+private data class LumaPlaneBuffers(
+    var frame: ByteArray = ByteArray(0),
+    var row: ByteArray = ByteArray(0)
+)
+
+private fun extractLumaPlane(
+    imageProxy: ImageProxy,
+    buffers: LumaPlaneBuffers
+): ByteArray {
     val plane = imageProxy.planes.firstOrNull() ?: return ByteArray(0)
     val rowStride = plane.rowStride
     val width = imageProxy.width
     val height = imageProxy.height
     val buffer = plane.buffer
+    val required = width * height
+
+    if (buffers.frame.size < required) {
+        buffers.frame = ByteArray(required)
+    }
+    val output = buffers.frame
 
     if (rowStride == width) {
-        return ByteArray(width * height).also { out ->
-            buffer.rewind()
-            buffer.get(out, 0, min(out.size, buffer.remaining()))
-        }
+        buffer.rewind()
+        buffer.get(output, 0, min(required, buffer.remaining()))
+        return output
     }
 
-    val output = ByteArray(width * height)
-    val row = ByteArray(rowStride)
+    if (buffers.row.size < rowStride) {
+        buffers.row = ByteArray(rowStride)
+    }
+    val row = buffers.row
     buffer.rewind()
     var outOffset = 0
     for (y in 0 until height) {
@@ -790,21 +809,32 @@ private fun normalizeCapturedImage(
     normalizedCorners: List<android.graphics.PointF>? = null
 ): Uri? {
     if (!detector.isAvailable()) return null
-    val sourceBitmap = decodeBitmapFromUri(context, inputUri) ?: return null
 
-    val corrected = if (normalizedCorners != null && normalizedCorners.size == 4) {
-        val mappedCorners = normalizedCorners.map { ratio ->
-            android.graphics.PointF(
-                ratio.x.coerceIn(0f, 1f) * (sourceBitmap.width - 1).coerceAtLeast(1),
-                ratio.y.coerceIn(0f, 1f) * (sourceBitmap.height - 1).coerceAtLeast(1)
-            )
-        }
-        detector.perspectiveCorrect(sourceBitmap, mappedCorners) ?: detector.autoCorrect(sourceBitmap)
+    val effectiveCorners = if (normalizedCorners != null && normalizedCorners.size == 4) {
+        normalizedCorners
     } else {
-        detector.autoCorrect(sourceBitmap)
+        detectNormalizedDocumentCorners(context, inputUri, detector)
     } ?: return null
 
-    return writeBitmapToCache(context, corrected)
+    val regionDecoded = decodeDocumentRegionForPerspective(
+        context = context,
+        inputUri = inputUri,
+        normalizedCorners = effectiveCorners
+    ) ?: return null
+
+    val corrected = detector.perspectiveCorrect(regionDecoded.bitmap, regionDecoded.cornersInRegion)
+        ?: detector.autoCorrect(regionDecoded.bitmap)
+        ?: regionDecoded.bitmap
+
+    val outputUri = writeBitmapToCache(context, corrected)
+
+    if (corrected !== regionDecoded.bitmap && !regionDecoded.bitmap.isRecycled) {
+        regionDecoded.bitmap.recycle()
+    }
+    if (!corrected.isRecycled) {
+        corrected.recycle()
+    }
+    return outputUri
 }
 
 private fun decodeBitmapFromUri(context: Context, uri: Uri): Bitmap? {
@@ -816,18 +846,31 @@ private fun decodeBitmapFromUri(context: Context, uri: Uri): Bitmap? {
 private fun applyFilterToCapturedImage(
     context: Context,
     inputUri: Uri,
-    filterMode: ScanFilterMode
+    filterMode: ScanFilterMode,
+    detector: DocumentEdgeDetector
 ): Uri? {
     if (filterMode == ScanFilterMode.COLOR) {
         return inputUri
     }
 
     val source = decodeBitmapFromUri(context, inputUri) ?: return null
-    val working = source.copy(Bitmap.Config.ARGB_8888, true) ?: return null
-    if (working !== source) {
-        source.recycle()
-    }
+    val filtered = when (filterMode) {
+        ScanFilterMode.GRAYSCALE -> detector.applyGrayscaleFilter(source)
+        ScanFilterMode.BW -> detector.applyBlackWhiteFilter(source)
+        ScanFilterMode.ENHANCED -> detector.applyEnhancedFilter(source)
+        ScanFilterMode.COLOR -> null
+    } ?: applyFilterWithCpuFallback(source, filterMode)
 
+    source.recycle()
+    if (filtered == null) return null
+
+    val outputUri = writeBitmapToCache(context, filtered)
+    filtered.recycle()
+    return outputUri
+}
+
+private fun applyFilterWithCpuFallback(source: Bitmap, filterMode: ScanFilterMode): Bitmap? {
+    val working = source.copy(Bitmap.Config.ARGB_8888, true) ?: return null
     val width = working.width
     val height = working.height
     val pixels = IntArray(width * height)
@@ -842,28 +885,21 @@ private fun applyFilterToCapturedImage(
         val gray = (0.299f * red + 0.587f * green + 0.114f * blue).toInt().coerceIn(0, 255)
 
         pixels[i] = when (filterMode) {
-            ScanFilterMode.GRAYSCALE -> {
-                android.graphics.Color.argb(alpha, gray, gray, gray)
-            }
-
+            ScanFilterMode.GRAYSCALE -> android.graphics.Color.argb(alpha, gray, gray, gray)
             ScanFilterMode.BW -> {
                 val threshold = if (gray >= 150) 255 else 0
                 android.graphics.Color.argb(alpha, threshold, threshold, threshold)
             }
-
             ScanFilterMode.ENHANCED -> {
                 val contrasted = (((gray - 128f) * 1.45f) + 138f).toInt().coerceIn(0, 255)
                 android.graphics.Color.argb(alpha, contrasted, contrasted, contrasted)
             }
-
             ScanFilterMode.COLOR -> color
         }
     }
 
     working.setPixels(pixels, 0, width, 0, 0, width, height)
-    val outputUri = writeBitmapToCache(context, working)
-    working.recycle()
-    return outputUri
+    return working
 }
 
 private fun writeBitmapToCache(context: Context, bitmap: Bitmap): Uri? {
@@ -874,6 +910,134 @@ private fun writeBitmapToCache(context: Context, bitmap: Bitmap): Uri? {
         }
         Uri.fromFile(output)
     }.getOrNull()
+}
+
+private fun detectNormalizedDocumentCorners(
+    context: Context,
+    inputUri: Uri,
+    detector: DocumentEdgeDetector
+): List<android.graphics.PointF>? {
+    val previewBitmap = decodeBitmapConstrained(context, inputUri, maxLongEdge = 1600) ?: return null
+    return try {
+        val detected = detector.detectDocumentBounds(previewBitmap) ?: return null
+        if (detected.confidence < 0.2f) {
+            null
+        } else {
+            detected.corners.toNormalizedRatios(previewBitmap.width, previewBitmap.height)
+        }
+    } finally {
+        if (!previewBitmap.isRecycled) {
+            previewBitmap.recycle()
+        }
+    }
+}
+
+private data class RegionDecodeResult(
+    val bitmap: Bitmap,
+    val cornersInRegion: List<android.graphics.PointF>
+)
+
+private fun decodeDocumentRegionForPerspective(
+    context: Context,
+    inputUri: Uri,
+    normalizedCorners: List<android.graphics.PointF>
+): RegionDecodeResult? {
+    if (normalizedCorners.size != 4) return null
+    val bounds = readImageBounds(context, inputUri) ?: return null
+    val fullWidth = bounds.first.coerceAtLeast(1)
+    val fullHeight = bounds.second.coerceAtLeast(1)
+
+    val cornersInFullImage = normalizedCorners.map { corner ->
+        android.graphics.PointF(
+            corner.x.coerceIn(0f, 1f) * (fullWidth - 1).coerceAtLeast(1),
+            corner.y.coerceIn(0f, 1f) * (fullHeight - 1).coerceAtLeast(1)
+        )
+    }
+
+    val decodeRect = buildDocumentCropRect(cornersInFullImage, fullWidth, fullHeight)
+    val sampleSize = computeRegionSampleSize(
+        width = decodeRect.width(),
+        height = decodeRect.height(),
+        maxLongEdge = 3600
+    )
+
+    val decodedBitmap = context.contentResolver.openFileDescriptor(inputUri, "r")?.use { descriptor ->
+        @Suppress("DEPRECATION")
+        val decoder = BitmapRegionDecoder.newInstance(descriptor.fileDescriptor, false)
+        try {
+            val options = BitmapFactory.Options().apply {
+                inSampleSize = sampleSize
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            decoder.decodeRegion(decodeRect, options)
+        } finally {
+            decoder.recycle()
+        }
+    } ?: return null
+
+    val sampledCornerMap = cornersInFullImage.map { corner ->
+        android.graphics.PointF(
+            ((corner.x - decodeRect.left) / sampleSize.toFloat()).coerceIn(
+                0f,
+                (decodedBitmap.width - 1).coerceAtLeast(0).toFloat()
+            ),
+            ((corner.y - decodeRect.top) / sampleSize.toFloat()).coerceIn(
+                0f,
+                (decodedBitmap.height - 1).coerceAtLeast(0).toFloat()
+            )
+        )
+    }
+
+    return RegionDecodeResult(
+        bitmap = decodedBitmap,
+        cornersInRegion = sampledCornerMap
+    )
+}
+
+private fun readImageBounds(context: Context, inputUri: Uri): Pair<Int, Int>? {
+    val bounds = BitmapFactory.Options().apply {
+        inJustDecodeBounds = true
+    }
+    context.contentResolver.openInputStream(inputUri)?.use { stream ->
+        BitmapFactory.decodeStream(stream, null, bounds)
+    } ?: return null
+
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+    return bounds.outWidth to bounds.outHeight
+}
+
+private fun buildDocumentCropRect(
+    corners: List<android.graphics.PointF>,
+    fullWidth: Int,
+    fullHeight: Int
+): Rect {
+    val minX = corners.minOf { it.x }
+    val minY = corners.minOf { it.y }
+    val maxX = corners.maxOf { it.x }
+    val maxY = corners.maxOf { it.y }
+
+    val docWidth = (maxX - minX).coerceAtLeast(1f)
+    val docHeight = (maxY - minY).coerceAtLeast(1f)
+    val padding = (maxOf(docWidth, docHeight) * 0.06f).toInt().coerceAtLeast(12)
+
+    val left = (minX.toInt() - padding).coerceAtLeast(0)
+    val top = (minY.toInt() - padding).coerceAtLeast(0)
+    val right = (maxX.toInt() + padding).coerceAtMost(fullWidth)
+    val bottom = (maxY.toInt() + padding).coerceAtMost(fullHeight)
+
+    val safeRight = if (right <= left) (left + 1).coerceAtMost(fullWidth) else right
+    val safeBottom = if (bottom <= top) (top + 1).coerceAtMost(fullHeight) else bottom
+    return Rect(left, top, safeRight, safeBottom)
+}
+
+private fun computeRegionSampleSize(width: Int, height: Int, maxLongEdge: Int): Int {
+    val safeMax = maxLongEdge.coerceAtLeast(512)
+    var sample = 1
+    val longest = maxOf(width, height).coerceAtLeast(1)
+    while (longest / sample > safeMax) {
+        sample *= 2
+    }
+    return sample.coerceAtLeast(1)
 }
 
 private fun normalizeRotation(rotation: Int): Int {

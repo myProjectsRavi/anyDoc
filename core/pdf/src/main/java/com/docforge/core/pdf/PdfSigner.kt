@@ -11,8 +11,10 @@ import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.coroutines.coroutineContext
 
 data class PdfSignaturePlacement(
     val targetPageOneBased: Int,
@@ -61,6 +63,7 @@ class PdfSigner(
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(placements.isNotEmpty()) { "No signature placements provided." }
         require(signatureBitmap.width > 0 && signatureBitmap.height > 0) { "Invalid signature bitmap." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
@@ -87,6 +90,7 @@ class PdfSigner(
                     val signatureImage = LosslessFactory.createFromImage(outDoc, signatureBitmap)
 
                     repeat(sourceDoc.numberOfPages) { pageIndex ->
+                        checkCancelled()
                         val sourcePage = sourceDoc.getPage(pageIndex)
                         val importedPage = importPage(outDoc, sourcePage)
 
@@ -100,6 +104,7 @@ class PdfSigner(
                                 true
                             ).use { stream ->
                                 pagePlacements.forEach { placement ->
+                                    checkCancelled()
                                     drawSignature(
                                         stream = stream,
                                         page = importedPage,

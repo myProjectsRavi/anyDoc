@@ -17,6 +17,8 @@
         android:roundIcon="@android:drawable/ic_menu_agenda"
         android:supportsRtl="true"
         android:theme="@style/Theme.DocForge">
+        <profileable android:shell="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

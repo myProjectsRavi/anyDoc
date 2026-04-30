@@ -18,6 +18,7 @@ rootProject.name = "DocForge"
 
 include(
     ":app",
+    ":baselineprofile",
     ":core:ui",
     ":core:domain",
     ":core:storage",

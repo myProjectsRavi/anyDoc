@@ -12,12 +12,15 @@ import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import kotlin.coroutines.coroutineContext
 import kotlin.math.max
 
 enum class AudioConvertOutputFormat {
@@ -69,25 +72,32 @@ class AudioFormatConverter(
         outputBaseName: String,
         outputFormat: AudioConvertOutputFormat
     ): AudioFormatConversionResult = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
         when (outputFormat) {
-            AudioConvertOutputFormat.M4A_AAC -> convertToAacM4a(inputUri, outputBaseName)
-            AudioConvertOutputFormat.WAV -> convertToWav(inputUri, outputBaseName)
+            AudioConvertOutputFormat.M4A_AAC -> convertToAacM4a(inputUri, outputBaseName, checkCancelled)
+            AudioConvertOutputFormat.WAV -> convertToWav(inputUri, outputBaseName, checkCancelled)
             AudioConvertOutputFormat.MP3 -> convertToCompressed(
                 inputUri = inputUri,
                 outputBaseName = outputBaseName,
                 outputFormat = outputFormat,
-                targetMime = MediaFormat.MIMETYPE_AUDIO_MPEG
+                targetMime = MediaFormat.MIMETYPE_AUDIO_MPEG,
+                checkCancelled = checkCancelled
             )
             AudioConvertOutputFormat.FLAC -> convertToCompressed(
                 inputUri = inputUri,
                 outputBaseName = outputBaseName,
                 outputFormat = outputFormat,
-                targetMime = MediaFormat.MIMETYPE_AUDIO_FLAC
+                targetMime = MediaFormat.MIMETYPE_AUDIO_FLAC,
+                checkCancelled = checkCancelled
             )
         }
     }
 
-    private fun convertToAacM4a(inputUri: Uri, outputBaseName: String): AudioFormatConversionResult {
+    private fun convertToAacM4a(
+        inputUri: Uri,
+        outputBaseName: String,
+        checkCancelled: () -> Unit
+    ): AudioFormatConversionResult {
         require(hasEncoderForMime(MediaFormat.MIMETYPE_AUDIO_AAC)) {
             "AAC encoder not available on this device."
         }
@@ -96,12 +106,13 @@ class AudioFormatConverter(
         val pcmFile = createTempPcmFile()
 
         return try {
-            val decoded = decodeToPcmFile(inputUri, pcmFile)
+            val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
             encodePcmToAacM4a(
                 pcmFile = pcmFile,
                 outputFile = outputFile,
                 sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount
+                channelCount = decoded.channelCount,
+                checkCancelled = checkCancelled
             )
             AudioFormatConversionResult(
                 outputFile = outputFile,
@@ -115,17 +126,22 @@ class AudioFormatConverter(
         }
     }
 
-    private fun convertToWav(inputUri: Uri, outputBaseName: String): AudioFormatConversionResult {
+    private fun convertToWav(
+        inputUri: Uri,
+        outputBaseName: String,
+        checkCancelled: () -> Unit
+    ): AudioFormatConversionResult {
         val outputFile = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
         val pcmFile = createTempPcmFile()
 
         return try {
-            val decoded = decodeToPcmFile(inputUri, pcmFile)
+            val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
             writeWav(
                 pcmFile = pcmFile,
                 outputFile = outputFile,
                 sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount
+                channelCount = decoded.channelCount,
+                checkCancelled = checkCancelled
             )
             AudioFormatConversionResult(
                 outputFile = outputFile,
@@ -143,7 +159,8 @@ class AudioFormatConverter(
         inputUri: Uri,
         outputBaseName: String,
         outputFormat: AudioConvertOutputFormat,
-        targetMime: String
+        targetMime: String,
+        checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
         val outputFile = createOutputFile(outputBaseName, outputFormat)
         val sourceTrack = withAudioTrack(inputUri) { _, _, trackFormat ->
@@ -158,7 +175,7 @@ class AudioFormatConverter(
         if (normalizeMime(sourceMimeType) == normalizeMime(targetMime)) {
             withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
                 extractor.selectTrack(trackIndex)
-                copyExtractorSamplesToFile(extractor, trackFormat, outputFile)
+                copyExtractorSamplesToFile(extractor, trackFormat, outputFile, checkCancelled)
             }
             return AudioFormatConversionResult(
                 outputFile = outputFile,
@@ -176,13 +193,14 @@ class AudioFormatConverter(
         val pcmFile = createTempPcmFile()
 
         return try {
-            val decoded = decodeToPcmFile(inputUri, pcmFile)
+            val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
             encodePcmToRawCodec(
                 pcmFile = pcmFile,
                 outputFile = outputFile,
                 sampleRateHz = decoded.sampleRateHz,
                 channelCount = decoded.channelCount,
-                targetMime = targetMime
+                targetMime = targetMime,
+                checkCancelled = checkCancelled
             )
             AudioFormatConversionResult(
                 outputFile = outputFile,
@@ -196,7 +214,11 @@ class AudioFormatConverter(
         }
     }
 
-    private fun decodeToPcmFile(inputUri: Uri, pcmFile: File): DecodedPcmSummary {
+    private fun decodeToPcmFile(
+        inputUri: Uri,
+        pcmFile: File,
+        checkCancelled: () -> Unit
+    ): DecodedPcmSummary {
         return withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
             val sourceMime = trackFormat.getString(MediaFormat.KEY_MIME).orEmpty()
             extractor.selectTrack(trackIndex)
@@ -216,6 +238,7 @@ class AudioFormatConverter(
 
                 FileOutputStream(pcmFile).use { outputStream ->
                     while (!outputDone) {
+                        checkCancelled()
                         if (!inputDone) {
                             val inputIndex = decoder.dequeueInputBuffer(CODEC_TIMEOUT_US)
                             if (inputIndex >= 0) {
@@ -301,7 +324,8 @@ class AudioFormatConverter(
         pcmFile: File,
         outputFile: File,
         sampleRateHz: Int,
-        channelCount: Int
+        channelCount: Int,
+        checkCancelled: () -> Unit
     ) {
         val format = MediaFormat.createAudioFormat(
             MediaFormat.MIMETYPE_AUDIO_AAC,
@@ -324,12 +348,14 @@ class AudioFormatConverter(
             var trackIndex = -1
             var muxerStarted = false
 
-            FileInputStream(pcmFile).use { inputStream ->
+            FileInputStream(pcmFile).channel.use { inputChannel ->
+                val mappedInput = inputChannel.map(FileChannel.MapMode.READ_ONLY, 0L, inputChannel.size())
                 var inputDone = false
                 var outputDone = false
                 var totalInputBytes = 0L
 
                 while (!outputDone) {
+                    checkCancelled()
                     if (!inputDone) {
                         val inputIndex = encoder.dequeueInputBuffer(CODEC_TIMEOUT_US)
                         if (inputIndex >= 0) {
@@ -337,9 +363,8 @@ class AudioFormatConverter(
                                 ?: error("Encoder input buffer unavailable")
                             inputBuffer.clear()
 
-                            val temp = ByteArray(minOf(DEFAULT_BUFFER_SIZE, inputBuffer.remaining()))
-                            val read = inputStream.read(temp)
-                            if (read < 0) {
+                            val read = minOf(DEFAULT_BUFFER_SIZE, minOf(inputBuffer.remaining(), mappedInput.remaining()))
+                            if (read <= 0) {
                                 val pts = bytesToPresentationTimeUs(totalInputBytes, sampleRateHz, channelCount)
                                 encoder.queueInputBuffer(
                                     inputIndex,
@@ -350,7 +375,13 @@ class AudioFormatConverter(
                                 )
                                 inputDone = true
                             } else {
-                                inputBuffer.put(temp, 0, read)
+                                val start = mappedInput.position()
+                                val slice = mappedInput.duplicate().apply {
+                                    position(start)
+                                    limit(start + read)
+                                }
+                                inputBuffer.put(slice)
+                                mappedInput.position(start + read)
                                 val pts = bytesToPresentationTimeUs(totalInputBytes, sampleRateHz, channelCount)
                                 encoder.queueInputBuffer(inputIndex, 0, read, pts, 0)
                                 totalInputBytes += read
@@ -403,7 +434,8 @@ class AudioFormatConverter(
         outputFile: File,
         sampleRateHz: Int,
         channelCount: Int,
-        targetMime: String
+        targetMime: String,
+        checkCancelled: () -> Unit
     ) {
         val format = MediaFormat.createAudioFormat(targetMime, sampleRateHz, channelCount).apply {
             if (targetMime == MediaFormat.MIMETYPE_AUDIO_MPEG) {
@@ -418,13 +450,15 @@ class AudioFormatConverter(
             encoder.start()
 
             val bufferInfo = MediaCodec.BufferInfo()
-            FileInputStream(pcmFile).use { inputStream ->
+            FileInputStream(pcmFile).channel.use { inputChannel ->
+                val mappedInput = inputChannel.map(FileChannel.MapMode.READ_ONLY, 0L, inputChannel.size())
                 FileOutputStream(outputFile).use { outputStream ->
                     var inputDone = false
                     var outputDone = false
                     var totalInputBytes = 0L
 
                     while (!outputDone) {
+                        checkCancelled()
                         if (!inputDone) {
                             val inputIndex = encoder.dequeueInputBuffer(CODEC_TIMEOUT_US)
                             if (inputIndex >= 0) {
@@ -432,9 +466,8 @@ class AudioFormatConverter(
                                     ?: error("Encoder input buffer unavailable")
                                 inputBuffer.clear()
 
-                                val temp = ByteArray(minOf(DEFAULT_BUFFER_SIZE, inputBuffer.remaining()))
-                                val read = inputStream.read(temp)
-                                if (read < 0) {
+                                val read = minOf(DEFAULT_BUFFER_SIZE, minOf(inputBuffer.remaining(), mappedInput.remaining()))
+                                if (read <= 0) {
                                     val pts = bytesToPresentationTimeUs(totalInputBytes, sampleRateHz, channelCount)
                                     encoder.queueInputBuffer(
                                         inputIndex,
@@ -445,7 +478,13 @@ class AudioFormatConverter(
                                     )
                                     inputDone = true
                                 } else {
-                                    inputBuffer.put(temp, 0, read)
+                                    val start = mappedInput.position()
+                                    val slice = mappedInput.duplicate().apply {
+                                        position(start)
+                                        limit(start + read)
+                                    }
+                                    inputBuffer.put(slice)
+                                    mappedInput.position(start + read)
                                     val pts = bytesToPresentationTimeUs(totalInputBytes, sampleRateHz, channelCount)
                                     encoder.queueInputBuffer(inputIndex, 0, read, pts, 0)
                                     totalInputBytes += read
@@ -488,7 +527,8 @@ class AudioFormatConverter(
         pcmFile: File,
         outputFile: File,
         sampleRateHz: Int,
-        channelCount: Int
+        channelCount: Int,
+        checkCancelled: () -> Unit
     ) {
         val pcmSize = pcmFile.length()
         val bitsPerSample = 16
@@ -509,13 +549,17 @@ class AudioFormatConverter(
             output.writeShortLE(bitsPerSample.toShort())
             output.writeAscii("data")
             output.writeIntLE(pcmSize.toInt())
+        }
 
-            FileInputStream(pcmFile).use { input ->
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read <= 0) break
-                    output.write(buffer, 0, read)
+        FileInputStream(pcmFile).channel.use { inputChannel ->
+            FileOutputStream(outputFile, true).channel.use { outputChannel ->
+                val size = inputChannel.size()
+                var position = 0L
+                while (position < size) {
+                    checkCancelled()
+                    val transferred = inputChannel.transferTo(position, size - position, outputChannel)
+                    if (transferred <= 0L) break
+                    position += transferred
                 }
             }
         }
@@ -524,18 +568,21 @@ class AudioFormatConverter(
     private fun copyExtractorSamplesToFile(
         extractor: MediaExtractor,
         trackFormat: MediaFormat,
-        outputFile: File
+        outputFile: File,
+        checkCancelled: () -> Unit
     ) {
         val buffer = ByteBuffer.allocate(selectBufferSize(trackFormat))
-        FileOutputStream(outputFile).use { output ->
+        FileOutputStream(outputFile).channel.use { outputChannel ->
             while (true) {
+                checkCancelled()
                 buffer.clear()
                 val sampleSize = extractor.readSampleData(buffer, 0)
                 if (sampleSize < 0) break
-                val bytes = ByteArray(sampleSize)
                 buffer.position(0)
-                buffer.get(bytes, 0, sampleSize)
-                output.write(bytes)
+                buffer.limit(sampleSize)
+                while (buffer.hasRemaining()) {
+                    outputChannel.write(buffer)
+                }
                 extractor.advance()
             }
         }

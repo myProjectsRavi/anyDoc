@@ -163,6 +163,51 @@ class DocumentEdgeDetector {
         return perspectiveCorrect(bitmap, detected.corners)
     }
 
+    fun applyGrayscaleFilter(bitmap: Bitmap): Bitmap? {
+        return transformBitmap(bitmap) { sourceRgba, outputRgba ->
+            val gray = Mat()
+            try {
+                Imgproc.cvtColor(sourceRgba, gray, Imgproc.COLOR_RGBA2GRAY)
+                Imgproc.cvtColor(gray, outputRgba, Imgproc.COLOR_GRAY2RGBA)
+            } finally {
+                gray.release()
+            }
+        }
+    }
+
+    fun applyBlackWhiteFilter(bitmap: Bitmap, threshold: Double = 150.0): Bitmap? {
+        return transformBitmap(bitmap) { sourceRgba, outputRgba ->
+            val gray = Mat()
+            val binary = Mat()
+            try {
+                Imgproc.cvtColor(sourceRgba, gray, Imgproc.COLOR_RGBA2GRAY)
+                Imgproc.threshold(gray, binary, threshold, 255.0, Imgproc.THRESH_BINARY)
+                Imgproc.cvtColor(binary, outputRgba, Imgproc.COLOR_GRAY2RGBA)
+            } finally {
+                binary.release()
+                gray.release()
+            }
+        }
+    }
+
+    fun applyEnhancedFilter(bitmap: Bitmap): Bitmap? {
+        return transformBitmap(bitmap) { sourceRgba, outputRgba ->
+            val gray = Mat()
+            val blurred = Mat()
+            val sharpened = Mat()
+            try {
+                Imgproc.cvtColor(sourceRgba, gray, Imgproc.COLOR_RGBA2GRAY)
+                Imgproc.GaussianBlur(gray, blurred, Size(0.0, 0.0), 2.2)
+                Core.addWeighted(gray, 1.55, blurred, -0.55, 0.0, sharpened)
+                Imgproc.cvtColor(sharpened, outputRgba, Imgproc.COLOR_GRAY2RGBA)
+            } finally {
+                sharpened.release()
+                blurred.release()
+                gray.release()
+            }
+        }
+    }
+
     private fun detectFromGray(grayInput: Mat): DetectedDocument? {
         if (grayInput.empty()) return null
 
@@ -260,6 +305,29 @@ class DocumentEdgeDetector {
 
     private fun distance(a: PointF, b: PointF): Double {
         return hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble())
+    }
+
+    private inline fun transformBitmap(
+        bitmap: Bitmap,
+        transform: (sourceRgba: Mat, outputRgba: Mat) -> Unit
+    ): Bitmap? {
+        if (!openCvReady || bitmap.width <= 0 || bitmap.height <= 0) return null
+        val sourceRgba = Mat()
+        val outputRgba = Mat()
+        return try {
+            Utils.bitmapToMat(bitmap, sourceRgba)
+            transform(sourceRgba, outputRgba)
+            val width = outputRgba.cols().coerceAtLeast(1)
+            val height = outputRgba.rows().coerceAtLeast(1)
+            val outputBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            Utils.matToBitmap(outputRgba, outputBitmap)
+            outputBitmap
+        } catch (_: Throwable) {
+            null
+        } finally {
+            outputRgba.release()
+            sourceRgba.release()
+        }
     }
 }
 

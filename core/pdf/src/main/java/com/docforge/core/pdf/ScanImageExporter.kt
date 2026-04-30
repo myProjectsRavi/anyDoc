@@ -6,10 +6,12 @@ import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import kotlin.coroutines.coroutineContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -36,6 +38,7 @@ class ScanImageExporter(
         zipBundle: Boolean = false
     ): ScanImageExportResult = withContext(Dispatchers.IO) {
         require(imageUris.isNotEmpty()) { "No scan pages available for export." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
@@ -49,6 +52,7 @@ class ScanImageExporter(
         var totalBytes = 0L
 
         imageUris.forEachIndexed { index, uri ->
+            checkCancelled()
             val bitmap = decodeBitmap(uri) ?: error("Failed to decode page ${index + 1}: $uri")
             val extension = if (format == ScanImageFormat.JPG) "jpg" else "png"
             val outputFile = File(outputDir, "${base}_p${index + 1}.$extension")
@@ -71,6 +75,7 @@ class ScanImageExporter(
             val zip = File(outputDir, "${base}_${format.name.lowercase()}_bundle.zip")
             ZipOutputStream(FileOutputStream(zip)).use { zipOut ->
                 outputFiles.forEach { imageFile ->
+                    checkCancelled()
                     FileInputStream(imageFile).use { input ->
                         zipOut.putNextEntry(ZipEntry(imageFile.name))
                         input.copyTo(zipOut, bufferSize = 8 * 1024)

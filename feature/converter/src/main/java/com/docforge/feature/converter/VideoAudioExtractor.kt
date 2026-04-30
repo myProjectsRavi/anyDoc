@@ -9,10 +9,11 @@ import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
 import java.nio.ByteBuffer
+import kotlin.coroutines.coroutineContext
 
 enum class AudioOutputFormat {
     M4A,
@@ -54,16 +55,18 @@ class VideoAudioExtractor(
         outputBaseName: String,
         outputFormat: AudioOutputFormat
     ): VideoAudioExtractionResult = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
         val outputFile = createOutputFile(outputBaseName, outputFormat)
         when (outputFormat) {
-            AudioOutputFormat.M4A -> extractToM4a(inputUri, outputFile)
-            AudioOutputFormat.MP3 -> extractToMp3Passthrough(inputUri, outputFile)
+            AudioOutputFormat.M4A -> extractToM4a(inputUri, outputFile, checkCancelled)
+            AudioOutputFormat.MP3 -> extractToMp3Passthrough(inputUri, outputFile, checkCancelled)
         }
     }
 
     private fun extractToM4a(
         inputUri: Uri,
-        outputFile: File
+        outputFile: File,
+        checkCancelled: () -> Unit
     ): VideoAudioExtractionResult {
         return withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
             extractor.selectTrack(trackIndex)
@@ -81,6 +84,7 @@ class VideoAudioExtractor(
                 val info = MediaCodec.BufferInfo()
 
                 while (true) {
+                    checkCancelled()
                     buffer.clear()
                     val sampleSize = extractor.readSampleData(buffer, 0)
                     if (sampleSize < 0) break
@@ -110,7 +114,8 @@ class VideoAudioExtractor(
 
     private fun extractToMp3Passthrough(
         inputUri: Uri,
-        outputFile: File
+        outputFile: File,
+        checkCancelled: () -> Unit
     ): VideoAudioExtractionResult {
         return withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
             val mimeType = trackFormat.getString(MediaFormat.KEY_MIME).orEmpty()
@@ -121,16 +126,18 @@ class VideoAudioExtractor(
             extractor.selectTrack(trackIndex)
 
             val buffer = ByteBuffer.allocate(selectBufferSize(trackFormat))
-            FileOutputStream(outputFile).use { stream ->
+            outputFile.outputStream().channel.use { outputChannel ->
                 while (true) {
+                    checkCancelled()
                     buffer.clear()
                     val sampleSize = extractor.readSampleData(buffer, 0)
                     if (sampleSize < 0) break
 
-                    val bytes = ByteArray(sampleSize)
                     buffer.position(0)
-                    buffer.get(bytes, 0, sampleSize)
-                    stream.write(bytes)
+                    buffer.limit(sampleSize)
+                    while (buffer.hasRemaining()) {
+                        outputChannel.write(buffer)
+                    }
                     extractor.advance()
                 }
             }

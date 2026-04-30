@@ -3,7 +3,11 @@ package com.docforge.app.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.Immutable
 import com.docforge.core.domain.repository.HistoryRepository
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,8 +35,9 @@ enum class HomeToolId {
     PDF_TO_IMAGES
 }
 
+@Immutable
 data class HomeUiState(
-    val quickActionToolIds: List<HomeToolId> = emptyList()
+    val quickActionToolIds: ImmutableList<HomeToolId> = persistentListOf()
 )
 
 class HomeViewModel(
@@ -51,7 +56,7 @@ class HomeViewModel(
                     .take(4)
 
                 _uiState.update {
-                    it.copy(quickActionToolIds = mapped)
+                    it.copy(quickActionToolIds = mapped.toPersistentList())
                 }
             }
         }

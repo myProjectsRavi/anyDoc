@@ -12,8 +12,10 @@ import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.font.PDFont
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.coroutines.coroutineContext
 import kotlin.math.max
 import kotlin.math.min
 
@@ -56,6 +58,7 @@ class PdfAnnotator(
         annotations: List<PdfAnnotationCommand>
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(annotations.isNotEmpty()) { "Add at least one annotation before export." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
@@ -80,6 +83,7 @@ class PdfAnnotator(
 
                 PDDocument().use { outDoc ->
                     repeat(sourceDoc.numberOfPages) { pageIndex ->
+                        checkCancelled()
                         val sourcePage = sourceDoc.getPage(pageIndex)
                         val importedPage = importPage(outDoc, sourcePage)
 
@@ -93,6 +97,7 @@ class PdfAnnotator(
                                 true
                             ).use { stream ->
                                 pageCommands.forEach { command ->
+                                    checkCancelled()
                                     drawAnnotation(stream, importedPage, command)
                                 }
                             }

@@ -8,8 +8,10 @@ import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.coroutines.coroutineContext
 
 enum class PdfCompressionLevel(
     val scaleFactor: Float,
@@ -33,6 +35,7 @@ class PdfCompressor(
         outputName: String,
         level: PdfCompressionLevel
     ): PdfCreationResult = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
             bucket = DocForgeOutputBucket.DOCUMENTS
@@ -48,6 +51,7 @@ class PdfCompressor(
 
                 PDDocument().use { outDoc ->
                     repeat(sourceDoc.numberOfPages) { pageIndex ->
+                        checkCancelled()
                         importPage(outDoc, sourceDoc.getPage(pageIndex))
                     }
 

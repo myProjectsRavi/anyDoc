@@ -15,9 +15,11 @@ import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.P
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
+import kotlin.coroutines.coroutineContext
 
 class PdfMerger(
     private val context: Context
@@ -32,6 +34,7 @@ class PdfMerger(
         options: PdfMergeOptions = PdfMergeOptions()
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(inputUris.isNotEmpty()) { "Select at least one source file." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
@@ -48,6 +51,7 @@ class PdfMerger(
             var outputPageNumber = 1
 
             inputUris.forEach { uri ->
+                checkCancelled()
                 sourceBookmarks += PdfSourceBookmark(
                     label = resolveSourceLabel(uri),
                     startPageOneBased = outputPageNumber
@@ -60,6 +64,7 @@ class PdfMerger(
                                 require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages: $uri" }
 
                                 repeat(sourceDoc.numberOfPages) { pageIndex ->
+                                    checkCancelled()
                                     val sourcePage = sourceDoc.getPage(pageIndex)
                                     val imported = mergedDoc.importPage(sourcePage)
                                     imported.rotation = sourcePage.rotation

@@ -9,8 +9,10 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.coroutines.coroutineContext
 import kotlin.math.min
 
 data class PdfSplitResult(
@@ -32,6 +34,7 @@ class PdfSplitter(
         startPageOneBased: Int,
         endPageOneBased: Int
     ): PdfCreationResult = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
         withLoadedSourceDocument(inputUri) { sourceDoc ->
             require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
             require(startPageOneBased in 1..sourceDoc.numberOfPages) { "Start page out of bounds." }
@@ -44,6 +47,7 @@ class PdfSplitter(
 
             PDDocument().use { outDoc ->
                 for (pageOneBased in startPageOneBased..endPageOneBased) {
+                    checkCancelled()
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                 }
                 outDoc.save(outputFile)
@@ -62,6 +66,7 @@ class PdfSplitter(
         outputBaseName: String,
         pagesOneBased: List<Int>
     ): PdfSplitResult = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
         withLoadedSourceDocument(inputUri) { sourceDoc ->
             require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
             require(pagesOneBased.isNotEmpty()) { "No pages selected for extraction." }
@@ -80,6 +85,7 @@ class PdfSplitter(
             var bytes = 0L
 
             requested.forEach { pageOneBased ->
+                checkCancelled()
                 val out = File(outputDir, "${sanitizedBase}_p$pageOneBased.pdf")
                 PDDocument().use { outDoc ->
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
@@ -103,6 +109,7 @@ class PdfSplitter(
         pagesPerChunk: Int
     ): PdfSplitResult = withContext(Dispatchers.IO) {
         require(pagesPerChunk > 0) { "Pages per split must be greater than 0." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         withLoadedSourceDocument(inputUri) { sourceDoc ->
             require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
@@ -114,11 +121,13 @@ class PdfSplitter(
 
             var startPageOneBased = 1
             while (startPageOneBased <= sourceDoc.numberOfPages) {
+                checkCancelled()
                 val endPageOneBased = min(startPageOneBased + pagesPerChunk - 1, sourceDoc.numberOfPages)
                 val out = File(outputDir, "${sanitizedBase}_${startPageOneBased}_${endPageOneBased}.pdf")
 
                 PDDocument().use { outDoc ->
                     for (pageOneBased in startPageOneBased..endPageOneBased) {
+                        checkCancelled()
                         importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                     }
                     outDoc.save(out)
@@ -141,6 +150,7 @@ class PdfSplitter(
         inputUri: Uri,
         outputBaseName: String
     ): PdfSplitResult = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
         val outputDir = outputDirectory()
         val sanitizedBase = sanitizeName(outputBaseName, "split_bookmarks")
 
@@ -155,6 +165,7 @@ class PdfSplitter(
             var bytes = 0L
 
             boundaries.forEachIndexed { index, boundary ->
+                checkCancelled()
                 val nextStart = boundaries.getOrNull(index + 1)?.startPageOneBased ?: (totalPages + 1)
                 val endPage = (nextStart - 1).coerceAtMost(totalPages)
                 if (endPage < boundary.startPageOneBased) return@forEachIndexed
@@ -167,6 +178,7 @@ class PdfSplitter(
 
                 PDDocument().use { outDoc ->
                     for (pageIndex in (boundary.startPageOneBased - 1)..(endPage - 1)) {
+                        checkCancelled()
                         importPage(outDoc, sourceDoc.getPage(pageIndex))
                     }
                     outDoc.save(outFile)
@@ -190,6 +202,7 @@ class PdfSplitter(
         orderedPagesOneBased: List<Int>
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(orderedPagesOneBased.isNotEmpty()) { "No pages specified for reorder." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         withLoadedSourceDocument(inputUri) { sourceDoc ->
             require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
@@ -204,6 +217,7 @@ class PdfSplitter(
 
             PDDocument().use { outDoc ->
                 orderedPagesOneBased.forEach { pageOneBased ->
+                    checkCancelled()
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                 }
                 outDoc.save(outputFile)
@@ -223,6 +237,7 @@ class PdfSplitter(
         pagesToDeleteOneBased: List<Int>
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(pagesToDeleteOneBased.isNotEmpty()) { "No pages specified for deletion." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         withLoadedSourceDocument(inputUri) { sourceDoc ->
             require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
@@ -241,6 +256,7 @@ class PdfSplitter(
 
             PDDocument().use { outDoc ->
                 keptPages.forEach { pageOneBased ->
+                    checkCancelled()
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                 }
                 outDoc.save(outputFile)
@@ -262,6 +278,7 @@ class PdfSplitter(
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(pagesToRotateOneBased.isNotEmpty()) { "No pages specified for rotation." }
         require(degreesClockwise in setOf(90, 180, 270)) { "Rotation must be 90, 180, or 270 degrees." }
+        val checkCancelled = { coroutineContext.ensureActive() }
 
         withLoadedSourceDocument(inputUri) { sourceDoc ->
             require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
@@ -277,6 +294,7 @@ class PdfSplitter(
 
             PDDocument().use { outDoc ->
                 for (pageOneBased in 1..sourceDoc.numberOfPages) {
+                    checkCancelled()
                     val sourcePage = sourceDoc.getPage(pageOneBased - 1)
                     val imported = importPage(outDoc, sourcePage)
                     if (pageOneBased in rotateSet) {
@@ -289,6 +307,52 @@ class PdfSplitter(
             PdfCreationResult(
                 outputFile = outputFile,
                 pageCount = sourceDoc.numberOfPages,
+                outputSizeBytes = outputFile.length()
+            )
+        }
+    }
+
+    suspend fun applyWorkspaceEdits(
+        inputUri: Uri,
+        outputName: String,
+        visualOrderOneBased: List<Int>,
+        rotationDegreesBySourcePage: Map<Int, Int>
+    ): PdfCreationResult = withContext(Dispatchers.IO) {
+        require(visualOrderOneBased.isNotEmpty()) { "Workspace has no pages to save." }
+        val checkCancelled = { coroutineContext.ensureActive() }
+
+        withLoadedSourceDocument(inputUri) { sourceDoc ->
+            require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
+
+            visualOrderOneBased.forEach { page ->
+                require(page in 1..sourceDoc.numberOfPages) { "Page $page is out of bounds." }
+            }
+
+            rotationDegreesBySourcePage.forEach { (page, degrees) ->
+                require(page in 1..sourceDoc.numberOfPages) { "Rotation page $page is out of bounds." }
+                require(degrees % 90 == 0) { "Rotation degrees for page $page must be a multiple of 90." }
+            }
+
+            val outputDir = outputDirectory()
+            val sanitized = sanitizeName(outputName, "workspace")
+            val outputFile = File(outputDir, "$sanitized.pdf")
+
+            PDDocument().use { outDoc ->
+                visualOrderOneBased.forEach { pageOneBased ->
+                    checkCancelled()
+                    val sourcePage = sourceDoc.getPage(pageOneBased - 1)
+                    val imported = importPage(outDoc, sourcePage)
+                    val extraRotation = rotationDegreesBySourcePage[pageOneBased] ?: 0
+                    if (extraRotation != 0) {
+                        imported.rotation = normalizeRotation(sourcePage.rotation + extraRotation)
+                    }
+                }
+                outDoc.save(outputFile)
+            }
+
+            PdfCreationResult(
+                outputFile = outputFile,
+                pageCount = visualOrderOneBased.size,
                 outputSizeBytes = outputFile.length()
             )
         }
@@ -325,6 +389,10 @@ class PdfSplitter(
     private fun sanitizeName(raw: String, fallbackPrefix: String): String {
         return raw.ifBlank { "${fallbackPrefix}_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+    }
+
+    private fun normalizeRotation(value: Int): Int {
+        return ((value % 360) + 360) % 360
     }
 
     private fun resolveTopLevelBookmarkBoundaries(document: PDDocument): List<BookmarkBoundary> {

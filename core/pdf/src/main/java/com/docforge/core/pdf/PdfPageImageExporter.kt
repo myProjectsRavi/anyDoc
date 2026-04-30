@@ -8,10 +8,12 @@ import android.os.Build
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import kotlin.coroutines.coroutineContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -40,6 +42,7 @@ class PdfPageImageExporter(
         scaleFactor: Float = 1f,
         zipBundle: Boolean = false
     ): PdfPageImageExportResult = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
         context.contentResolver.openFileDescriptor(inputUri, "r")?.use { descriptor ->
             PdfRenderer(descriptor).use { renderer ->
                 require(renderer.pageCount > 0) { "Input PDF has no pages." }
@@ -56,6 +59,7 @@ class PdfPageImageExporter(
                 var totalBytes = 0L
 
                 repeat(renderer.pageCount) { pageIndex ->
+                    checkCancelled()
                     renderer.openPage(pageIndex).use { page ->
                         val width = (page.width * scaleFactor).toInt().coerceAtLeast(1)
                         val height = (page.height * scaleFactor).toInt().coerceAtLeast(1)
@@ -84,6 +88,7 @@ class PdfPageImageExporter(
                     val zip = File(outputDir, "${base}_${format.name.lowercase()}_bundle.zip")
                     ZipOutputStream(FileOutputStream(zip)).use { zipOut ->
                         files.forEach { imageFile ->
+                            checkCancelled()
                             FileInputStream(imageFile).use { input ->
                                 zipOut.putNextEntry(ZipEntry(imageFile.name))
                                 input.copyTo(zipOut, bufferSize = 8 * 1024)

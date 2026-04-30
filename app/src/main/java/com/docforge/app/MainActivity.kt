@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.docforge.app.navigation.DocForgeNavHost
+import com.docforge.app.runtime.EngineWarmup
 import com.docforge.app.share.ShareIntentRouter
 import com.docforge.app.share.ShareLaunchRequest
 import com.docforge.core.ui.theme.DocForgeTheme
@@ -20,6 +21,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         sharedLaunchRequest = ShareIntentRouter.fromIntent(intent)
+        EngineWarmup.preWarm(applicationContext)
         enableEdgeToEdge()
 
         setContent {

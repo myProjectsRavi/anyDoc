@@ -9,6 +9,7 @@ import com.docforge.core.domain.repository.HistoryRepository
 import com.docforge.core.pdf.PdfMergeOptions
 import com.docforge.core.pdf.PdfMergePageSizeMode
 import com.docforge.core.pdf.PdfMerger
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +28,7 @@ class PdfToolsViewModel(
         if (uris.isEmpty()) return
         _uiState.update {
             it.copy(
-                selectedUris = uris,
+                selectedUris = uris.toPersistentList(),
                 statusMessage = "${uris.size} source file(s) selected",
                 errorMessage = null
             )
@@ -37,7 +38,7 @@ class PdfToolsViewModel(
     fun remove(index: Int) {
         _uiState.update { state ->
             if (index !in state.selectedUris.indices) return@update state
-            val updated = state.selectedUris.toMutableList().apply { removeAt(index) }
+            val updated = state.selectedUris.toMutableList().apply { removeAt(index) }.toPersistentList()
             state.copy(selectedUris = updated, statusMessage = "Removed item ${index + 1}")
         }
     }
@@ -49,7 +50,7 @@ class PdfToolsViewModel(
             val tmp = updated[index - 1]
             updated[index - 1] = updated[index]
             updated[index] = tmp
-            state.copy(selectedUris = updated)
+            state.copy(selectedUris = updated.toPersistentList())
         }
     }
 
@@ -60,7 +61,7 @@ class PdfToolsViewModel(
             val tmp = updated[index + 1]
             updated[index + 1] = updated[index]
             updated[index] = tmp
-            state.copy(selectedUris = updated)
+            state.copy(selectedUris = updated.toPersistentList())
         }
     }
 

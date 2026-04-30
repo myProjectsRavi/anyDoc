@@ -577,6 +577,73 @@ class PdfSplitViewModel(
         }
     }
 
+    fun saveVisualWorkspace(
+        visualOrderOneBased: List<Int>,
+        rotationDegreesBySourcePage: Map<Int, Int>
+    ) {
+        val state = _uiState.value
+        val uri = state.selectedUri
+        if (uri == null) {
+            _uiState.update { it.copy(errorMessage = "Select one PDF first.") }
+            return
+        }
+        if (state.isProcessing) return
+        if (visualOrderOneBased.isEmpty()) {
+            _uiState.update { it.copy(errorMessage = "No pages available in visual workspace.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isProcessing = true,
+                    statusMessage = "Saving visual workspace edits...",
+                    errorMessage = null,
+                    lastOutputPaths = emptyList(),
+                    lastOutputSizeBytes = null
+                )
+            }
+
+            runCatching {
+                pdfSplitter.applyWorkspaceEdits(
+                    inputUri = uri,
+                    outputName = state.outputBaseName,
+                    visualOrderOneBased = visualOrderOneBased,
+                    rotationDegreesBySourcePage = rotationDegreesBySourcePage
+                )
+            }.onSuccess { result ->
+                historyRepository.insert(
+                    ConversionRecord(
+                        sourceLabel = "PDF workspace save (${visualOrderOneBased.size} pages, ${rotationDegreesBySourcePage.size} rotated)",
+                        outputPath = result.outputFile.absolutePath,
+                        operation = "PDF Workspace Save",
+                        createdAtMillis = System.currentTimeMillis(),
+                        inputCount = visualOrderOneBased.size,
+                        outputSizeBytes = result.outputSizeBytes
+                    )
+                )
+
+                _uiState.update {
+                    it.copy(
+                        isProcessing = false,
+                        lastOutputPaths = listOf(result.outputFile.absolutePath),
+                        lastOutputSizeBytes = result.outputSizeBytes,
+                        statusMessage = "Workspace saved (${result.pageCount} pages)",
+                        errorMessage = null
+                    )
+                }
+            }.onFailure { err ->
+                _uiState.update {
+                    it.copy(
+                        isProcessing = false,
+                        statusMessage = null,
+                        errorMessage = err.message ?: "Visual workspace save failed"
+                    )
+                }
+            }
+        }
+    }
+
     private fun parsePageExpression(
         raw: String,
         preserveOrder: Boolean,

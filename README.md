@@ -47,6 +47,10 @@ Implemented:
 - Virtualized on-demand thumbnail rendering for large PDFs (no eager full-document rendering)
 - Thumbnail quality presets for split visual workspace (Low/Medium/High)
 - Thumbnail prefetch windowing for smoother large-PDF scrolling
+- Strict thumbnail LRU cache sized to 1/8 of heap with bitmap recycle-on-evict
+- Optimistic split workspace edits (queue delete/rotate visually at 0ms, single deferred save write)
+- Cooperative cancellation checks (`ensureActive`) in long-running PDF/audio/image loops
+- OpenCV-accelerated scanner filters (grayscale/BW/enhanced) with CPU fallback path
 - Share-intent smart routing (ACTION_SEND / ACTION_SEND_MULTIPLE -> tool-specific screen prefill by file type)
 - Batch queue processing for mixed conversion tasks (sequential offline runner with run/cancel and per-task status)
 - Foreground-service queue progress notifications (persistent progress + completion summary notification)
@@ -76,5 +80,5 @@ Not yet implemented (current roadmap subset):
 ## Next feature slices (in blueprint order)
 
 1. Add placement-template import/export file backup in PDF Sign
-2. Add split thumbnail memory cap + LRU eviction for long browsing sessions
-3. Add background worker option for very large PDF-to-images exports
+2. Add background worker option for very large PDF-to-images exports
+3. Add memory-mapped I/O pass for large PCM read paths in audio conversion
