@@ -1,0 +1,24 @@
+package com.docforge.app.navigation
+
+internal object Routes {
+    const val ONBOARDING = "onboarding"
+    const val HOME = "home"
+    const val SETTINGS = "settings"
+    const val SCANNER = "scanner"
+    const val CONVERTER = "converter"
+    const val IMAGE_FORMAT = "image_format"
+    const val AUDIO_FORMAT = "audio_format"
+    const val DOC_TO_PDF = "doc_to_pdf"
+    const val TEXT_TO_PDF = "text_to_pdf"
+    const val VIDEO_TO_AUDIO = "video_to_audio"
+    const val BATCH_QUEUE = "batch_queue"
+    const val PDF_MERGE = "pdf_merge"
+    const val PDF_SPLIT = "pdf_split"
+    const val PDF_SIGN = "pdf_sign"
+    const val PDF_ANNOTATE = "pdf_annotate"
+    const val PDF_PASSWORD = "pdf_password"
+    const val PDF_COMPRESS = "pdf_compress"
+    const val PDF_TEXT = "pdf_text"
+    const val PDF_TO_IMAGES = "pdf_to_images"
+    const val HISTORY = "history"
+}
