@@ -2,6 +2,8 @@ package com.docforge.core.pdf
 
 import android.content.Context
 import android.net.Uri
+import com.tom_roush.pdfbox.io.MemoryUsageSetting
+import com.tom_roush.pdfbox.pdmodel.PDDocument
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.channels.Channels
@@ -62,4 +64,14 @@ internal fun guessTempSuffix(uri: Uri, defaultSuffix: String): String {
 
     val safeExt = extension.takeIf { it.matches(SAFE_EXTENSION_REGEX) }
     return if (safeExt == null) defaultSuffix else ".$safeExt"
+}
+
+private fun pdfMemoryUsageSetting(): MemoryUsageSetting = MemoryUsageSetting.setupTempFileOnly()
+
+internal fun loadPdfDocument(file: File): PDDocument {
+    return PDDocument.load(file, pdfMemoryUsageSetting())
+}
+
+internal fun loadPdfDocument(file: File, password: String): PDDocument {
+    return PDDocument.load(file, password, pdfMemoryUsageSetting())
 }

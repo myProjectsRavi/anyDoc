@@ -28,7 +28,7 @@ class PdfPasswordTool(
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(userPassword.isNotBlank()) { "User password cannot be blank." }
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_pwd_", suffix = ".pdf") { sourceFile ->
-            PDDocument.load(sourceFile).use { document ->
+            loadPdfDocument(sourceFile).use { document ->
                 require(document.numberOfPages > 0) { "Input PDF has no pages." }
 
                 val permissions = AccessPermission()
@@ -63,7 +63,7 @@ class PdfPasswordTool(
         require(password.isNotBlank()) { "Password cannot be blank for unlock." }
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_unlock_", suffix = ".pdf") { sourceFile ->
             try {
-                PDDocument.load(sourceFile, password).use { document ->
+                loadPdfDocument(sourceFile, password).use { document ->
                     require(document.numberOfPages > 0) { "Input PDF has no pages." }
                     require(document.isEncrypted) { "Selected PDF is not password protected." }
 
@@ -87,7 +87,7 @@ class PdfPasswordTool(
     suspend fun isEncrypted(inputUri: android.net.Uri): Boolean = withContext(Dispatchers.IO) {
         runCatching {
             context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_probe_", suffix = ".pdf") { sourceFile ->
-                PDDocument.load(sourceFile).use { doc -> doc.isEncrypted }
+                loadPdfDocument(sourceFile).use { doc -> doc.isEncrypted }
             }
         }.getOrElse { true }
     }

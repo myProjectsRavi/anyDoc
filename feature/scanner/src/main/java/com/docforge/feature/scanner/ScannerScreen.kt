@@ -86,6 +86,7 @@ fun ScannerRoute(
     val state = viewModel.uiState.collectAsStateWithLifecycle().value
     val detector = remember { DocumentEdgeDetector() }
     val scope = rememberCoroutineScope()
+    var previousManagedScanUris by remember { mutableStateOf<Set<Uri>>(emptySet()) }
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -121,6 +122,24 @@ fun ScannerRoute(
         if (!hasCameraPermission) {
             permissionLauncher.launch(Manifest.permission.CAMERA)
         }
+    }
+
+    LaunchedEffect(state.capturedUris) {
+        val currentManaged = state.capturedUris
+            .filter(::isManagedScanCacheUri)
+            .toSet()
+
+        val removedManaged = previousManagedScanUris - currentManaged
+        removedManaged.forEach { uri ->
+            deleteManagedScanCacheUri(uri)
+        }
+        previousManagedScanUris = currentManaged
+
+        cleanupStaleManagedScanCacheFiles(
+            context = context,
+            keepUris = currentManaged,
+            maxAgeMs = 24L * 60L * 60L * 1000L
+        )
     }
 
     if (!hasCameraPermission) {
@@ -1038,6 +1057,41 @@ private fun computeRegionSampleSize(width: Int, height: Int, maxLongEdge: Int): 
         sample *= 2
     }
     return sample.coerceAtLeast(1)
+}
+
+private fun isManagedScanCacheUri(uri: Uri): Boolean {
+    if (uri.scheme != "file") return false
+    val name = uri.lastPathSegment.orEmpty()
+    return name.startsWith("scan_") || name.startsWith("scan_warp_")
+}
+
+private fun deleteManagedScanCacheUri(uri: Uri) {
+    if (!isManagedScanCacheUri(uri)) return
+    val file = uri.path?.let(::File) ?: return
+    if (file.exists()) {
+        runCatching { file.delete() }
+    }
+}
+
+private fun cleanupStaleManagedScanCacheFiles(
+    context: Context,
+    keepUris: Set<Uri>,
+    maxAgeMs: Long
+) {
+    val keepPaths = keepUris.mapNotNull { it.path }.toSet()
+    val now = System.currentTimeMillis()
+    val maxAge = maxAgeMs.coerceAtLeast(60_000L)
+    val cacheFiles = context.cacheDir.listFiles().orEmpty()
+    cacheFiles.forEach { file ->
+        val name = file.name
+        val isManaged = name.startsWith("scan_") || name.startsWith("scan_warp_")
+        if (!isManaged) return@forEach
+        if (file.absolutePath in keepPaths) return@forEach
+        val ageMs = (now - file.lastModified()).coerceAtLeast(0L)
+        if (ageMs >= maxAge) {
+            runCatching { file.delete() }
+        }
+    }
 }
 
 private fun normalizeRotation(rotation: Int): Int {

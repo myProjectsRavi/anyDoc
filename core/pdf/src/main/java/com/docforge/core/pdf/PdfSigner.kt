@@ -75,7 +75,7 @@ class PdfSigner(
         val outputFile = File(outputDir, "$sanitized.pdf")
 
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_sign_src_", suffix = ".pdf") { sourceFile ->
-            PDDocument.load(sourceFile).use { sourceDoc ->
+            loadPdfDocument(sourceFile).use { sourceDoc ->
                 require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
 
                 placements.forEach { placement ->
@@ -134,7 +134,7 @@ class PdfSigner(
     suspend fun getPageCount(inputUri: Uri): Int = withContext(Dispatchers.IO) {
         runCatching {
             context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_sign_count_", suffix = ".pdf") { sourceFile ->
-                PDDocument.load(sourceFile).use { sourceDoc -> sourceDoc.numberOfPages }
+                loadPdfDocument(sourceFile).use { sourceDoc -> sourceDoc.numberOfPages }
             }
         }.getOrDefault(0)
     }

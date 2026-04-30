@@ -366,7 +366,7 @@ class PdfSplitter(
 
     private inline fun <T> withLoadedSourceDocument(inputUri: Uri, block: (PDDocument) -> T): T {
         return context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_split_src_", suffix = ".pdf") { sourceFile ->
-            PDDocument.load(sourceFile).use(block)
+            loadPdfDocument(sourceFile).use(block)
         }
     }
 

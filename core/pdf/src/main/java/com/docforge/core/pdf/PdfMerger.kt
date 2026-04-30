@@ -60,7 +60,7 @@ class PdfMerger(
                 when (resolveInputType(uri)) {
                     MergeInputType.PDF -> {
                         context.withUriCopiedToCacheFile(uri, prefix = "docforge_merge_pdf_", suffix = ".pdf") { sourceFile ->
-                            PDDocument.load(sourceFile).use { sourceDoc ->
+                            loadPdfDocument(sourceFile).use { sourceDoc ->
                                 require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages: $uri" }
 
                                 repeat(sourceDoc.numberOfPages) { pageIndex ->

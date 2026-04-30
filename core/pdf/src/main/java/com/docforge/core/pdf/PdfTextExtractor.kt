@@ -31,7 +31,7 @@ class PdfTextExtractor(
         outputName: String
     ): PdfTextExtractionResult = withContext(Dispatchers.IO) {
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_extract_", suffix = ".pdf") { sourceFile ->
-            PDDocument.load(sourceFile).use { document ->
+            loadPdfDocument(sourceFile).use { document ->
                 val stripper = PDFTextStripper().apply {
                     sortByPosition = true
                     startPage = 1
@@ -71,7 +71,7 @@ class PdfTextExtractor(
     suspend fun getPageCount(inputUri: android.net.Uri): Int = withContext(Dispatchers.IO) {
         runCatching {
             context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_count_", suffix = ".pdf") { sourceFile ->
-                PDDocument.load(sourceFile).use { document ->
+                loadPdfDocument(sourceFile).use { document ->
                     document.numberOfPages
                 }
             }
