@@ -50,13 +50,28 @@ import com.docforge.feature.pdftools.PdfCompressViewModelFactory
 import com.docforge.feature.pdftools.PdfAnnotateRoute
 import com.docforge.feature.pdftools.PdfAnnotateViewModel
 import com.docforge.feature.pdftools.PdfAnnotateViewModelFactory
+import com.docforge.feature.pdftools.PdfBatchStampRoute
+import com.docforge.feature.pdftools.PdfBatchStampViewModel
+import com.docforge.feature.pdftools.PdfBatchStampViewModelFactory
+import com.docforge.feature.pdftools.PdfFormRoute
+import com.docforge.feature.pdftools.PdfFormViewModel
+import com.docforge.feature.pdftools.PdfFormViewModelFactory
+import com.docforge.feature.pdftools.PdfIdCardRoute
+import com.docforge.feature.pdftools.PdfIdCardViewModel
+import com.docforge.feature.pdftools.PdfIdCardViewModelFactory
 import com.docforge.feature.pdftools.PdfMergeRoute
+import com.docforge.feature.pdftools.PdfOcrRoute
+import com.docforge.feature.pdftools.PdfOcrViewModel
+import com.docforge.feature.pdftools.PdfOcrViewModelFactory
 import com.docforge.feature.pdftools.PdfPasswordRoute
 import com.docforge.feature.pdftools.PdfPasswordViewModel
 import com.docforge.feature.pdftools.PdfPasswordViewModelFactory
 import com.docforge.feature.pdftools.PdfPageImageRoute
 import com.docforge.feature.pdftools.PdfPageImageViewModel
 import com.docforge.feature.pdftools.PdfPageImageViewModelFactory
+import com.docforge.feature.pdftools.PdfRedactRoute
+import com.docforge.feature.pdftools.PdfRedactViewModel
+import com.docforge.feature.pdftools.PdfRedactViewModelFactory
 import com.docforge.feature.pdftools.PdfSignRoute
 import com.docforge.feature.pdftools.PdfSignViewModel
 import com.docforge.feature.pdftools.PdfSignViewModelFactory
@@ -66,6 +81,9 @@ import com.docforge.feature.pdftools.PdfSplitViewModelFactory
 import com.docforge.feature.pdftools.PdfTextExtractRoute
 import com.docforge.feature.pdftools.PdfTextExtractViewModel
 import com.docforge.feature.pdftools.PdfTextExtractViewModelFactory
+import com.docforge.feature.pdftools.PdfTranslateRoute
+import com.docforge.feature.pdftools.PdfTranslateViewModel
+import com.docforge.feature.pdftools.PdfTranslateViewModelFactory
 import com.docforge.feature.pdftools.PdfToolsViewModel
 import com.docforge.feature.pdftools.PdfToolsViewModelFactory
 import com.docforge.feature.scanner.ScannerRoute
@@ -230,6 +248,12 @@ fun DocForgeNavHost(
                     onOpenPdfCompress = { navController.navigate(Routes.PDF_COMPRESS) },
                     onOpenPdfText = { navController.navigate(Routes.PDF_TEXT) },
                     onOpenPdfToImages = { navController.navigate(Routes.PDF_TO_IMAGES) },
+                    onOpenPdfBatchStamp = { navController.navigate(Routes.PDF_BATCH_STAMP) },
+                    onOpenPdfOcr = { navController.navigate(Routes.PDF_OCR) },
+                    onOpenPdfForm = { navController.navigate(Routes.PDF_FORM) },
+                    onOpenIdCard = { navController.navigate(Routes.ID_CARD) },
+                    onOpenPdfTranslate = { navController.navigate(Routes.PDF_TRANSLATE) },
+                    onOpenPdfRedact = { navController.navigate(Routes.PDF_REDACT) },
                     onOpenHistory = { navController.navigate(Routes.HISTORY) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) }
                 )
@@ -490,6 +514,78 @@ fun DocForgeNavHost(
                 )
                 PdfPageImageRoute(
                     viewModel = pdfPageImageViewModel,
+                    paddingValues = paddingValues
+                )
+            }
+            composable(Routes.PDF_BATCH_STAMP) {
+                val batchStampViewModel: PdfBatchStampViewModel = viewModel(
+                    factory = PdfBatchStampViewModelFactory(
+                        historyRepository = dependencies.historyRepository,
+                        batchStampTool = dependencies.pdfBatchStampTool
+                    )
+                )
+                PdfBatchStampRoute(
+                    viewModel = batchStampViewModel,
+                    paddingValues = paddingValues
+                )
+            }
+            composable(Routes.PDF_OCR) {
+                val ocrViewModel: PdfOcrViewModel = viewModel(
+                    factory = PdfOcrViewModelFactory(
+                        historyRepository = dependencies.historyRepository,
+                        ocrTool = dependencies.pdfOcrTool
+                    )
+                )
+                PdfOcrRoute(
+                    viewModel = ocrViewModel,
+                    paddingValues = paddingValues
+                )
+            }
+            composable(Routes.PDF_FORM) {
+                val formViewModel: PdfFormViewModel = viewModel(
+                    factory = PdfFormViewModelFactory(
+                        historyRepository = dependencies.historyRepository,
+                        formTool = dependencies.pdfFormTool
+                    )
+                )
+                PdfFormRoute(
+                    viewModel = formViewModel,
+                    paddingValues = paddingValues
+                )
+            }
+            composable(Routes.ID_CARD) {
+                val idCardViewModel: PdfIdCardViewModel = viewModel(
+                    factory = PdfIdCardViewModelFactory(
+                        historyRepository = dependencies.historyRepository,
+                        idCardTool = dependencies.pdfIdCardTool
+                    )
+                )
+                PdfIdCardRoute(
+                    viewModel = idCardViewModel,
+                    paddingValues = paddingValues
+                )
+            }
+            composable(Routes.PDF_TRANSLATE) {
+                val translateViewModel: PdfTranslateViewModel = viewModel(
+                    factory = PdfTranslateViewModelFactory(
+                        historyRepository = dependencies.historyRepository,
+                        translationTool = dependencies.pdfTranslationTool
+                    )
+                )
+                PdfTranslateRoute(
+                    viewModel = translateViewModel,
+                    paddingValues = paddingValues
+                )
+            }
+            composable(Routes.PDF_REDACT) {
+                val redactViewModel: PdfRedactViewModel = viewModel(
+                    factory = PdfRedactViewModelFactory(
+                        historyRepository = dependencies.historyRepository,
+                        redactionTool = dependencies.pdfRedactionTool
+                    )
+                )
+                PdfRedactRoute(
+                    viewModel = redactViewModel,
                     paddingValues = paddingValues
                 )
             }

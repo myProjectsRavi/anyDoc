@@ -13,10 +13,16 @@ import com.docforge.core.pdf.PdfCompressor
 import com.docforge.core.pdf.PdfPageImageExporter
 import com.docforge.core.pdf.PdfMerger
 import com.docforge.core.pdf.PdfAnnotator
+import com.docforge.core.pdf.PdfBatchStampTool
+import com.docforge.core.pdf.PdfFormTool
+import com.docforge.core.pdf.PdfIdCardTool
+import com.docforge.core.pdf.PdfOcrTool
 import com.docforge.core.pdf.PdfPasswordTool
+import com.docforge.core.pdf.PdfRedactionTool
 import com.docforge.core.pdf.PdfSigner
 import com.docforge.core.pdf.PdfSplitter
 import com.docforge.core.pdf.PdfTextExtractor
+import com.docforge.core.pdf.PdfTranslationTool
 import com.docforge.core.pdf.ScanImageExporter
 import com.docforge.feature.pdftools.SavedSignatureStore
 import com.docforge.feature.pdftools.SignaturePlacementTemplateStore
@@ -40,6 +46,12 @@ class AppDependencies(context: Context) {
     val pdfAnnotator: PdfAnnotator = PdfAnnotator(context)
     val pdfPasswordTool: PdfPasswordTool = PdfPasswordTool(context)
     val scanImageExporter: ScanImageExporter = ScanImageExporter(context)
+    val pdfBatchStampTool: PdfBatchStampTool = PdfBatchStampTool(context)
+    val pdfOcrTool: PdfOcrTool = PdfOcrTool(context)
+    val pdfFormTool: PdfFormTool = PdfFormTool(context)
+    val pdfIdCardTool: PdfIdCardTool = PdfIdCardTool(context)
+    val pdfTranslationTool: PdfTranslationTool = PdfTranslationTool(context)
+    val pdfRedactionTool: PdfRedactionTool = PdfRedactionTool(context)
     val imageFormatConverter: ImageFormatConverter = ImageFormatConverter(context)
     val audioFormatConverter: AudioFormatConverter = AudioFormatConverter(context)
     val documentPdfConverter: DocumentPdfConverter = DocumentPdfConverter(context)

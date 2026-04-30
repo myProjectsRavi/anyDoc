@@ -32,7 +32,13 @@ enum class HomeToolId {
     PDF_PASSWORD,
     PDF_COMPRESS,
     PDF_TEXT,
-    PDF_TO_IMAGES
+    PDF_TO_IMAGES,
+    PDF_BATCH_STAMP,
+    PDF_OCR,
+    PDF_FORM,
+    ID_CARD,
+    PDF_TRANSLATE,
+    PDF_REDACT
 }
 
 @Immutable
@@ -81,6 +87,12 @@ class HomeViewModel(
             operation == "PDF Compress" -> HomeToolId.PDF_COMPRESS
             operation == "PDF -> TXT" -> HomeToolId.PDF_TEXT
             operation.startsWith("PDF ->") -> HomeToolId.PDF_TO_IMAGES
+            operation == "PDF Batch Stamp" -> HomeToolId.PDF_BATCH_STAMP
+            operation == "PDF OCR" -> HomeToolId.PDF_OCR
+            operation == "PDF Form Fill" || operation == "PDF Form Builder" -> HomeToolId.PDF_FORM
+            operation == "ID Card -> PDF" -> HomeToolId.ID_CARD
+            operation == "PDF Translate" -> HomeToolId.PDF_TRANSLATE
+            operation == "PDF Redact" -> HomeToolId.PDF_REDACT
             operation == "Text -> PDF" -> HomeToolId.TEXT_TO_PDF
             operation.endsWith("-> PDF") -> HomeToolId.DOC_TO_PDF
             else -> null

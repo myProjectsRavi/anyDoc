@@ -20,5 +20,11 @@ internal object Routes {
     const val PDF_COMPRESS = "pdf_compress"
     const val PDF_TEXT = "pdf_text"
     const val PDF_TO_IMAGES = "pdf_to_images"
+    const val PDF_BATCH_STAMP = "pdf_batch_stamp"
+    const val PDF_OCR = "pdf_ocr"
+    const val PDF_FORM = "pdf_form"
+    const val ID_CARD = "id_card"
+    const val PDF_TRANSLATE = "pdf_translate"
+    const val PDF_REDACT = "pdf_redact"
     const val HISTORY = "history"
 }

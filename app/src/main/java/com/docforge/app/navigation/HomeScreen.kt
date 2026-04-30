@@ -55,6 +55,12 @@ internal fun HomeScreen(
     onOpenPdfCompress: () -> Unit,
     onOpenPdfText: () -> Unit,
     onOpenPdfToImages: () -> Unit,
+    onOpenPdfBatchStamp: () -> Unit,
+    onOpenPdfOcr: () -> Unit,
+    onOpenPdfForm: () -> Unit,
+    onOpenIdCard: () -> Unit,
+    onOpenPdfTranslate: () -> Unit,
+    onOpenPdfRedact: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -77,6 +83,12 @@ internal fun HomeScreen(
         onOpenPdfCompress,
         onOpenPdfText,
         onOpenPdfToImages,
+        onOpenPdfBatchStamp,
+        onOpenPdfOcr,
+        onOpenPdfForm,
+        onOpenIdCard,
+        onOpenPdfTranslate,
+        onOpenPdfRedact,
         onOpenHistory,
         onOpenSettings
     ) {
@@ -97,6 +109,12 @@ internal fun HomeScreen(
             onOpenPdfCompress = onOpenPdfCompress,
             onOpenPdfText = onOpenPdfText,
             onOpenPdfToImages = onOpenPdfToImages,
+            onOpenPdfBatchStamp = onOpenPdfBatchStamp,
+            onOpenPdfOcr = onOpenPdfOcr,
+            onOpenPdfForm = onOpenPdfForm,
+            onOpenIdCard = onOpenIdCard,
+            onOpenPdfTranslate = onOpenPdfTranslate,
+            onOpenPdfRedact = onOpenPdfRedact,
             onOpenHistory = onOpenHistory,
             onOpenSettings = onOpenSettings
         )
@@ -186,6 +204,12 @@ private fun buildHomeTools(
     onOpenPdfCompress: () -> Unit,
     onOpenPdfText: () -> Unit,
     onOpenPdfToImages: () -> Unit,
+    onOpenPdfBatchStamp: () -> Unit,
+    onOpenPdfOcr: () -> Unit,
+    onOpenPdfForm: () -> Unit,
+    onOpenIdCard: () -> Unit,
+    onOpenPdfTranslate: () -> Unit,
+    onOpenPdfRedact: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit
 ): List<HomeTool> {
@@ -315,6 +339,48 @@ private fun buildHomeTools(
             subtitle = "Export pages to JPG/PNG/WebP with optional ZIP bundle",
             keywords = "pdf images jpg png webp zip bundle",
             onClick = onOpenPdfToImages
+        ),
+        HomeTool(
+            id = HomeToolId.PDF_BATCH_STAMP,
+            title = "Batch Watermark + Bates",
+            subtitle = "Apply legal watermark text and Bates numbering across PDFs",
+            keywords = "pdf batch watermark bates legal stamp numbering",
+            onClick = onOpenPdfBatchStamp
+        ),
+        HomeTool(
+            id = HomeToolId.PDF_OCR,
+            title = "Offline OCR",
+            subtitle = "Extract text from scans and generate searchable PDFs",
+            keywords = "ocr text recognition searchable pdf scan",
+            onClick = onOpenPdfOcr
+        ),
+        HomeTool(
+            id = HomeToolId.PDF_FORM,
+            title = "AcroForm Fill + Builder",
+            subtitle = "Fill existing form fields and add new text fields",
+            keywords = "pdf form acroform fill builder fields",
+            onClick = onOpenPdfForm
+        ),
+        HomeTool(
+            id = HomeToolId.ID_CARD,
+            title = "ID Card / Passport Mode",
+            subtitle = "Front+back auto layout to one printable PDF page",
+            keywords = "id card passport front back scan pdf",
+            onClick = onOpenIdCard
+        ),
+        HomeTool(
+            id = HomeToolId.PDF_TRANSLATE,
+            title = "Auto-Translate PDF",
+            subtitle = "On-device translation with line-level layout overlays",
+            keywords = "translate pdf language offline preserve layout",
+            onClick = onOpenPdfTranslate
+        ),
+        HomeTool(
+            id = HomeToolId.PDF_REDACT,
+            title = "True PDF Redaction",
+            subtitle = "Content-level text removal with irreversible verification",
+            keywords = "pdf redact redaction irreversible remove text secure",
+            onClick = onOpenPdfRedact
         )
     )
 }
