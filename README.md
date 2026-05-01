@@ -55,17 +55,6 @@ Because AnyDoc works entirely on your phone (no cloud uploads!), it is **lightni
 
 ---
 
-## 💻 For Developers (Build Instructions)
-
-Want to build AnyDoc from source? It's powered by modern, highly-optimized Android architecture (Jetpack Compose, Coroutines, CameraX, OpenCV, and PDFBox) designed to run flawlessly even on 4GB RAM devices.
-
-1. Install the Android SDK (Platform 34).
-2. Set your `ANDROID_HOME` or configure `local.properties`.
-3. Build the app:
-   ```bash
-   ./gradlew :app:assembleDebug
-   ```
-
 <div align="center">
   <p>Built with ❤️ to give you back your digital freedom.</p>
 </div>
