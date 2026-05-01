@@ -1,83 +1,71 @@
 # 🛡️ AnyDoc
 
 <div align="center">
-  <h3><strong>The Ultimate, God-Tier Document & Media Toolkit for Android</strong></h3>
-  <p><em>100% Free. 100% Offline. 100% Private. Zero Subscriptions. Zero Ads. Zero Latency.</em></p>
+  <h3><strong>Your All-in-One Document & Media Super App</strong></h3>
+  <p><em>Replace all your paid document apps with one completely free, blazing-fast, and 100% private tool.</em></p>
+  <p>
+    <b>100% Free forever</b> • <b>Zero Ads</b> • <b>Works Offline</b> • <b>No Subscriptions</b>
+  </p>
 </div>
 
 ---
 
-## 🌟 Why AnyDoc?
+## 🌟 Why use AnyDoc?
 
-Tired of subscription traps, cloud-dependent lag, and invasive privacy policies just to merge a PDF or scan a document? **AnyDoc** is engineered to be the final document app you will ever need. 
+Sick of paying $10/month just to sign a PDF or scan a receipt? AnyDoc gives you every premium document feature for **free**. 
 
-Built with an **uncompromising offline-first architecture** (the `INTERNET` permission is intentionally absent from the manifest), AnyDoc processes massive files directly on your device's hardware. Even on a 4GB RAM device, it delivers a blisteringly fast, 0ms-latency experience.
-
-Your data never leaves your phone. Ever.
+Because AnyDoc works entirely on your phone (no cloud uploads!), it is **lightning fast** and **completely private**. Your sensitive documents, IDs, and photos never leave your device. 
 
 ---
 
-## 🚀 Core Pillars
+## ✨ What can you do with AnyDoc?
 
-- **🚫 Zero Subscriptions:** Completely free forever. No paywalls, no "premium" features.
-- **🔒 Absolute Privacy:** No tracking, no analytics, no cloud uploads. What happens on your device, stays on your device.
-- **⚡ Supercharged Performance:** God-tier memory management. Native OpenCV & PDFBox integrations tear through 500MB PDFs and 48MP raw photos without breaking a sweat or crashing.
-- **🔋 Offline Forever:** Works flawlessly on an airplane, in a tunnel, or completely off the grid.
+### ✍️ Sign & Fill Documents Instantly
+*   **Sign Contracts in Seconds:** Draw your signature once, save it, and drag-and-drop it onto any PDF.
+*   **Sign Multiple Pages:** Apply your signature to 50 pages at once with built-in templates. Perfect for massive contracts!
+*   **Fill Forms:** Type text, add dates, and drop sticky notes exactly where you need them.
+*   **Draw & Highlight:** Freehand draw or highlight important sections with your finger.
 
----
+### 📸 Turn Paper into Perfect PDFs
+*   **Smart Document Scanner:** Point your camera at a receipt, whiteboard, or letter. AnyDoc automatically finds the edges, crops it, and flattens it perfectly.
+*   **Professional Filters:** Make text pop with Magic Color, Grayscale, or crisp Black & White filters.
+*   **Export Anywhere:** Save your scans as a multi-page PDF, high-quality images, or a neat ZIP file.
 
-## 🛠️ Feature Arsenal
+### ✂️ Master Your PDFs
+*   **Merge & Combine:** Select multiple PDFs or images and instantly stitch them into one single file.
+*   **Split & Extract:** Pull out specific pages, or chop a massive PDF into smaller, bite-sized files.
+*   **Reorder & Delete Pages:** Use the beautiful visual workspace to drag, drop, rotate (90°/180°), and delete pages just by tapping.
+*   **Shrink Huge Files:** Compress massive PDFs so they are small enough to email or upload, without making them blurry.
 
-### 📄 PDF Mastery
-*   **Merge PDFs & Images:** Combine multiple PDFs and images into a single document. Normalize page sizes and inject custom metadata/bookmarks.
-*   **Split & Extract:** Split by page ranges, extract specific pages, chunk every *N* pages, or intelligently split by top-level outline bookmarks.
-*   **Sign & Fill:** Draw your signature, save up to 3 presets, and drag-and-drop them onto pages. Create **Placement Templates** to automate signing massive contracts across multiple pages.
-*   **Compress PDFs:** Shrink massive PDFs using native smart compression presets (High/Medium/Low) without destroying vector quality.
-*   **Annotate & Draw:** Highlight, add text, drop sticky notes, or freehand draw directly onto PDF pages.
-*   **Protect & Unlock:** Encrypt sensitive documents with military-grade AES-128 passwords, or strip passwords from unlocked files.
-*   **Page Workspace:** Visually reorder, rotate (90/180/270°), and delete pages using a highly optimized, memory-safe thumbnail grid.
+### 🔒 Protect Your Privacy
+*   **Military-Grade Passwords:** Lock sensitive financial or legal documents with strong encryption.
+*   **Unlock PDFs:** Remove annoying passwords from documents you already own so you don't have to type them every time.
+*   **100% Offline:** AnyDoc doesn't even have the ability to connect to the internet. Your data is physically impossible to leak or hack.
 
-### 📸 Next-Gen Document Scanner
-*   **Live Edge Detection:** Powered by OpenCV. Accurately detects document bounds in real-time through the camera viewfinder.
-*   **Auto-Capture & Perspective Correction:** Automatically snaps when stable and perfectly flattens skewed pages.
-*   **Pro Filters:** Apply Color, Grayscale, B&W, or Enhanced filters per page.
-*   **Flexible Exports:** Export your scans as an offline PDF, high-res JPG/PNG gallery, or a neat ZIP bundle.
+### 🔄 The Ultimate Media Converter
+*   **Documents to PDF:** Turn Word (DOCX), Text (TXT), or Spreadsheet (CSV) files into clean PDFs.
+*   **PDF to Text & Images:** Extract all the typing from a PDF, or save every page as a high-quality picture.
+*   **Fix Image Formats:** Batch convert annoying HEIC, BMP, or WebP photos into standard JPGs or PNGs.
+*   **Extract Audio:** Pull the music or speech out of a video file and save it as an MP3 or M4A.
 
-### 🔄 Universal Media Converter
-*   **Document to PDF:** Convert DOCX, RTF, CSV, and TXT files instantly into formatted PDFs.
-*   **Text to PDF:** Type or paste text and generate a PDF with plain/smart formatting and custom page sizes.
-*   **PDF to Text & Images:** Extract raw text from PDFs to a local `.txt` file, or render pages into JPG/PNG/WebP images (with ZIP export).
-*   **Image Format Converter:** Batch convert heavy HEIC, BMP, TIFF, WebP, JPG, or PNG files into optimized formats.
-*   **Video to Audio:** Strip audio tracks from massive video files (MP4/MKV -> M4A/MP3).
-*   **Audio Transcoder:** Convert and encode audio formats natively (M4A, WAV, MP3, FLAC).
-
-### ⚙️ Power-User Workflows
-*   **Batch Queue Runner:** Queue up 50 different conversion tasks and let them run sequentially in the background with persistent progress notifications.
-*   **Live Queue Editing:** Reorder or cancel tasks while the batch runner is active.
-*   **Smart Share Routing:** Send any file to AnyDoc from other apps, and it will auto-route to the correct tool based on the file type.
-*   **Persistent History:** Keep track of your local conversions seamlessly via local database.
+### ⚡ Super-User Features
+*   **Queue up Tasks:** Tell AnyDoc to convert 50 files at once. It runs quietly in the background while you do something else. 
+*   **Send to AnyDoc:** "Share" any file from another app (like WhatsApp or Gmail) straight into AnyDoc to process it instantly.
+*   **Keep Track of Everything:** Easily find your past conversions with the built-in history tracker.
 
 ---
 
-## 🏗️ Technical Architecture (For the Geeks)
+## 💻 For Developers (Build Instructions)
 
-*   **100% Native PDF Manipulation:** Uses `pdfbox-android` for instantaneous, vector-preserving PDF merges, splits, and edits. No destructive Bitmap rasterization.
-*   **OOM-Proof Memory Management:** Utilizes stream-based processing, constrained memory-mapped I/O, and strict hardware-aware decode bounds. It will never crash, even when processing massive PDFs or camera frames on constrained 4GB RAM devices.
-*   **Modern Android Stack:** Kotlin, Jetpack Compose UI, Coroutines/Flow, CameraX, Room, and an ultra-clean modular architecture (`app`, `core`, `feature`).
+Want to build AnyDoc from source? It's powered by modern, highly-optimized Android architecture (Jetpack Compose, Coroutines, CameraX, OpenCV, and PDFBox) designed to run flawlessly even on 4GB RAM devices.
 
----
+1. Install the Android SDK (Platform 34).
+2. Set your `ANDROID_HOME` or configure `local.properties`.
+3. Build the app:
+   ```bash
+   ./gradlew :app:assembleDebug
+   ```
 
-## 📦 Build Prerequisites
-
-1. Install Android SDK with platform 34 and build-tools.
-2. Set your Android SDK path in `local.properties` (`sdk.dir=/path/to/Android/sdk`) or via `ANDROID_HOME`.
-3. Run the following command:
-
-```bash
-./gradlew :app:assembleDebug
-```
-
----
 <div align="center">
-  <p>Built with passion to replace corporate bloatware. Enjoy your digital freedom.</p>
+  <p>Built with ❤️ to give you back your digital freedom.</p>
 </div>
