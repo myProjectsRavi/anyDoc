@@ -59,7 +59,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -969,7 +969,7 @@ private fun writeBitmapToCache(context: Context, bitmap: Bitmap): Uri? {
     return runCatching {
         val output = File(context.cacheDir, "scan_warp_${System.currentTimeMillis()}.jpg")
         FileOutputStream(output).use { stream ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 96, stream)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream)
         }
         Uri.fromFile(output)
     }.getOrNull()
@@ -1116,6 +1116,8 @@ private fun deleteManagedScanCacheUri(uri: Uri) {
     }
 }
 
+private const val SCAN_CACHE_MAX_BYTES = 500L * 1024L * 1024L // 500 MB cap
+
 private fun cleanupStaleManagedScanCacheFiles(
     context: Context,
     keepUris: Set<Uri>,
@@ -1125,14 +1127,33 @@ private fun cleanupStaleManagedScanCacheFiles(
     val now = System.currentTimeMillis()
     val maxAge = maxAgeMs.coerceAtLeast(60_000L)
     val cacheFiles = context.cacheDir.listFiles().orEmpty()
-    cacheFiles.forEach { file ->
+
+    // Collect managed scan files sorted oldest-first
+    val managedFiles = cacheFiles.filter { file ->
         val name = file.name
-        val isManaged = name.startsWith("scan_") || name.startsWith("scan_warp_")
-        if (!isManaged) return@forEach
-        if (file.absolutePath in keepPaths) return@forEach
+        (name.startsWith("scan_") || name.startsWith("scan_warp_")) && file.absolutePath !in keepPaths
+    }.sortedBy { it.lastModified() }
+
+    // Delete stale files by age
+    managedFiles.forEach { file ->
         val ageMs = (now - file.lastModified()).coerceAtLeast(0L)
         if (ageMs >= maxAge) {
             runCatching { file.delete() }
+        }
+    }
+
+    // Enforce size cap: delete oldest files until under limit
+    val allManaged = context.cacheDir.listFiles().orEmpty().filter { file ->
+        val name = file.name
+        (name.startsWith("scan_") || name.startsWith("scan_warp_")) && file.absolutePath !in keepPaths
+    }.sortedBy { it.lastModified() }
+
+    var totalSize = allManaged.sumOf { it.length() }
+    for (file in allManaged) {
+        if (totalSize <= SCAN_CACHE_MAX_BYTES) break
+        val size = file.length()
+        if (runCatching { file.delete() }.getOrDefault(false)) {
+            totalSize -= size
         }
     }
 }

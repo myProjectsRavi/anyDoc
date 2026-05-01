@@ -696,7 +696,7 @@ private fun renderPdfPreviewPage(
                         val renderWidth = (baseWidth * scale).toInt().coerceAtLeast(1)
                         val renderHeight = (baseHeight * scale).toInt().coerceAtLeast(1)
 
-                        Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888).also { bitmap ->
+                        Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.RGB_565).also { bitmap ->
                             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                         }
                     }

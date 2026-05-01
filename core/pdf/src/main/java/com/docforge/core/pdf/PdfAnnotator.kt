@@ -62,7 +62,7 @@ class PdfAnnotator(
 
         val sanitized = outputName.ifBlank { "annotated_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = File(outputDir, "$sanitized.pdf")
+        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_annotate_src_", suffix = ".pdf") { sourceFile ->
             loadPdfDocument(sourceFile).use { sourceDoc ->

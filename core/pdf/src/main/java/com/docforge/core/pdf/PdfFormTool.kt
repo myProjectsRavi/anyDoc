@@ -86,7 +86,7 @@ class PdfFormTool(
         )
         val sanitized = outputName.ifBlank { "form_filled_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = File(outputDir, "$sanitized.pdf")
+        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_form_fill_", suffix = ".pdf") { sourceFile ->
             loadPdfDocument(sourceFile).use { document ->
@@ -170,7 +170,7 @@ class PdfFormTool(
         )
         val sanitized = outputName.ifBlank { "form_builder_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = File(outputDir, "$sanitized.pdf")
+        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_form_build_", suffix = ".pdf") { sourceFile ->
             loadPdfDocument(sourceFile).use { sourceDoc ->

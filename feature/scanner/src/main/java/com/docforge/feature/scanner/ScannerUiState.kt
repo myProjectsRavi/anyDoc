@@ -35,4 +35,7 @@ data class ScannerUiState(
     val errorMessage: String? = null
 )
 
-private fun defaultOutputName(): String = "scan_${System.currentTimeMillis()}"
+private fun defaultOutputName(): String {
+    val sdf = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
+    return "scan_${sdf.format(java.util.Date())}"
+}

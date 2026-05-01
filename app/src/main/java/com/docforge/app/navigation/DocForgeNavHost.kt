@@ -17,6 +17,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.docforge.app.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -135,8 +137,8 @@ fun DocForgeNavHost(
                                 restoreState = true
                             }
                         },
-                        label = { Text("Home") },
-                        icon = { Icon(Icons.Filled.Home, contentDescription = "Home") }
+                        label = { Text(stringResource(R.string.nav_home)) },
+                        icon = { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.nav_home)) }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.SCANNER,
@@ -149,8 +151,8 @@ fun DocForgeNavHost(
                                 restoreState = true
                             }
                         },
-                        label = { Text("Scanner") },
-                        icon = { Icon(Icons.Filled.CameraAlt, contentDescription = "Scanner") }
+                        label = { Text(stringResource(R.string.nav_scanner)) },
+                        icon = { Icon(Icons.Filled.CameraAlt, contentDescription = stringResource(R.string.nav_scanner)) }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.CONVERTER,
@@ -163,8 +165,8 @@ fun DocForgeNavHost(
                                 restoreState = true
                             }
                         },
-                        label = { Text("Convert") },
-                        icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = "Convert") }
+                        label = { Text(stringResource(R.string.nav_convert)) },
+                        icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.nav_convert)) }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.PDF_MERGE,
@@ -177,8 +179,8 @@ fun DocForgeNavHost(
                                 restoreState = true
                             }
                         },
-                        label = { Text("PDF") },
-                        icon = { Icon(Icons.Filled.PictureAsPdf, contentDescription = "PDF Tools") }
+                        label = { Text(stringResource(R.string.nav_pdf_tools)) },
+                        icon = { Icon(Icons.Filled.PictureAsPdf, contentDescription = stringResource(R.string.nav_pdf_tools)) }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.HISTORY,
@@ -191,8 +193,8 @@ fun DocForgeNavHost(
                                 restoreState = true
                             }
                         },
-                        label = { Text("History") },
-                        icon = { Icon(Icons.Filled.History, contentDescription = "History") }
+                        label = { Text(stringResource(R.string.nav_history)) },
+                        icon = { Icon(Icons.Filled.History, contentDescription = stringResource(R.string.nav_history)) }
                     )
                 }
             }

@@ -6,10 +6,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 object BatchQueueRuntimeStore {
     private val taskIdCounter = AtomicLong(1L)
     private val outputBaseSanitizer = Regex("[^a-zA-Z0-9_-]")
+    private val mutex = Mutex()
 
     private val _state = MutableStateFlow(BatchQueueUiState())
     val state: StateFlow<BatchQueueUiState> = _state.asStateFlow()
@@ -23,7 +26,8 @@ object BatchQueueRuntimeStore {
 
         val taskId = taskIdCounter.getAndIncrement()
         val summary = buildInputSummary(type, uniqueUris.size, inputLabels)
-        val outputBaseName = "${type.defaultOutputPrefix}_${System.currentTimeMillis()}_$taskId"
+        val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+        val outputBaseName = "${type.defaultOutputPrefix}_${timestamp}_$taskId"
 
         val task = BatchQueueTask(
             id = taskId,
@@ -148,9 +152,9 @@ object BatchQueueRuntimeStore {
         return Result.success(Unit)
     }
 
-    fun beginProcessing(): Result<List<Long>> {
+    suspend fun beginProcessing(): Result<List<Long>> = mutex.withLock {
         if (_state.value.isProcessing) {
-            return Result.failure(IllegalStateException("Queue is already running."))
+            return@withLock Result.failure(IllegalStateException("Queue is already running."))
         }
 
         val queued = _state.value.tasks
@@ -158,7 +162,7 @@ object BatchQueueRuntimeStore {
             .map { it.id }
 
         if (queued.isEmpty()) {
-            return Result.failure(IllegalArgumentException("Add at least one queued task first."))
+            return@withLock Result.failure(IllegalArgumentException("Add at least one queued task first."))
         }
 
         _state.update {
@@ -172,7 +176,7 @@ object BatchQueueRuntimeStore {
             )
         }
 
-        return Result.success(queued)
+        Result.success(queued)
     }
 
     fun snapshotTasks(taskIds: List<Long>): List<BatchQueueTask> {

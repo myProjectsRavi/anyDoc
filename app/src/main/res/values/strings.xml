@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DocForge</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_scanner">Scanner</string>
+    <string name="nav_convert">Convert</string>
+    <string name="nav_pdf_tools">PDF Tools</string>
+    <string name="nav_history">History</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">Document Scanner</string>
+    <string name="scanner_subtitle">Capture pages, import from gallery, then export as PDF or high-res JPG/PNG.</string>
+    <string name="scanner_capture_page">Capture Page</string>
+    <string name="scanner_import_gallery">Import Gallery</string>
+    <string name="scanner_auto_capture_on">Auto Capture: ON</string>
+    <string name="scanner_auto_capture_off">Auto Capture: OFF</string>
+    <string name="scanner_reset_corners">Reset Corners</string>
+    <string name="scanner_export_pdf">Export PDF</string>
+    <string name="scanner_export_jpg">Export JPG</string>
+    <string name="scanner_export_png">Export PNG</string>
+    <string name="scanner_apply_filter">Apply Filter</string>
+    <string name="scanner_remove">Remove</string>
+    <string name="scanner_dismiss_error">Dismiss Error</string>
+    <string name="scanner_camera_permission_title">Camera permission required</string>
+    <string name="scanner_camera_permission_body">DocForge scanner stays fully offline, but needs camera access to capture document pages.</string>
+    <string name="scanner_grant_permission">Grant Camera Permission</string>
+    <string name="scanner_scan_filter">Scan Filter</string>
+    <string name="scanner_export_format">Export Format</string>
+    <string name="scanner_output_file_name">Output File Name</string>
+    <string name="scanner_page_size">Page Size</string>
+    <string name="scanner_zip_on">ZIP Bundle: ON</string>
+    <string name="scanner_zip_off">ZIP Bundle: OFF</string>
+
+    <!-- Common -->
+    <string name="error_password_blank">Password cannot be blank.</string>
+    <string name="error_password_too_short">Password must be at least 6 characters.</string>
+</resources>

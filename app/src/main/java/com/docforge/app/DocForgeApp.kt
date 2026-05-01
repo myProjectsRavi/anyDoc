@@ -11,6 +11,7 @@ import java.io.File
 
 class DocForgeApp : Application() {
 
+    val dependencies: AppDependencies by lazy { AppDependencies(this) }
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {

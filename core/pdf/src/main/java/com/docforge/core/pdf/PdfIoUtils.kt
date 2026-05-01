@@ -75,3 +75,14 @@ internal fun loadPdfDocument(file: File): PDDocument {
 internal fun loadPdfDocument(file: File, password: String): PDDocument {
     return PDDocument.load(file, password, pdfMemoryUsageSetting())
 }
+
+internal fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
+    val candidate = File(directory, "$baseName.$extension")
+    if (!candidate.exists()) return candidate
+    var counter = 1
+    while (true) {
+        val numbered = File(directory, "${baseName}_$counter.$extension")
+        if (!numbered.exists()) return numbered
+        counter++
+    }
+}

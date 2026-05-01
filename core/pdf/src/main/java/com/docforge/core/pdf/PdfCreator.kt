@@ -54,7 +54,7 @@ class PdfCreator(
 
         val sanitized = outputName.ifBlank { "docforge_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val output = File(outputDir, "$sanitized.pdf")
+        val output = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
         val pdf = PdfDocument()
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)

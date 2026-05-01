@@ -6,13 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [ConversionHistoryEntity::class],
-    version = 1,
+    entities = [ConversionHistoryEntity::class, BatchPresetEntity::class],
+    version = 2,
     exportSchema = true
 )
 abstract class DocForgeDatabase : RoomDatabase() {
 
     abstract fun conversionHistoryDao(): ConversionHistoryDao
+    abstract fun batchPresetDao(): BatchPresetDao
 
     companion object {
         @Volatile

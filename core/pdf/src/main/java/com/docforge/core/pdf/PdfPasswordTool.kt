@@ -22,6 +22,7 @@ class PdfPasswordTool(
         ownerPassword: String = userPassword
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(userPassword.isNotBlank()) { "User password cannot be blank." }
+        require(userPassword.length >= 6) { "Password must be at least 6 characters." }
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_pwd_", suffix = ".pdf") { sourceFile ->
             loadPdfDocument(sourceFile).use { document ->
                 require(document.numberOfPages > 0) { "Input PDF has no pages." }
@@ -96,6 +97,6 @@ class PdfPasswordTool(
         val sanitized = outputName.ifBlank { "${fallbackPrefix}_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
-        return File(outputDir, "$sanitized.pdf")
+        return resolveNonConflictingFile(outputDir, sanitized, "pdf")
     }
 }

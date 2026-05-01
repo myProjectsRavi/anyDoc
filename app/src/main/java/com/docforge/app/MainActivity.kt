@@ -16,12 +16,14 @@ import com.docforge.app.share.ShareLaunchRequest
 import com.docforge.core.ui.theme.DocForgeTheme
 
 class MainActivity : ComponentActivity() {
-    private val deps by lazy { AppDependencies(applicationContext) }
+    private val deps: AppDependencies get() = (application as DocForgeApp).dependencies
     private var sharedLaunchRequest by mutableStateOf<ShareLaunchRequest?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        sharedLaunchRequest = ShareIntentRouter.fromIntent(intent)
+        sharedLaunchRequest = ShareIntentRouter.fromIntent(intent)?.also { request ->
+            takePersistablePermissions(request)
+        }
         EngineWarmup.preWarm(applicationContext)
         enableEdgeToEdge()
 
@@ -47,6 +49,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        sharedLaunchRequest = ShareIntentRouter.fromIntent(intent)
+        sharedLaunchRequest = ShareIntentRouter.fromIntent(intent)?.also { request ->
+            takePersistablePermissions(request)
+        }
+    }
+
+    private fun takePersistablePermissions(request: ShareLaunchRequest) {
+        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        request.uris.forEach { uri ->
+            runCatching {
+                contentResolver.takePersistableUriPermission(uri, flags)
+            }
+        }
     }
 }

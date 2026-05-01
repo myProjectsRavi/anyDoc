@@ -1,7 +1,10 @@
 package com.docforge.core.domain.settings
 
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import java.io.File
 
 enum class DocForgeOutputBucket(val mediaDirectory: String) {
@@ -69,15 +72,42 @@ object DocForgeSettingsStore {
 
     fun resolveOutputDirectory(context: Context, bucket: DocForgeOutputBucket): File {
         val folderName = readOutputFolderName(context, bucket)
-        // Use public external storage so files are visible in file managers
-        val publicBase = android.os.Environment.getExternalStoragePublicDirectory(bucket.mediaDirectory)
+        @Suppress("DEPRECATION")
+        val publicBase = Environment.getExternalStoragePublicDirectory(bucket.mediaDirectory)
         val publicDir = File(publicBase, folderName)
         if (publicDir.exists() || publicDir.mkdirs()) {
             return publicDir
         }
-        // Fallback to app-scoped external storage if public directory is not writable
         val fallbackBase = context.getExternalFilesDir(bucket.mediaDirectory) ?: context.filesDir
         return File(fallbackBase, folderName).apply { mkdirs() }
+    }
+
+    /**
+     * Notify MediaStore about a newly created file so it appears in file managers on Android 10+.
+     */
+    fun notifyMediaStore(context: Context, file: File, mimeType: String, bucket: DocForgeOutputBucket) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val folderName = readOutputFolderName(context, bucket)
+            val relativePath = "${bucket.mediaDirectory}/$folderName"
+            val contentUri = when (bucket) {
+                DocForgeOutputBucket.DOCUMENTS -> MediaStore.Files.getContentUri("external")
+                DocForgeOutputBucket.PICTURES -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                DocForgeOutputBucket.AUDIO -> MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+            }
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+                put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+                put(MediaStore.MediaColumns.IS_PENDING, 0)
+            }
+            runCatching { context.contentResolver.insert(contentUri, values) }
+        } else {
+            runCatching {
+                android.media.MediaScannerConnection.scanFile(
+                    context, arrayOf(file.absolutePath), arrayOf(mimeType), null
+                )
+            }
+        }
     }
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

@@ -15,14 +15,19 @@ import kotlinx.coroutines.launch
 class BatchQueueViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-    private val presetStore = BatchQueuePresetStore(application.applicationContext)
+    private val presetStore = BatchQueuePresetStore(
+        com.docforge.core.storage.db.DocForgeDatabase.get(application.applicationContext).batchPresetDao()
+    )
 
     private val _uiState = MutableStateFlow(BatchQueueUiState())
     val uiState: StateFlow<BatchQueueUiState> = _uiState.asStateFlow()
-    private val _presets = MutableStateFlow(presetStore.readPresets())
+    private val _presets = MutableStateFlow<List<BatchQueuePreset>>(emptyList())
     val presets: StateFlow<List<BatchQueuePreset>> = _presets.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            _presets.value = presetStore.readPresets()
+        }
         viewModelScope.launch {
             BatchQueueRuntimeStore.state.collect { runtimeState ->
                 _uiState.value = runtimeState
@@ -79,14 +84,16 @@ class BatchQueueViewModel(
             )
         }
 
-        presetStore.savePreset(name, presetTasks)
-            .onSuccess { preset ->
-                _presets.value = presetStore.readPresets()
-                BatchQueueRuntimeStore.setStatusMessage("Saved preset: ${preset.name}")
-            }
-            .onFailure { err ->
-                setError(err.message ?: "Failed to save preset")
-            }
+        viewModelScope.launch {
+            presetStore.savePreset(name, presetTasks)
+                .onSuccess { preset ->
+                    _presets.value = presetStore.readPresets()
+                    BatchQueueRuntimeStore.setStatusMessage("Saved preset: ${preset.name}")
+                }
+                .onFailure { err ->
+                    setError(err.message ?: "Failed to save preset")
+                }
+        }
     }
 
     fun loadPreset(presetId: Long) {
@@ -104,32 +111,36 @@ class BatchQueueViewModel(
     }
 
     fun deletePreset(presetId: Long) {
-        val deleted = presetStore.deletePreset(presetId)
-        if (!deleted) {
-            setError("Preset not found.")
-            return
+        viewModelScope.launch {
+            val deleted = presetStore.deletePreset(presetId)
+            if (!deleted) {
+                setError("Preset not found.")
+                return@launch
+            }
+            _presets.value = presetStore.readPresets()
+            BatchQueueRuntimeStore.setStatusMessage("Deleted preset #$presetId")
         }
-        _presets.value = presetStore.readPresets()
-        BatchQueueRuntimeStore.setStatusMessage("Deleted preset #$presetId")
     }
 
     fun runQueue() {
-        val startResult = BatchQueueRuntimeStore.beginProcessing()
-        val taskIds = startResult.getOrElse { err ->
-            setError(err.message ?: "Failed to start queue")
-            return
-        }
+        viewModelScope.launch {
+            val startResult = BatchQueueRuntimeStore.beginProcessing()
+            val taskIds = startResult.getOrElse { err ->
+                setError(err.message ?: "Failed to start queue")
+                return@launch
+            }
 
-        val context = getApplication<Application>().applicationContext
-        val intent = Intent(context, BatchQueueForegroundService::class.java).apply {
-            action = BatchQueueServiceContract.ACTION_RUN_QUEUE
-            putExtra(BatchQueueServiceContract.EXTRA_TASK_IDS, taskIds.toLongArray())
-        }
+            val context = getApplication<Application>().applicationContext
+            val intent = Intent(context, BatchQueueForegroundService::class.java).apply {
+                action = BatchQueueServiceContract.ACTION_RUN_QUEUE
+                putExtra(BatchQueueServiceContract.EXTRA_TASK_IDS, taskIds.toLongArray())
+            }
 
-        runCatching {
-            ContextCompat.startForegroundService(context, intent)
-        }.onFailure { err ->
-            BatchQueueRuntimeStore.failProcessing(err.message ?: "Unable to start batch service")
+            runCatching {
+                ContextCompat.startForegroundService(context, intent)
+            }.onFailure { err ->
+                BatchQueueRuntimeStore.failProcessing(err.message ?: "Unable to start batch service")
+            }
         }
     }
 
