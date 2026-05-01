@@ -1,7 +1,9 @@
 package com.docforge.feature.pdftools
 
 import android.net.Uri
+import androidx.compose.runtime.Immutable
 
+@Immutable
 data class PdfSplitUiState(
     val selectedUri: Uri? = null,
     val inputLabel: String? = null,

@@ -11,6 +11,10 @@ import com.docforge.core.pdf.PdfCreator
 import com.docforge.core.pdf.PdfPageSize
 import com.docforge.core.pdf.ScanImageExporter
 import com.docforge.core.pdf.ScanImageFormat
+import com.docforge.core.ui.model.toStableUriRef
+import com.docforge.core.ui.model.toStableUriRefList
+import com.docforge.core.ui.model.toUriList
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,9 +33,12 @@ class ScannerViewModel(
 
     fun onImageCaptured(uri: Uri) {
         _uiState.update {
+            val updated = it.capturedUris.toMutableList()
+                .apply { add(uri.toStableUriRef()) }
+                .toPersistentList()
             it.copy(
-                capturedUris = it.capturedUris + uri,
-                statusMessage = "Captured ${it.capturedUris.size + 1} page(s)",
+                capturedUris = updated,
+                statusMessage = "Captured ${updated.size} page(s)",
                 errorMessage = null
             )
         }
@@ -40,8 +47,9 @@ class ScannerViewModel(
     fun onImagesImported(uris: List<Uri>) {
         if (uris.isEmpty()) return
         _uiState.update {
+            val updated = (it.capturedUris + uris.toStableUriRefList()).toPersistentList()
             it.copy(
-                capturedUris = it.capturedUris + uris,
+                capturedUris = updated,
                 statusMessage = "Added ${uris.size} imported page(s)",
                 errorMessage = null
             )
@@ -52,7 +60,7 @@ class ScannerViewModel(
         val current = _uiState.value
         if (index !in current.capturedUris.indices) return
         _uiState.update {
-            val updated = it.capturedUris.toMutableList().apply { removeAt(index) }
+            val updated = it.capturedUris.toMutableList().apply { removeAt(index) }.toPersistentList()
             it.copy(capturedUris = updated, statusMessage = "Removed page ${index + 1}")
         }
     }
@@ -62,9 +70,9 @@ class ScannerViewModel(
         if (index !in current.capturedUris.indices) return
         _uiState.update {
             val updated = it.capturedUris.toMutableList()
-            updated[index] = uri
+            updated[index] = uri.toStableUriRef()
             it.copy(
-                capturedUris = updated,
+                capturedUris = updated.toPersistentList(),
                 statusMessage = "${reason}: page ${index + 1}",
                 errorMessage = null
             )
@@ -127,7 +135,7 @@ class ScannerViewModel(
                 ScannerExportFormat.PDF -> {
                     runCatching {
                         pdfCreator.createPdfFromImages(
-                            imageUris = state.capturedUris,
+                            imageUris = state.capturedUris.toUriList(),
                             outputName = state.outputName,
                             options = PdfCreationOptions(pageSize = state.pageSize)
                         )
@@ -161,7 +169,7 @@ class ScannerViewModel(
 
                     runCatching {
                         scanImageExporter.export(
-                            imageUris = state.capturedUris,
+                            imageUris = state.capturedUris.toUriList(),
                             outputBaseName = state.outputName,
                             format = imageFormat,
                             zipBundle = state.zipImageOutput

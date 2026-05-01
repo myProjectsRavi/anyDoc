@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.docforge.core.pdf.PdfMergePageSizeMode
+import com.docforge.core.ui.model.StableUriRef
 
 @Composable
 fun PdfMergeRoute(
@@ -159,10 +160,10 @@ fun PdfMergeScreen(
             }
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f, fill = false)) {
-                itemsIndexed(state.selectedUris) { index, uri ->
+                itemsIndexed(state.selectedUris) { index, uriRef ->
                     PdfItemCard(
                         index = index,
-                        uri = uri,
+                        uriRef = uriRef,
                         onMoveUp = { onMoveUp(index) },
                         onMoveDown = { onMoveDown(index) },
                         onRemove = { onRemove(index) },
@@ -207,7 +208,7 @@ fun PdfMergeScreen(
 @Composable
 private fun PdfItemCard(
     index: Int,
-    uri: Uri,
+    uriRef: StableUriRef,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onRemove: () -> Unit,
@@ -216,7 +217,8 @@ private fun PdfItemCard(
     enabled: Boolean
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val label = remember(uri) {
+    val uri = remember(uriRef) { uriRef.toUri() }
+    val label = remember(uriRef) {
         DocumentFile.fromSingleUri(context, uri)?.name ?: uri.lastPathSegment ?: uri.toString()
     }
 

@@ -1,13 +1,16 @@
 package com.docforge.feature.pdftools
 
 import android.net.Uri
+import androidx.compose.runtime.Immutable
 
+@Immutable
 data class PdfSavedSignatureSlotUi(
     val slot: Int,
     val exists: Boolean = false,
     val updatedAtMillis: Long? = null
 )
 
+@Immutable
 data class PdfSignaturePlacementUi(
     val pageOneBased: Int,
     val xRatio: Float,
@@ -15,12 +18,14 @@ data class PdfSignaturePlacementUi(
     val widthRatio: Float
 )
 
+@Immutable
 data class PdfPlacementTemplateUi(
     val name: String,
     val placementCount: Int,
     val updatedAtMillis: Long
 )
 
+@Immutable
 data class PdfSignUiState(
     val selectedUri: Uri? = null,
     val inputLabel: String? = null,

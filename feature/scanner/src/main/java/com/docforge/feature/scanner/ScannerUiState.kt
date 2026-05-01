@@ -1,7 +1,10 @@
 package com.docforge.feature.scanner
 
-import android.net.Uri
+import androidx.compose.runtime.Immutable
+import com.docforge.core.ui.model.StableUriRef
 import com.docforge.core.pdf.PdfPageSize
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 enum class ScanFilterMode {
     COLOR,
@@ -16,8 +19,9 @@ enum class ScannerExportFormat {
     PNG
 }
 
+@Immutable
 data class ScannerUiState(
-    val capturedUris: List<Uri> = emptyList(),
+    val capturedUris: ImmutableList<StableUriRef> = persistentListOf(),
     val outputName: String = defaultOutputName(),
     val pageSize: PdfPageSize = PdfPageSize.A4,
     val exportFormat: ScannerExportFormat = ScannerExportFormat.PDF,

@@ -6,6 +6,10 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.graphics.Rect
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -67,6 +71,7 @@ import com.docforge.core.opencv.DetectedDocument
 import com.docforge.core.opencv.DocumentEdgeDetector
 import com.docforge.core.pdf.decodeBitmapConstrained
 import com.docforge.core.pdf.PdfPageSize
+import com.docforge.core.ui.model.StableUriRef
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
@@ -126,6 +131,7 @@ fun ScannerRoute(
 
     LaunchedEffect(state.capturedUris) {
         val currentManaged = state.capturedUris
+            .map { it.toUri() }
             .filter(::isManagedScanCacheUri)
             .toSet()
 
@@ -321,10 +327,11 @@ fun ScannerScreen(
             }
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f, fill = false)) {
-                itemsIndexed(state.capturedUris) { index, uri ->
+                itemsIndexed(state.capturedUris) { index, uriRef ->
+                    val uri = uriRef.toUri()
                     CapturedPageItem(
                         index = index,
-                        uri = uri,
+                        uriRef = uriRef,
                         filterMode = state.selectedFilterMode,
                         enabled = !state.isExporting,
                         onApplySelectedFilter = {
@@ -367,14 +374,15 @@ fun ScannerScreen(
 @Composable
 private fun CapturedPageItem(
     index: Int,
-    uri: Uri,
+    uriRef: StableUriRef,
     filterMode: ScanFilterMode,
     enabled: Boolean,
     onApplySelectedFilter: () -> Unit,
     onRemove: () -> Unit
 ) {
     val context = LocalContext.current
-    val label = remember(uri) {
+    val uri = remember(uriRef) { uriRef.toUri() }
+    val label = remember(uriRef) {
         DocumentFile.fromSingleUri(context, uri)?.name ?: uri.lastPathSegment ?: uri.toString()
     }
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -889,6 +897,42 @@ private fun applyFilterToCapturedImage(
 }
 
 private fun applyFilterWithCpuFallback(source: Bitmap, filterMode: ScanFilterMode): Bitmap? {
+    applyFilterWithColorMatrix(source, filterMode)?.let { return it }
+    return applyFilterWithPixelLoop(source, filterMode)
+}
+
+private fun applyFilterWithColorMatrix(source: Bitmap, filterMode: ScanFilterMode): Bitmap? {
+    val matrix = when (filterMode) {
+        ScanFilterMode.GRAYSCALE -> ColorMatrix().apply { setSaturation(0f) }
+        ScanFilterMode.ENHANCED -> {
+            // Slight contrast + brightness lift after desaturation for scan readability.
+            val contrast = 1.45f
+            val translate = 138f - (128f * contrast)
+            val contrastMatrix = ColorMatrix(
+                floatArrayOf(
+                    contrast, 0f, 0f, 0f, translate,
+                    0f, contrast, 0f, 0f, translate,
+                    0f, 0f, contrast, 0f, translate,
+                    0f, 0f, 0f, 1f, 0f
+                )
+            )
+            ColorMatrix().apply {
+                setSaturation(0f)
+                postConcat(contrastMatrix)
+            }
+        }
+        ScanFilterMode.BW, ScanFilterMode.COLOR -> null
+    } ?: return null
+
+    val output = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        colorFilter = ColorMatrixColorFilter(matrix)
+    }
+    Canvas(output).drawBitmap(source, 0f, 0f, paint)
+    return output
+}
+
+private fun applyFilterWithPixelLoop(source: Bitmap, filterMode: ScanFilterMode): Bitmap? {
     val working = source.copy(Bitmap.Config.ARGB_8888, true) ?: return null
     val width = working.width
     val height = working.height
@@ -980,9 +1024,8 @@ private fun decodeDocumentRegionForPerspective(
         maxLongEdge = 3600
     )
 
-    val decodedBitmap = context.contentResolver.openFileDescriptor(inputUri, "r")?.use { descriptor ->
-        @Suppress("DEPRECATION")
-        val decoder = BitmapRegionDecoder.newInstance(descriptor.fileDescriptor, false)
+    val decodedBitmap = context.contentResolver.openInputStream(inputUri)?.use { stream ->
+        val decoder = BitmapRegionDecoder.newInstance(stream) ?: return@use null
         try {
             val options = BitmapFactory.Options().apply {
                 inSampleSize = sampleSize

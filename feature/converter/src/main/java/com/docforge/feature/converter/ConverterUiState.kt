@@ -1,10 +1,14 @@
 package com.docforge.feature.converter
 
-import android.net.Uri
+import androidx.compose.runtime.Immutable
 import com.docforge.core.pdf.PdfPageSize
+import com.docforge.core.ui.model.StableUriRef
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
+@Immutable
 data class ConverterUiState(
-    val selectedUris: List<Uri> = emptyList(),
+    val selectedUris: ImmutableList<StableUriRef> = persistentListOf(),
     val outputName: String = defaultOutputName(),
     val pageSize: PdfPageSize = PdfPageSize.A4,
     val isConverting: Boolean = false,

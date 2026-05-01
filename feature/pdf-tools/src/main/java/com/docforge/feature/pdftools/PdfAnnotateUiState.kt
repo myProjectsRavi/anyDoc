@@ -1,9 +1,11 @@
 package com.docforge.feature.pdftools
 
 import android.net.Uri
+import androidx.compose.runtime.Immutable
 import com.docforge.core.pdf.PdfAnnotationCommand
 import com.docforge.core.pdf.PdfAnnotationType
 
+@Immutable
 data class PdfAnnotateUiState(
     val selectedUri: Uri? = null,
     val inputLabel: String? = null,

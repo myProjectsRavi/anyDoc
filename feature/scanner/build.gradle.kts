@@ -3,6 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+val enableComposeCompilerMetrics = providers.gradleProperty("enableComposeCompilerMetrics")
+    .orNull
+    ?.toBoolean() == true
+
 android {
     namespace = "com.docforge.feature.scanner"
     compileSdk = 34
@@ -18,6 +22,14 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        if (enableComposeCompilerMetrics) {
+            freeCompilerArgs += listOf(
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${layout.buildDirectory.dir("compose-metrics").get().asFile.absolutePath}",
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${layout.buildDirectory.dir("compose-reports").get().asFile.absolutePath}"
+            )
+        }
     }
 
     buildFeatures {
@@ -45,6 +57,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.collections.immutable)
     implementation(libs.androidx.documentfile)
 
     implementation(libs.androidx.camera.core)

@@ -9,6 +9,8 @@ import com.docforge.core.domain.repository.HistoryRepository
 import com.docforge.core.pdf.PdfMergeOptions
 import com.docforge.core.pdf.PdfMergePageSizeMode
 import com.docforge.core.pdf.PdfMerger
+import com.docforge.core.ui.model.toStableUriRefList
+import com.docforge.core.ui.model.toUriList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,9 +28,10 @@ class PdfToolsViewModel(
 
     fun onFilesSelected(uris: List<Uri>) {
         if (uris.isEmpty()) return
+        val stableUris = uris.toStableUriRefList()
         _uiState.update {
             it.copy(
-                selectedUris = uris.toPersistentList(),
+                selectedUris = stableUris,
                 statusMessage = "${uris.size} source file(s) selected",
                 errorMessage = null
             )
@@ -108,7 +111,7 @@ class PdfToolsViewModel(
 
             runCatching {
                 pdfMerger.merge(
-                    inputUris = state.selectedUris,
+                    inputUris = state.selectedUris.toUriList(),
                     outputName = state.outputName,
                     options = PdfMergeOptions(
                         title = state.mergeTitle.trim(),

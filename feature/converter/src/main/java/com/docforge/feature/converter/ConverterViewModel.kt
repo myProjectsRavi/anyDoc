@@ -8,6 +8,8 @@ import com.docforge.core.domain.repository.HistoryRepository
 import com.docforge.core.pdf.PdfCreationOptions
 import com.docforge.core.pdf.PdfCreator
 import com.docforge.core.pdf.PdfPageSize
+import com.docforge.core.ui.model.toStableUriRefList
+import com.docforge.core.ui.model.toUriList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,9 +26,10 @@ class ConverterViewModel(
     val uiState: StateFlow<ConverterUiState> = _uiState.asStateFlow()
 
     fun onImagesSelected(uris: List<android.net.Uri>) {
+        val stableUris = uris.toStableUriRefList()
         _uiState.update {
             it.copy(
-                selectedUris = uris,
+                selectedUris = stableUris,
                 statusMessage = if (uris.isNotEmpty()) "${uris.size} file(s) selected" else null,
                 errorMessage = null
             )
@@ -57,7 +60,7 @@ class ConverterViewModel(
             _uiState.update { it.copy(isConverting = true, errorMessage = null, statusMessage = "Converting...") }
             runCatching {
                 pdfCreator.createPdfFromImages(
-                    imageUris = state.selectedUris,
+                    imageUris = state.selectedUris.toUriList(),
                     outputName = state.outputName,
                     options = PdfCreationOptions(pageSize = state.pageSize)
                 )

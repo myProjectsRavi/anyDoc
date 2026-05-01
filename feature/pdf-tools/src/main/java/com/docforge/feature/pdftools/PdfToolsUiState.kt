@@ -1,14 +1,14 @@
 package com.docforge.feature.pdftools
 
-import android.net.Uri
 import androidx.compose.runtime.Immutable
 import com.docforge.core.pdf.PdfMergePageSizeMode
+import com.docforge.core.ui.model.StableUriRef
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 @Immutable
 data class PdfToolsUiState(
-    val selectedUris: ImmutableList<Uri> = persistentListOf(),
+    val selectedUris: ImmutableList<StableUriRef> = persistentListOf(),
     val outputName: String = defaultOutputName(),
     val mergeTitle: String = "",
     val mergeAuthor: String = "",

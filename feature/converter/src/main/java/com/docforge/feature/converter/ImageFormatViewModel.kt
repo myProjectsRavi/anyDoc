@@ -6,6 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.docforge.core.domain.model.ConversionRecord
 import com.docforge.core.domain.repository.HistoryRepository
+import com.docforge.core.ui.model.toStableUriRefList
+import com.docforge.core.ui.model.toUriList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,12 +26,13 @@ class ImageFormatViewModel(
     val uiState: StateFlow<ImageFormatUiState> = _uiState.asStateFlow()
 
     fun onImagesSelected(uris: List<Uri>) {
+        val stableUris = uris.toStableUriRefList()
         _uiState.update {
             it.copy(
-                selectedUris = uris,
+                selectedUris = stableUris,
                 statusMessage = if (uris.isNotEmpty()) "${uris.size} image(s) selected" else null,
                 errorMessage = null,
-                lastOutputPaths = emptyList(),
+                lastOutputPaths = persistentListOf(),
                 lastOutputSizeBytes = null
             )
         }
@@ -74,14 +79,14 @@ class ImageFormatViewModel(
                     isConverting = true,
                     statusMessage = "Converting images...",
                     errorMessage = null,
-                    lastOutputPaths = emptyList(),
+                    lastOutputPaths = persistentListOf(),
                     lastOutputSizeBytes = null
                 )
             }
 
             runCatching {
                 imageFormatConverter.convertBatch(
-                    inputUris = state.selectedUris,
+                    inputUris = state.selectedUris.toUriList(),
                     outputBaseName = state.outputBaseName,
                     outputFormat = state.outputFormat,
                     quality = quality,
@@ -103,7 +108,7 @@ class ImageFormatViewModel(
                 _uiState.update {
                     it.copy(
                         isConverting = false,
-                        lastOutputPaths = result.outputFiles.map { file -> file.absolutePath },
+                        lastOutputPaths = result.outputFiles.map { file -> file.absolutePath }.toPersistentList(),
                         lastOutputSizeBytes = result.outputSizeBytes,
                         statusMessage = "Converted ${result.outputFiles.size} image(s)",
                         errorMessage = null

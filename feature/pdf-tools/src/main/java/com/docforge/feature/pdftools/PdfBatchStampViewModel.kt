@@ -8,6 +8,10 @@ import com.docforge.core.domain.model.ConversionRecord
 import com.docforge.core.domain.repository.HistoryRepository
 import com.docforge.core.pdf.PdfBatchStampOptions
 import com.docforge.core.pdf.PdfBatchStampTool
+import com.docforge.core.ui.model.toStableUriRefList
+import com.docforge.core.ui.model.toUriList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,13 +28,14 @@ class PdfBatchStampViewModel(
 
     fun onInputsSelected(uris: List<Uri>, labels: List<String>) {
         if (uris.isEmpty()) return
+        val stableUris = uris.toStableUriRefList()
         _uiState.update {
             it.copy(
-                selectedUris = uris,
-                inputLabels = labels,
+                selectedUris = stableUris,
+                inputLabels = labels.toPersistentList(),
                 statusMessage = "Selected ${uris.size} PDF file(s)",
                 errorMessage = null,
-                lastOutputPaths = emptyList(),
+                lastOutputPaths = persistentListOf(),
                 lastOutputSizeBytes = null
             )
         }
@@ -65,14 +70,14 @@ class PdfBatchStampViewModel(
                     isProcessing = true,
                     statusMessage = "Applying watermark/Bates stamps...",
                     errorMessage = null,
-                    lastOutputPaths = emptyList(),
+                    lastOutputPaths = persistentListOf(),
                     lastOutputSizeBytes = null
                 )
             }
 
             runCatching {
                 batchStampTool.stampBatch(
-                    inputUris = state.selectedUris,
+                    inputUris = state.selectedUris.toUriList(),
                     outputBaseName = state.outputBaseName,
                     options = PdfBatchStampOptions(
                         watermarkText = state.watermarkText,
@@ -102,7 +107,7 @@ class PdfBatchStampViewModel(
                         isProcessing = false,
                         statusMessage = "Stamped ${result.outputs.size} PDF(s), ${result.totalPages} page(s)",
                         errorMessage = null,
-                        lastOutputPaths = result.outputs.map { file -> file.outputFile.absolutePath },
+                        lastOutputPaths = result.outputs.map { file -> file.outputFile.absolutePath }.toPersistentList(),
                         lastOutputSizeBytes = result.totalOutputSizeBytes
                     )
                 }
