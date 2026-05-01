@@ -1,9 +1,16 @@
 package com.docforge.app.navigation
 
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -129,7 +136,7 @@ fun DocForgeNavHost(
                             }
                         },
                         label = { Text("Home") },
-                        icon = { Text("H") }
+                        icon = { Icon(Icons.Filled.Home, contentDescription = "Home") }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.SCANNER,
@@ -143,7 +150,7 @@ fun DocForgeNavHost(
                             }
                         },
                         label = { Text("Scanner") },
-                        icon = { Text("S") }
+                        icon = { Icon(Icons.Filled.CameraAlt, contentDescription = "Scanner") }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.CONVERTER,
@@ -157,7 +164,7 @@ fun DocForgeNavHost(
                             }
                         },
                         label = { Text("Convert") },
-                        icon = { Text("C") }
+                        icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = "Convert") }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.PDF_MERGE,
@@ -171,21 +178,7 @@ fun DocForgeNavHost(
                             }
                         },
                         label = { Text("PDF") },
-                        icon = { Text("P") }
-                    )
-                    NavigationBarItem(
-                        selected = currentRoute == Routes.PDF_SPLIT,
-                        onClick = {
-                            navController.navigate(Routes.PDF_SPLIT) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        label = { Text("Split") },
-                        icon = { Text("T") }
+                        icon = { Icon(Icons.Filled.PictureAsPdf, contentDescription = "PDF Tools") }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Routes.HISTORY,
@@ -199,7 +192,7 @@ fun DocForgeNavHost(
                             }
                         },
                         label = { Text("History") },
-                        icon = { Text("R") }
+                        icon = { Icon(Icons.Filled.History, contentDescription = "History") }
                     )
                 }
             }

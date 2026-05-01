@@ -1,0 +1,4 @@
+package,name,composable,skippable,restartable,readonly,inline,isLambda,hasDefaults,defaultsGroup,groups,calls,
+com.docforge.feature.history.HistoryRoute,HistoryRoute,1,0,1,0,0,0,0,0,1,2,
+com.docforge.feature.history.HistoryScreen,HistoryScreen,1,0,1,0,0,0,0,0,1,1,
+com.docforge.feature.history.HistoryItem,HistoryItem,1,0,1,0,0,0,0,0,1,1,

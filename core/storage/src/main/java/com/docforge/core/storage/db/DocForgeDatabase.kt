@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [ConversionHistoryEntity::class],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class DocForgeDatabase : RoomDatabase() {
 
@@ -24,7 +24,9 @@ abstract class DocForgeDatabase : RoomDatabase() {
                     context.applicationContext,
                     DocForgeDatabase::class.java,
                     "docforge.db"
-                ).build().also { instance = it }
+                )
+                    .fallbackToDestructiveMigration()
+                    .build().also { instance = it }
             }
         }
     }

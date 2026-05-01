@@ -1,0 +1,101 @@
+restartable scheme("[androidx.compose.ui.UiComposable]") fun AudioFormatRoute(
+  unstable viewModel: AudioFormatViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+  unstable prefillUris: List<Uri>? = @static emptyList()
+  stable onPrefillConsumed: Function0<Unit>? = @static {
+
+}
+
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun AudioFormatScreen(
+  unstable state: AudioFormatUiState
+  stable paddingValues: PaddingValues
+  stable onPickAudio: Function0<Unit>
+  stable onOutputBaseNameChanged: Function1<String, Unit>
+  stable onOutputFormatChanged: Function1<AudioConvertOutputFormat, Unit>
+  stable onConvertAudio: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun ConverterRoute(
+  unstable viewModel: ConverterViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun ConverterScreen(
+  stable state: ConverterUiState
+  stable paddingValues: PaddingValues
+  stable onPickImages: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onPageSizeChanged: Function1<PdfPageSize, Unit>
+  stable onConvert: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun DocumentPdfRoute(
+  unstable viewModel: DocumentPdfViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+  unstable prefillUris: List<Uri>? = @static emptyList()
+  stable onPrefillConsumed: Function0<Unit>? = @static {
+
+}
+
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun DocumentPdfScreen(
+  unstable state: DocumentPdfUiState
+  stable paddingValues: PaddingValues
+  stable onPickDocument: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onConvert: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun ImageFormatRoute(
+  unstable viewModel: ImageFormatViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+  unstable prefillUris: List<Uri>? = @static emptyList()
+  stable onPrefillConsumed: Function0<Unit>? = @static {
+
+}
+
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun ImageFormatScreen(
+  stable state: ImageFormatUiState
+  stable paddingValues: PaddingValues
+  stable onPickImages: Function0<Unit>
+  stable onOutputBaseNameChanged: Function1<String, Unit>
+  stable onOutputFormatChanged: Function1<ImageOutputFormat, Unit>
+  stable onQualityChanged: Function1<String, Unit>
+  stable onScaleChanged: Function1<String, Unit>
+  stable onConvert: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun TextPdfRoute(
+  unstable viewModel: TextPdfViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun TextPdfScreen(
+  stable state: TextPdfUiState
+  stable paddingValues: PaddingValues
+  stable onTitleChanged: Function1<String, Unit>
+  stable onTextChanged: Function1<String, Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onPageSizeChanged: Function1<PdfPageSize, Unit>
+  stable onFormatModeChanged: Function1<TextPdfFormatMode, Unit>
+  stable onConvert: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun VideoAudioRoute(
+  unstable viewModel: VideoAudioViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+  unstable prefillUris: List<Uri>? = @static emptyList()
+  stable onPrefillConsumed: Function0<Unit>? = @static {
+
+}
+
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun VideoAudioScreen(
+  unstable state: VideoAudioUiState
+  stable paddingValues: PaddingValues
+  stable onPickVideo: Function0<Unit>
+  stable onOutputBaseNameChanged: Function1<String, Unit>
+  stable onOutputFormatChanged: Function1<AudioOutputFormat, Unit>
+  stable onExtractAudio: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)

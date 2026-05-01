@@ -1,6 +1,7 @@
 package com.docforge.app.runtime
 
 import android.content.Context
+import com.docforge.core.pdf.PdfBoxInit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,9 +18,7 @@ object EngineWarmup {
         val appContext = context.applicationContext
         warmupScope.launch(Dispatchers.IO) {
             runCatching {
-                val loaderClass = Class.forName("com.tom_roush.pdfbox.android.PDFBoxResourceLoader")
-                val initMethod = loaderClass.getMethod("init", Context::class.java)
-                initMethod.invoke(null, appContext)
+                PdfBoxInit.ensure(appContext)
             }
             runCatching {
                 val openCvClass = Class.forName("org.opencv.android.OpenCVLoader")

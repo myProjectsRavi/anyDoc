@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
@@ -24,10 +23,6 @@ import kotlin.coroutines.coroutineContext
 class PdfMerger(
     private val context: Context
 ) {
-    init {
-        PDFBoxResourceLoader.init(context.applicationContext)
-    }
-
     suspend fun merge(
         inputUris: List<Uri>,
         outputName: String,

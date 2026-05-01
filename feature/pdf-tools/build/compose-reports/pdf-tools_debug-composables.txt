@@ -1,0 +1,285 @@
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfAnnotateRoute(
+  unstable viewModel: PdfAnnotateViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfAnnotateScreen(
+  stable state: PdfAnnotateUiState
+  stable paddingValues: PaddingValues
+  unstable freehandPoints: MutableList<Offset?>
+  stable freehandCanvasWidth: Int
+  stable freehandCanvasHeight: Int
+  stable onFreehandCanvasSizeChanged: Function2<Int, Int, Unit>
+  stable onClearFreehand: Function0<Unit>
+  stable onPickPdf: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onTypeChanged: Function1<PdfAnnotationType, Unit>
+  stable onPageChanged: Function1<String, Unit>
+  stable onXRatioChanged: Function1<String, Unit>
+  stable onYRatioChanged: Function1<String, Unit>
+  stable onWidthRatioChanged: Function1<String, Unit>
+  stable onHeightRatioChanged: Function1<String, Unit>
+  stable onTextChanged: Function1<String, Unit>
+  stable onAddAnnotation: Function0<Unit>
+  stable onAddFreehandAnnotation: Function0<Unit>
+  stable onRemoveAnnotation: Function1<Int, Unit>
+  stable onClearAnnotations: Function0<Unit>
+  stable onExport: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfBatchStampRoute(
+  unstable viewModel: PdfBatchStampViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfBatchStampScreen(
+  stable state: PdfBatchStampUiState
+  stable paddingValues: PaddingValues
+  stable onPickInputs: Function0<Unit>
+  stable onOutputBaseNameChanged: Function1<String, Unit>
+  stable onWatermarkTextChanged: Function1<String, Unit>
+  stable onEnableWatermarkChanged: Function1<Boolean, Unit>
+  stable onEnableBatesChanged: Function1<Boolean, Unit>
+  stable onBatesPrefixChanged: Function1<String, Unit>
+  stable onBatesStartChanged: Function1<String, Unit>
+  stable onBatesPaddingChanged: Function1<Int, Unit>
+  stable onApply: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfCompressRoute(
+  unstable viewModel: PdfCompressViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfCompressScreen(
+  unstable state: PdfCompressUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onLevelChanged: Function1<PdfCompressionLevel, Unit>
+  stable onCompress: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfFormRoute(
+  unstable viewModel: PdfFormViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfFormScreen(
+  stable state: PdfFormUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onFieldSelected: Function1<String, Unit>
+  stable onFieldValueChanged: Function2<String, String, Unit>
+  stable onFieldBooleanChanged: Function2<String, Boolean, Unit>
+  stable onFlattenChanged: Function1<Boolean, Unit>
+  stable onBuilderFieldNameChanged: Function1<String, Unit>
+  stable onBuilderPageChanged: Function1<String, Unit>
+  stable onBuilderXChanged: Function1<String, Unit>
+  stable onBuilderYChanged: Function1<String, Unit>
+  stable onBuilderWidthChanged: Function1<String, Unit>
+  stable onBuilderHeightChanged: Function1<String, Unit>
+  stable onBuilderDefaultChanged: Function1<String, Unit>
+  stable onFillFields: Function0<Unit>
+  stable onAddField: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun FieldPicker(
+  unstable fields: List<PdfFormFieldInfo>
+  stable selectedFieldName: String?
+  stable onFieldSelected: Function1<String, Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfIdCardRoute(
+  unstable viewModel: PdfIdCardViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfIdCardScreen(
+  unstable state: PdfIdCardUiState
+  stable paddingValues: PaddingValues
+  stable onPickFront: Function0<Unit>
+  stable onPickBack: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onPageSizeChanged: Function1<PdfPageSize, Unit>
+  stable onExport: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfMergeRoute(
+  unstable viewModel: PdfToolsViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+  unstable prefillUris: List<Uri>? = @static emptyList()
+  stable onPrefillConsumed: Function0<Unit>? = @static {
+
+}
+
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfMergeScreen(
+  stable state: PdfToolsUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdfs: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onMergeTitleChanged: Function1<String, Unit>
+  stable onMergeAuthorChanged: Function1<String, Unit>
+  stable onMergeSubjectChanged: Function1<String, Unit>
+  stable onToggleBookmarks: Function0<Unit>
+  stable onMergePageSizeModeChanged: Function1<PdfMergePageSizeMode, Unit>
+  stable onMoveUp: Function1<Int, Unit>
+  stable onMoveDown: Function1<Int, Unit>
+  stable onRemove: Function1<Int, Unit>
+  stable onMerge: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfItemCard(
+  stable index: Int
+  stable uriRef: StableUriRef
+  stable onMoveUp: Function0<Unit>
+  stable onMoveDown: Function0<Unit>
+  stable onRemove: Function0<Unit>
+  stable moveUpEnabled: Boolean
+  stable moveDownEnabled: Boolean
+  stable enabled: Boolean
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfOcrRoute(
+  unstable viewModel: PdfOcrViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfOcrScreen(
+  stable state: PdfOcrUiState
+  stable paddingValues: PaddingValues
+  stable onPickInput: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onCreateSearchablePdfChanged: Function1<Boolean, Unit>
+  stable onRunOcr: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfPageImageRoute(
+  unstable viewModel: PdfPageImageViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfPageImageScreen(
+  stable state: PdfPageImageUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onOutputBaseNameChanged: Function1<String, Unit>
+  stable onFormatChanged: Function1<PdfPageImageFormat, Unit>
+  stable onZipBundleOutputChanged: Function1<Boolean, Unit>
+  stable onJpegQualityChanged: Function1<String, Unit>
+  stable onScaleChanged: Function1<String, Unit>
+  stable onExportPages: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfPasswordRoute(
+  unstable viewModel: PdfPasswordViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfPasswordScreen(
+  unstable state: PdfPasswordUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onModeChanged: Function1<PdfPasswordMode, Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onUserPasswordChanged: Function1<String, Unit>
+  stable onOwnerPasswordChanged: Function1<String, Unit>
+  stable onUnlockPasswordChanged: Function1<String, Unit>
+  stable onApply: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfRedactRoute(
+  unstable viewModel: PdfRedactViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfRedactScreen(
+  stable state: PdfRedactUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onTermsTextChanged: Function1<String, Unit>
+  stable onCaseSensitiveChanged: Function1<Boolean, Unit>
+  stable onScrubMetadataChanged: Function1<Boolean, Unit>
+  stable onScrubFormValuesChanged: Function1<Boolean, Unit>
+  stable onVerifyIrreversibleChanged: Function1<Boolean, Unit>
+  stable onRunRedaction: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfSignRoute(
+  unstable viewModel: PdfSignViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfSignScreen(
+  stable state: PdfSignUiState
+  stable paddingValues: PaddingValues
+  unstable points: MutableList<Offset?>
+  stable canvasWidth: Int
+  stable canvasHeight: Int
+  stable onCanvasSizeChanged: Function2<Int, Int, Unit>
+  stable onClearSignature: Function0<Unit>
+  stable onPickPdf: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onTargetPageChanged: Function1<String, Unit>
+  stable onXRatioChanged: Function1<String, Unit>
+  stable onYRatioChanged: Function1<String, Unit>
+  stable onWidthRatioChanged: Function1<String, Unit>
+  stable onTemplateNameChanged: Function1<String, Unit>
+  stable onSaveTemplate: Function0<Unit>
+  stable onLoadTemplate: Function1<String, Unit>
+  stable onDeleteTemplate: Function1<String, Unit>
+  stable onAddPlacement: Function0<Unit>
+  stable onApplyPlacementToAll: Function0<Unit>
+  stable onRemovePlacement: Function1<Int, Unit>
+  stable onLoadPlacement: Function1<Int, Unit>
+  stable onClearPlacements: Function0<Unit>
+  stable onSaveSignatureSlot: Function1<Int, Unit>
+  stable onUseSignatureSlot: Function1<Int, Unit>
+  stable onDeleteSignatureSlot: Function1<Int, Unit>
+  stable onSign: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfSplitRoute(
+  unstable viewModel: PdfSplitViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfSplitScreen(
+  stable state: PdfSplitUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onOutputBaseNameChanged: Function1<String, Unit>
+  stable onStartPageChanged: Function1<String, Unit>
+  stable onEndPageChanged: Function1<String, Unit>
+  stable onSplitEveryNChanged: Function1<String, Unit>
+  stable onExtractPagesChanged: Function1<String, Unit>
+  stable onReorderPagesChanged: Function1<String, Unit>
+  stable onDeletePagesChanged: Function1<String, Unit>
+  stable onRotatePagesChanged: Function1<String, Unit>
+  stable onRotateDegreesChanged: Function1<Int, Unit>
+  stable onSplitRange: Function0<Unit>
+  stable onSplitEveryN: Function0<Unit>
+  stable onSplitByBookmarks: Function0<Unit>
+  stable onExtractPages: Function0<Unit>
+  stable onReorderPages: Function0<Unit>
+  stable onDeletePages: Function0<Unit>
+  stable onRotatePages: Function0<Unit>
+  stable onSaveVisualWorkspace: Function2<List<Int>, Map<Int, Int>, Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfTextExtractRoute(
+  unstable viewModel: PdfTextExtractViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfTextExtractScreen(
+  unstable state: PdfTextExtractUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onExtract: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun PdfTranslateRoute(
+  unstable viewModel: PdfTranslateViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PdfTranslateScreen(
+  stable state: PdfTranslateUiState
+  stable paddingValues: PaddingValues
+  stable onPickPdf: Function0<Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onSourceLanguageChanged: Function1<String, Unit>
+  stable onTargetLanguageChanged: Function1<String, Unit>
+  stable onTranslate: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)

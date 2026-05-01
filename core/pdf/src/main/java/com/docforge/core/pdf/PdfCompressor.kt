@@ -1,41 +1,50 @@
 package com.docforge.core.pdf
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
+import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
+import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
+import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.coroutineContext
+import kotlin.math.roundToInt
 
 enum class PdfCompressionLevel(
-    val scaleFactor: Float,
+    /** DPI to render source pages at for rasterization-based compression */
+    val renderDpi: Int,
+    /** JPEG quality 0-100 for embedded page images */
+    val jpegQuality: Int,
+    /** Estimated output-to-input size ratio (for UI hint) */
     val estimatedRatio: Float
 ) {
-    HIGH(scaleFactor = 1.0f, estimatedRatio = 0.95f),
-    MEDIUM(scaleFactor = 0.9f, estimatedRatio = 0.85f),
-    LOW(scaleFactor = 0.8f, estimatedRatio = 0.75f)
+    HIGH(renderDpi = 150, jpegQuality = 82, estimatedRatio = 0.65f),
+    MEDIUM(renderDpi = 120, jpegQuality = 70, estimatedRatio = 0.45f),
+    LOW(renderDpi = 96, jpegQuality = 58, estimatedRatio = 0.30f)
 }
 
 class PdfCompressor(
     private val context: Context
 ) {
 
-    init {
-        PDFBoxResourceLoader.init(context.applicationContext)
-    }
-
     suspend fun compress(
         inputUri: Uri,
         outputName: String,
         level: PdfCompressionLevel
     ): PdfCreationResult = withContext(Dispatchers.IO) {
-        val checkCancelled = { coroutineContext.ensureActive() }
+        PdfBoxInit.ensure(context)
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
             bucket = DocForgeOutputBucket.DOCUMENTS
@@ -46,26 +55,18 @@ class PdfCompressor(
         val outputFile = File(outputDir, "$sanitized.pdf")
 
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_compress_src_", suffix = ".pdf") { sourceFile ->
-            loadPdfDocument(sourceFile).use { sourceDoc ->
-                require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
+            val pageCount = compressWithJpegRasterization(
+                sourceFile = sourceFile,
+                outputFile = outputFile,
+                renderDpi = level.renderDpi,
+                jpegQuality = level.jpegQuality
+            )
 
-                PDDocument().use { outDoc ->
-                    repeat(sourceDoc.numberOfPages) { pageIndex ->
-                        checkCancelled()
-                        importPage(outDoc, sourceDoc.getPage(pageIndex))
-                    }
-
-                    // Keep content vector-native and avoid destructive raster compression.
-                    applyCompressionProfile(outDoc, level)
-                    outDoc.save(outputFile)
-                }
-
-                PdfCreationResult(
-                    outputFile = outputFile,
-                    pageCount = sourceDoc.numberOfPages,
-                    outputSizeBytes = outputFile.length()
-                )
-            }
+            PdfCreationResult(
+                outputFile = outputFile,
+                pageCount = pageCount,
+                outputSizeBytes = outputFile.length()
+            )
         }
     }
 
@@ -77,31 +78,75 @@ class PdfCompressor(
         }.getOrDefault(0)
     }
 
-    private fun importPage(outDoc: PDDocument, sourcePage: PDPage): PDPage {
-        val imported = outDoc.importPage(sourcePage)
-        imported.rotation = sourcePage.rotation
-        imported.mediaBox = sourcePage.mediaBox
-        imported.cropBox = sourcePage.cropBox
-        imported.resources = sourcePage.resources
-        return imported
-    }
+    /**
+     * Rasterizes each page to a JPEG-embedded PDF using Android PdfRenderer + PdfBox.
+     * This achieves real file size reduction, especially for scanned documents.
+     * Trade-off: text is no longer selectable in the output.
+     *
+     * @return page count of the resulting document
+     */
+    private suspend fun compressWithJpegRasterization(
+        sourceFile: File,
+        outputFile: File,
+        renderDpi: Int,
+        jpegQuality: Int
+    ): Int = withContext(Dispatchers.IO) {
+        val checkCancelled = { coroutineContext.ensureActive() }
+        val scale = renderDpi / 72f  // PDF native unit = 1/72 inch
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        var pageCount = 0
 
-    private fun applyCompressionProfile(document: PDDocument, level: PdfCompressionLevel) {
-        when (level) {
-            PdfCompressionLevel.HIGH -> Unit
-            PdfCompressionLevel.MEDIUM -> {
-                document.documentCatalog.metadata = null
-            }
-            PdfCompressionLevel.LOW -> {
-                document.documentCatalog.metadata = null
-                val info = document.documentInformation
-                info.author = null
-                info.subject = null
-                info.creator = null
-                info.keywords = null
-                info.producer = null
-                document.documentInformation = info
+        ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
+            PdfRenderer(pfd).use { renderer ->
+                pageCount = renderer.pageCount
+                require(pageCount > 0) { "Input PDF has no pages." }
+
+                PDDocument().use { outDoc ->
+                    for (i in 0 until renderer.pageCount) {
+                        checkCancelled()
+                        renderer.openPage(i).use { page ->
+                            val bitmapWidth = (page.width * scale).roundToInt().coerceAtLeast(1)
+                            val bitmapHeight = (page.height * scale).roundToInt().coerceAtLeast(1)
+
+                            // Use RGB_565 for smaller memory footprint (no alpha needed for documents)
+                            val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.RGB_565)
+                            try {
+                                // Paint white background before rendering (PDF pages default to white)
+                                val canvas = Canvas(bitmap)
+                                canvas.drawColor(Color.WHITE)
+                                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+
+                                // Create a PdfBox page with original PDF point dimensions
+                                val pdPage = PDPage(PDRectangle(page.width.toFloat(), page.height.toFloat()))
+                                outDoc.addPage(pdPage)
+
+                                // Embed JPEG-compressed image
+                                val jpegImage = JPEGFactory.createFromImage(
+                                    outDoc,
+                                    bitmap,
+                                    jpegQuality / 100f
+                                )
+
+                                PDPageContentStream(outDoc, pdPage).use { stream ->
+                                    stream.drawImage(
+                                        jpegImage,
+                                        0f, 0f,
+                                        page.width.toFloat(),
+                                        page.height.toFloat()
+                                    )
+                                }
+                            } finally {
+                                bitmap.recycle()
+                            }
+                        }
+                    }
+
+                    outDoc.save(outputFile)
+                }
             }
         }
+
+        pageCount
     }
 }
+

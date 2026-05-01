@@ -1,0 +1,13 @@
+stable class HistoryUiState {
+  unstable val records: List<ConversionRecord>
+}
+unstable class HistoryViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val _uiState: MutableStateFlow<HistoryUiState>
+  unstable val uiState: StateFlow<HistoryUiState>
+  <runtime stability> = Unstable
+}
+unstable class HistoryViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  <runtime stability> = Unstable
+}

@@ -25,5 +25,6 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.pdfbox.android)
-    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.translate)
 }

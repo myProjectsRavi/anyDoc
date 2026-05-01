@@ -1,0 +1,445 @@
+stable class PdfAnnotateUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val pageCount: Int?
+  stable val outputName: String
+  stable val selectedType: PdfAnnotationType
+  stable val pageInput: String
+  stable val xRatioInput: String
+  stable val yRatioInput: String
+  stable val widthRatioInput: String
+  stable val heightRatioInput: String
+  stable val textInput: String
+  unstable val pendingAnnotations: List<PdfAnnotationCommand>
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class PdfAnnotateViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfAnnotator: PdfAnnotator
+  unstable val _uiState: MutableStateFlow<PdfAnnotateUiState>
+  unstable val uiState: StateFlow<PdfAnnotateUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfAnnotateViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfAnnotator: PdfAnnotator
+  <runtime stability> = Unstable
+}
+stable class PdfBatchStampUiState {
+  stable val selectedUris: ImmutableList<StableUriRef>
+  stable val inputLabels: ImmutableList<String>
+  stable val outputBaseName: String
+  stable val watermarkText: String
+  stable val enableWatermark: Boolean
+  stable val enableBates: Boolean
+  stable val batesPrefix: String
+  stable val batesStart: String
+  stable val batesPadding: Int
+  stable val isProcessing: Boolean
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  stable val lastOutputPaths: ImmutableList<String>
+  stable val lastOutputSizeBytes: Long?
+}
+unstable class PdfBatchStampViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val batchStampTool: PdfBatchStampTool
+  unstable val _uiState: MutableStateFlow<PdfBatchStampUiState>
+  unstable val uiState: StateFlow<PdfBatchStampUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfBatchStampViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val batchStampTool: PdfBatchStampTool
+  <runtime stability> = Unstable
+}
+unstable class PdfCompressUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val inputSizeBytes: Long?
+  stable val pageCount: Int?
+  stable val outputName: String
+  stable val compressionLevel: PdfCompressionLevel
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  <runtime stability> = Unstable
+}
+unstable class PdfCompressViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfCompressor: PdfCompressor
+  unstable val _uiState: MutableStateFlow<PdfCompressUiState>
+  unstable val uiState: StateFlow<PdfCompressUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfCompressViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfCompressor: PdfCompressor
+  stable val defaultCompressionLevel: PdfCompressionLevel
+  <runtime stability> = Unstable
+}
+stable class PdfFormUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  unstable val fields: List<PdfFormFieldInfo>
+  stable val selectedFieldName: String?
+  unstable val fieldEdits: Map<String, String>
+  stable val outputName: String
+  stable val flattenAfterFill: Boolean
+  stable val builderFieldName: String
+  stable val builderPage: String
+  stable val builderXRatio: String
+  stable val builderYRatio: String
+  stable val builderWidthRatio: String
+  stable val builderHeightRatio: String
+  stable val builderDefaultValue: String
+  stable val isProcessing: Boolean
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+}
+unstable class PdfFormViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val formTool: PdfFormTool
+  unstable val _uiState: MutableStateFlow<PdfFormUiState>
+  unstable val uiState: StateFlow<PdfFormUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfFormViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val formTool: PdfFormTool
+  <runtime stability> = Unstable
+}
+unstable class PdfIdCardUiState {
+  unstable val frontUri: Uri?
+  unstable val backUri: Uri?
+  stable val frontLabel: String?
+  stable val backLabel: String?
+  stable val outputName: String
+  stable val pageSize: PdfPageSize
+  stable val isProcessing: Boolean
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  <runtime stability> = Unstable
+}
+unstable class PdfIdCardViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val idCardTool: PdfIdCardTool
+  unstable val _uiState: MutableStateFlow<PdfIdCardUiState>
+  unstable val uiState: StateFlow<PdfIdCardUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfIdCardViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val idCardTool: PdfIdCardTool
+  <runtime stability> = Unstable
+}
+stable class PdfOcrUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val outputName: String
+  stable val createSearchablePdf: Boolean
+  stable val isProcessing: Boolean
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  stable val progressStage: String?
+  stable val progressCurrent: Int
+  stable val progressTotal: Int
+  stable val textOutputPath: String?
+  stable val searchablePdfPath: String?
+  stable val extractedTextPreview: String?
+  stable val extractedChars: Int?
+  stable val lineCount: Int?
+}
+unstable class PdfOcrViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val ocrTool: PdfOcrTool
+  unstable val _uiState: MutableStateFlow<PdfOcrUiState>
+  unstable val uiState: StateFlow<PdfOcrUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfOcrViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val ocrTool: PdfOcrTool
+  <runtime stability> = Unstable
+}
+stable class PdfPageImageUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val pageCount: Int?
+  stable val outputBaseName: String
+  stable val imageFormat: PdfPageImageFormat
+  stable val zipBundleOutput: Boolean
+  stable val jpegQualityInput: String
+  stable val scaleInput: String
+  stable val isProcessing: Boolean
+  unstable val lastOutputPaths: List<String>
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class PdfPageImageViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfPageImageExporter: PdfPageImageExporter
+  unstable val _uiState: MutableStateFlow<PdfPageImageUiState>
+  unstable val uiState: StateFlow<PdfPageImageUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfPageImageViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfPageImageExporter: PdfPageImageExporter
+  stable val defaultJpegQuality: Int
+  <runtime stability> = Unstable
+}
+unstable class PdfPasswordUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val isEncrypted: Boolean?
+  stable val outputName: String
+  stable val mode: PdfPasswordMode
+  stable val userPasswordInput: String
+  stable val ownerPasswordInput: String
+  stable val unlockPasswordInput: String
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  <runtime stability> = Unstable
+}
+unstable class PdfPasswordViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfPasswordTool: PdfPasswordTool
+  unstable val _uiState: MutableStateFlow<PdfPasswordUiState>
+  unstable val uiState: StateFlow<PdfPasswordUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfPasswordViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfPasswordTool: PdfPasswordTool
+  <runtime stability> = Unstable
+}
+stable class PdfRedactUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val outputName: String
+  stable val termsText: String
+  stable val caseSensitive: Boolean
+  stable val scrubMetadata: Boolean
+  stable val scrubFormValues: Boolean
+  stable val verifyIrreversible: Boolean
+  stable val isProcessing: Boolean
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  stable val progressStage: String?
+  stable val progressCurrent: Int
+  stable val progressTotal: Int
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val removedTextOperatorCount: Int?
+  stable val clearedFormFieldCount: Int?
+}
+unstable class PdfRedactViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val redactionTool: PdfRedactionTool
+  unstable val _uiState: MutableStateFlow<PdfRedactUiState>
+  unstable val uiState: StateFlow<PdfRedactUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfRedactViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val redactionTool: PdfRedactionTool
+  <runtime stability> = Unstable
+}
+stable class PdfSavedSignatureSlotUi {
+  stable val slot: Int
+  stable val exists: Boolean
+  stable val updatedAtMillis: Long?
+}
+stable class PdfSignaturePlacementUi {
+  stable val pageOneBased: Int
+  stable val xRatio: Float
+  stable val yRatio: Float
+  stable val widthRatio: Float
+}
+stable class PdfPlacementTemplateUi {
+  stable val name: String
+  stable val placementCount: Int
+  stable val updatedAtMillis: Long
+}
+stable class PdfSignUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val pageCount: Int?
+  stable val outputName: String
+  stable val targetPageInput: String
+  stable val xRatioInput: String
+  stable val yRatioInput: String
+  stable val widthRatioInput: String
+  stable val templateNameInput: String
+  unstable val placements: List<PdfSignaturePlacementUi>
+  unstable val placementTemplates: List<PdfPlacementTemplateUi>
+  stable val isProcessing: Boolean
+  unstable val savedSignatureSlots: List<PdfSavedSignatureSlotUi>
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class PdfSignViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfSigner: PdfSigner
+  unstable val savedSignatureStore: SavedSignatureStore
+  unstable val placementTemplateStore: SignaturePlacementTemplateStore
+  unstable val _uiState: MutableStateFlow<PdfSignUiState>
+  unstable val uiState: StateFlow<PdfSignUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfSignViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfSigner: PdfSigner
+  unstable val savedSignatureStore: SavedSignatureStore
+  unstable val placementTemplateStore: SignaturePlacementTemplateStore
+  <runtime stability> = Unstable
+}
+stable class PdfSplitUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val pageCount: Int?
+  stable val outputBaseName: String
+  stable val startPageInput: String
+  stable val endPageInput: String
+  stable val splitEveryNInput: String
+  stable val extractPagesInput: String
+  stable val reorderPagesInput: String
+  stable val deletePagesInput: String
+  stable val rotatePagesInput: String
+  stable val rotateDegrees: Int
+  stable val isProcessing: Boolean
+  unstable val lastOutputPaths: List<String>
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class PdfSplitViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfSplitter: PdfSplitter
+  unstable val _uiState: MutableStateFlow<PdfSplitUiState>
+  unstable val uiState: StateFlow<PdfSplitUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfSplitViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfSplitter: PdfSplitter
+  <runtime stability> = Unstable
+}
+unstable class PdfTextExtractUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val pageCount: Int?
+  stable val outputName: String
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val lastExtractedChars: Int?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  <runtime stability> = Unstable
+}
+unstable class PdfTextExtractViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfTextExtractor: PdfTextExtractor
+  unstable val _uiState: MutableStateFlow<PdfTextExtractUiState>
+  unstable val uiState: StateFlow<PdfTextExtractUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfTextExtractViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfTextExtractor: PdfTextExtractor
+  <runtime stability> = Unstable
+}
+stable class PdfToolsUiState {
+  stable val selectedUris: ImmutableList<StableUriRef>
+  stable val outputName: String
+  stable val mergeTitle: String
+  stable val mergeAuthor: String
+  stable val mergeSubject: String
+  stable val addBookmarks: Boolean
+  stable val mergePageSizeMode: PdfMergePageSizeMode
+  stable val isMerging: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class PdfToolsViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfMerger: PdfMerger
+  unstable val _uiState: MutableStateFlow<PdfToolsUiState>
+  unstable val uiState: StateFlow<PdfToolsUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfToolsViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val pdfMerger: PdfMerger
+  <runtime stability> = Unstable
+}
+stable class PdfTranslateUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val outputName: String
+  stable val sourceLanguageTag: String
+  stable val targetLanguageTag: String
+  stable val isProcessing: Boolean
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  stable val progressStage: String?
+  stable val progressCurrent: Int
+  stable val progressTotal: Int
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val translatedLineCount: Int?
+}
+unstable class PdfTranslateViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val translationTool: PdfTranslationTool
+  unstable val _uiState: MutableStateFlow<PdfTranslateUiState>
+  unstable val uiState: StateFlow<PdfTranslateUiState>
+  <runtime stability> = Unstable
+}
+unstable class PdfTranslateViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val translationTool: PdfTranslationTool
+  <runtime stability> = Unstable
+}
+stable class SavedSignatureSlot {
+  stable val slot: Int
+  stable val exists: Boolean
+  stable val updatedAtMillis: Long?
+  <runtime stability> = Stable
+}
+unstable class SavedSignatureStore {
+  unstable val appContext: @[FlexibleNullability] Context?
+  unstable val signatureDir: File
+  <runtime stability> = Unstable
+}
+stable class SignaturePlacementTemplateMeta {
+  stable val name: String
+  stable val placementCount: Int
+  stable val updatedAtMillis: Long
+  <runtime stability> = Stable
+}
+unstable class SignaturePlacementTemplateStore {
+  unstable val appContext: @[FlexibleNullability] Context?
+  unstable val templatesFile: File
+  <runtime stability> = Unstable
+}

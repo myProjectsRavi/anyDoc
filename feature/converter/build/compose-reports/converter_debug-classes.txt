@@ -1,0 +1,253 @@
+stable class AudioConvertTrackInfo {
+  stable val mimeType: String
+  stable val durationMs: Long?
+  stable val sampleRateHz: Int?
+  stable val channelCount: Int?
+  <runtime stability> = Stable
+}
+unstable class AudioFormatConversionResult {
+  unstable val outputFile: File
+  stable val outputSizeBytes: Long
+  stable val outputFormat: AudioConvertOutputFormat
+  stable val sourceMimeType: String
+  stable val durationMs: Long?
+  <runtime stability> = Unstable
+}
+unstable class AudioFormatConverter {
+  unstable val context: Context
+  <runtime stability> = Unstable
+}
+unstable class AudioFormatUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val sourceMimeType: String?
+  stable val durationMs: Long?
+  stable val outputBaseName: String
+  stable val outputFormat: AudioConvertOutputFormat
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  <runtime stability> = Unstable
+}
+unstable class AudioFormatViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val audioFormatConverter: AudioFormatConverter
+  unstable val _uiState: MutableStateFlow<AudioFormatUiState>
+  unstable val uiState: StateFlow<AudioFormatUiState>
+  <runtime stability> = Unstable
+}
+unstable class AudioFormatViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val audioFormatConverter: AudioFormatConverter
+  <runtime stability> = Unstable
+}
+stable class ConverterUiState {
+  stable val selectedUris: ImmutableList<StableUriRef>
+  stable val outputName: String
+  stable val pageSize: PdfPageSize
+  stable val isConverting: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class ConverterViewModel {
+  unstable val pdfCreator: PdfCreator
+  unstable val historyRepository: HistoryRepository
+  unstable val _uiState: MutableStateFlow<ConverterUiState>
+  unstable val uiState: StateFlow<ConverterUiState>
+  <runtime stability> = Unstable
+}
+unstable class ConverterViewModelFactory {
+  unstable val pdfCreator: PdfCreator
+  unstable val historyRepository: HistoryRepository
+  stable val defaultPageSize: PdfPageSize
+  <runtime stability> = Unstable
+}
+unstable class DocumentPdfConversionResult {
+  unstable val pdfResult: PdfCreationResult
+  stable val inputType: DocumentInputType
+  stable val lineCount: Int
+  <runtime stability> = Unstable
+}
+unstable class DocumentPdfConverter {
+  unstable val context: Context
+  <runtime stability> = Unstable
+}
+unstable class DocumentPdfUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val inputType: DocumentInputType
+  stable val outputName: String
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val lastPageCount: Int?
+  stable val lastLineCount: Int?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  <runtime stability> = Unstable
+}
+unstable class DocumentPdfViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val documentPdfConverter: DocumentPdfConverter
+  unstable val _uiState: MutableStateFlow<DocumentPdfUiState>
+  unstable val uiState: StateFlow<DocumentPdfUiState>
+  <runtime stability> = Unstable
+}
+unstable class DocumentPdfViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val documentPdfConverter: DocumentPdfConverter
+  <runtime stability> = Unstable
+}
+unstable class ImageFormatConversionResult {
+  unstable val outputFiles: List<File>
+  stable val outputSizeBytes: Long
+  <runtime stability> = Unstable
+}
+unstable class ImageFormatConverter {
+  unstable val context: Context
+  <runtime stability> = Unstable
+}
+stable class ImageFormatUiState {
+  stable val selectedUris: ImmutableList<StableUriRef>
+  stable val outputBaseName: String
+  stable val outputFormat: ImageOutputFormat
+  stable val qualityInput: String
+  stable val scaleInput: String
+  stable val isConverting: Boolean
+  stable val lastOutputPaths: ImmutableList<String>
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class ImageFormatViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val imageFormatConverter: ImageFormatConverter
+  unstable val _uiState: MutableStateFlow<ImageFormatUiState>
+  unstable val uiState: StateFlow<ImageFormatUiState>
+  <runtime stability> = Unstable
+}
+unstable class ImageFormatViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val imageFormatConverter: ImageFormatConverter
+  stable val defaultQuality: Int
+  <runtime stability> = Unstable
+}
+stable class TextPdfConversionOptions {
+  stable val pageSize: PdfPageSize
+  stable val title: String
+  stable val formatMode: TextPdfFormatMode
+  <runtime stability> = Stable
+}
+unstable class TextPdfConversionResult {
+  unstable val pdfResult: PdfCreationResult
+  stable val paragraphCount: Int
+  stable val characterCount: Int
+  <runtime stability> = Unstable
+}
+unstable class TextPdfConverter {
+  unstable val context: Context
+  <runtime stability> = Unstable
+}
+stable class Spacer {
+  <runtime stability> = Stable
+}
+stable class Title {
+  stable val text: String
+  <runtime stability> = Stable
+}
+stable class Heading {
+  stable val text: String
+  stable val level: Int
+  <runtime stability> = Stable
+}
+stable class Paragraph {
+  stable val text: String
+  <runtime stability> = Stable
+}
+stable class Bullet {
+  stable val text: String
+  <runtime stability> = Stable
+}
+stable class Numbered {
+  stable val numberPrefix: String
+  stable val text: String
+  <runtime stability> = Stable
+}
+stable class TextPdfUiState {
+  stable val title: String
+  stable val text: String
+  stable val outputName: String
+  stable val pageSize: PdfPageSize
+  stable val formatMode: TextPdfFormatMode
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val lastPageCount: Int?
+  stable val lastParagraphCount: Int?
+  stable val lastCharacterCount: Int?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  <runtime stability> = Stable
+}
+unstable class TextPdfViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val textPdfConverter: TextPdfConverter
+  unstable val _uiState: MutableStateFlow<TextPdfUiState>
+  unstable val uiState: StateFlow<TextPdfUiState>
+  <runtime stability> = Unstable
+}
+unstable class TextPdfViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val textPdfConverter: TextPdfConverter
+  stable val defaultPageSize: PdfPageSize
+  <runtime stability> = Unstable
+}
+stable class AudioTrackInfo {
+  stable val mimeType: String
+  stable val durationMs: Long?
+  stable val sampleRateHz: Int?
+  stable val channelCount: Int?
+  <runtime stability> = Stable
+}
+unstable class VideoAudioExtractionResult {
+  unstable val outputFile: File
+  stable val outputSizeBytes: Long
+  stable val outputFormat: AudioOutputFormat
+  stable val sourceMimeType: String
+  stable val durationMs: Long?
+  <runtime stability> = Unstable
+}
+unstable class VideoAudioExtractor {
+  unstable val context: Context
+  <runtime stability> = Unstable
+}
+unstable class VideoAudioUiState {
+  unstable val selectedUri: Uri?
+  stable val inputLabel: String?
+  stable val sourceMimeType: String?
+  stable val durationMs: Long?
+  stable val outputBaseName: String
+  stable val outputFormat: AudioOutputFormat
+  stable val isProcessing: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+  <runtime stability> = Unstable
+}
+unstable class VideoAudioViewModel {
+  unstable val historyRepository: HistoryRepository
+  unstable val videoAudioExtractor: VideoAudioExtractor
+  unstable val _uiState: MutableStateFlow<VideoAudioUiState>
+  unstable val uiState: StateFlow<VideoAudioUiState>
+  <runtime stability> = Unstable
+}
+unstable class VideoAudioViewModelFactory {
+  unstable val historyRepository: HistoryRepository
+  unstable val videoAudioExtractor: VideoAudioExtractor
+  <runtime stability> = Unstable
+}

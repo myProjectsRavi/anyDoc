@@ -29,32 +29,32 @@ import com.docforge.feature.pdftools.SignaturePlacementTemplateStore
 import com.docforge.core.storage.db.DocForgeDatabase
 import com.docforge.core.storage.repository.LocalHistoryRepository
 
-class AppDependencies(context: Context) {
-    private val db = DocForgeDatabase.get(context)
+class AppDependencies(private val context: Context) {
+    private val db by lazy { DocForgeDatabase.get(context) }
 
-    val settingsRepository: AppSettingsRepository = AppSettingsRepository(context)
-    val historyRepository: HistoryRepository = LocalHistoryRepository(db.conversionHistoryDao())
-    val pdfCreator: PdfCreator = PdfCreator(context)
-    val pdfMerger: PdfMerger = PdfMerger(context)
-    val pdfSplitter: PdfSplitter = PdfSplitter(context)
-    val pdfSigner: PdfSigner = PdfSigner(context)
-    val savedSignatureStore: SavedSignatureStore = SavedSignatureStore(context)
-    val placementTemplateStore: SignaturePlacementTemplateStore = SignaturePlacementTemplateStore(context)
-    val pdfCompressor: PdfCompressor = PdfCompressor(context)
-    val pdfTextExtractor: PdfTextExtractor = PdfTextExtractor(context)
-    val pdfPageImageExporter: PdfPageImageExporter = PdfPageImageExporter(context)
-    val pdfAnnotator: PdfAnnotator = PdfAnnotator(context)
-    val pdfPasswordTool: PdfPasswordTool = PdfPasswordTool(context)
-    val scanImageExporter: ScanImageExporter = ScanImageExporter(context)
-    val pdfBatchStampTool: PdfBatchStampTool = PdfBatchStampTool(context)
-    val pdfOcrTool: PdfOcrTool = PdfOcrTool(context)
-    val pdfFormTool: PdfFormTool = PdfFormTool(context)
-    val pdfIdCardTool: PdfIdCardTool = PdfIdCardTool(context)
-    val pdfTranslationTool: PdfTranslationTool = PdfTranslationTool(context)
-    val pdfRedactionTool: PdfRedactionTool = PdfRedactionTool(context)
-    val imageFormatConverter: ImageFormatConverter = ImageFormatConverter(context)
-    val audioFormatConverter: AudioFormatConverter = AudioFormatConverter(context)
-    val documentPdfConverter: DocumentPdfConverter = DocumentPdfConverter(context)
-    val textPdfConverter: TextPdfConverter = TextPdfConverter(context)
-    val videoAudioExtractor: VideoAudioExtractor = VideoAudioExtractor(context)
+    val settingsRepository: AppSettingsRepository by lazy { AppSettingsRepository(context) }
+    val historyRepository: HistoryRepository by lazy { LocalHistoryRepository(db.conversionHistoryDao()) }
+    val pdfCreator: PdfCreator by lazy { PdfCreator(context) }
+    val pdfMerger: PdfMerger by lazy { PdfMerger(context) }
+    val pdfSplitter: PdfSplitter by lazy { PdfSplitter(context) }
+    val pdfSigner: PdfSigner by lazy { PdfSigner(context) }
+    val savedSignatureStore: SavedSignatureStore by lazy { SavedSignatureStore(context) }
+    val placementTemplateStore: SignaturePlacementTemplateStore by lazy { SignaturePlacementTemplateStore(context) }
+    val pdfCompressor: PdfCompressor by lazy { PdfCompressor(context) }
+    val pdfTextExtractor: PdfTextExtractor by lazy { PdfTextExtractor(context) }
+    val pdfPageImageExporter: PdfPageImageExporter by lazy { PdfPageImageExporter(context) }
+    val pdfAnnotator: PdfAnnotator by lazy { PdfAnnotator(context) }
+    val pdfPasswordTool: PdfPasswordTool by lazy { PdfPasswordTool(context) }
+    val scanImageExporter: ScanImageExporter by lazy { ScanImageExporter(context) }
+    val pdfBatchStampTool: PdfBatchStampTool by lazy { PdfBatchStampTool(context) }
+    val pdfOcrTool: PdfOcrTool by lazy { PdfOcrTool(context) }
+    val pdfFormTool: PdfFormTool by lazy { PdfFormTool(context) }
+    val pdfIdCardTool: PdfIdCardTool by lazy { PdfIdCardTool(context) }
+    val pdfTranslationTool: PdfTranslationTool by lazy { PdfTranslationTool(context) }
+    val pdfRedactionTool: PdfRedactionTool by lazy { PdfRedactionTool(context) }
+    val imageFormatConverter: ImageFormatConverter by lazy { ImageFormatConverter(context) }
+    val audioFormatConverter: AudioFormatConverter by lazy { AudioFormatConverter(context) }
+    val documentPdfConverter: DocumentPdfConverter by lazy { DocumentPdfConverter(context) }
+    val textPdfConverter: TextPdfConverter by lazy { TextPdfConverter(context) }
+    val videoAudioExtractor: VideoAudioExtractor by lazy { VideoAudioExtractor(context) }
 }

@@ -68,9 +68,16 @@ object DocForgeSettingsStore {
     }
 
     fun resolveOutputDirectory(context: Context, bucket: DocForgeOutputBucket): File {
-        val baseDir = context.getExternalFilesDir(bucket.mediaDirectory) ?: context.filesDir
         val folderName = readOutputFolderName(context, bucket)
-        return File(baseDir, folderName).apply { mkdirs() }
+        // Use public external storage so files are visible in file managers
+        val publicBase = android.os.Environment.getExternalStoragePublicDirectory(bucket.mediaDirectory)
+        val publicDir = File(publicBase, folderName)
+        if (publicDir.exists() || publicDir.mkdirs()) {
+            return publicDir
+        }
+        // Fallback to app-scoped external storage if public directory is not writable
+        val fallbackBase = context.getExternalFilesDir(bucket.mediaDirectory) ?: context.filesDir
+        return File(fallbackBase, folderName).apply { mkdirs() }
     }
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

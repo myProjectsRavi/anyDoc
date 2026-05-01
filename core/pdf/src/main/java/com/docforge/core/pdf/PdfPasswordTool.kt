@@ -3,7 +3,6 @@ package com.docforge.core.pdf
 import android.content.Context
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission
 import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException
@@ -15,10 +14,6 @@ import java.io.File
 class PdfPasswordTool(
     private val context: Context
 ) {
-
-    init {
-        PDFBoxResourceLoader.init(context.applicationContext)
-    }
 
     suspend fun protect(
         inputUri: android.net.Uri,

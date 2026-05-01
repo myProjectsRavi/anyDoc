@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -10,6 +10,9 @@ android {
 
     defaultConfig {
         minSdk = 26
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
     }
 
     compileOptions {
@@ -27,5 +30,5 @@ dependencies {
 
     api(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
 }

@@ -5,20 +5,13 @@ import android.graphics.Bitmap
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
-import android.os.Build
-import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
-import android.view.translation.TranslationContext
-import android.view.translation.TranslationManager
-import android.view.translation.TranslationRequest
-import android.view.translation.TranslationRequestValue
-import android.view.translation.TranslationResponse
-import android.view.translation.TranslationSpec
-import android.view.translation.Translator
-import androidx.annotation.RequiresApi
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
-import com.google.android.gms.tasks.Task
+import com.google.mlkit.common.model.DownloadConditions
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.TranslatorOptions
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
@@ -33,8 +26,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.Locale
-import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.math.max
@@ -72,12 +63,14 @@ class PdfTranslationTool(
         translationBatchSize: Int = 24,
         onProgress: ((PdfTranslationProgress) -> Unit)? = null
     ): PdfTranslationResult = withContext(Dispatchers.IO) {
-        require(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            "Auto-translation requires Android 12+ with on-device translation support."
-        }
         require(sourceLanguageTag.isNotBlank() && targetLanguageTag.isNotBlank()) {
             "Provide both source and target language tags (e.g., en, es, fr)."
         }
+
+        val sourceLanguage = resolveLanguageTag(sourceLanguageTag)
+        val targetLanguage = resolveLanguageTag(targetLanguageTag)
+        require(sourceLanguage != null) { "Unsupported source language: $sourceLanguageTag" }
+        require(targetLanguage != null) { "Unsupported target language: $targetLanguageTag" }
 
         val coroutineCtx = currentCoroutineContext()
         val progressChunk = pageProgressChunk.coerceAtLeast(1)
@@ -107,7 +100,7 @@ class PdfTranslationTool(
                                 val bitmap = Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888)
                                 try {
                                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                                    val text = recognizer.process(InputImage.fromBitmap(bitmap, 0)).awaitTask()
+                                    val text = recognizer.processImageAwait(InputImage.fromBitmap(bitmap, 0))
                                     lines += extractTranslatableLines(pageIndex + 1, bitmap, text)
                                     val processed = pageIndex + 1
                                     if (processed == pageCount || processed % progressChunk == 0) {
@@ -127,19 +120,15 @@ class PdfTranslationTool(
                     }
                 }
 
-                val translatedTexts = TranslationRuntime.translate(
-                    context = context,
-                    sourceLanguageTag = sourceLanguageTag,
-                    targetLanguageTag = targetLanguageTag,
+                onProgress?.invoke(PdfTranslationProgress(stage = "Loading translation model", current = 0, total = 1))
+                val translatedTexts = translateWithMlKit(
+                    sourceLanguage = sourceLanguage,
+                    targetLanguage = targetLanguage,
                     sourceTexts = lines.map { it.text },
                     batchSize = translationBatchSize,
                     onBatchProgress = { processed, total ->
                         onProgress?.invoke(
-                            PdfTranslationProgress(
-                                stage = "Translating text",
-                                current = processed,
-                                total = total
-                            )
+                            PdfTranslationProgress(stage = "Translating text", current = processed, total = total)
                         )
                     }
                 )
@@ -173,6 +162,66 @@ class PdfTranslationTool(
             recognizer.close()
         }
     }
+
+    private suspend fun translateWithMlKit(
+        sourceLanguage: String,
+        targetLanguage: String,
+        sourceTexts: List<String>,
+        batchSize: Int,
+        onBatchProgress: ((processed: Int, total: Int) -> Unit)?
+    ): List<String> {
+        if (sourceTexts.isEmpty()) return emptyList()
+
+        val options = TranslatorOptions.Builder()
+            .setSourceLanguage(sourceLanguage)
+            .setTargetLanguage(targetLanguage)
+            .build()
+        val translator = Translation.getClient(options)
+
+        try {
+            // Download model (works offline if previously downloaded, or downloads on first use)
+            val conditions = DownloadConditions.Builder().build()
+            translator.downloadModelIfNeeded(conditions).awaitTask()
+
+            val output = ArrayList<String>(sourceTexts.size)
+            var processed = 0
+            val normalizedBatch = batchSize.coerceIn(1, 64)
+
+            sourceTexts.chunked(normalizedBatch).forEach { chunk ->
+                chunk.forEach { text ->
+                    val translated = runCatching {
+                        translator.translate(text).awaitTask()
+                    }.getOrElse { text }
+                    output.add(translated)
+                }
+                processed += chunk.size
+                onBatchProgress?.invoke(processed, sourceTexts.size)
+            }
+
+            return output
+        } finally {
+            translator.close()
+        }
+    }
+
+    private fun resolveLanguageTag(tag: String): String? {
+        return runCatching { TranslateLanguage.fromLanguageTag(tag) }.getOrNull()
+    }
+
+    private suspend fun <T> com.google.android.gms.tasks.Task<T>.awaitTask(): T =
+        suspendCancellableCoroutine { continuation ->
+            addOnSuccessListener { result -> if (continuation.isActive) continuation.resume(result) }
+            addOnFailureListener { error -> if (continuation.isActive) continuation.resumeWithException(error) }
+            addOnCanceledListener { continuation.cancel() }
+        }
+
+    private suspend fun com.google.mlkit.vision.text.TextRecognizer.processImageAwait(image: InputImage): Text =
+        suspendCancellableCoroutine { continuation ->
+            process(image)
+                .addOnSuccessListener { result -> if (continuation.isActive) continuation.resume(result) }
+                .addOnFailureListener { error -> if (continuation.isActive) continuation.resumeWithException(error) }
+                .addOnCanceledListener { continuation.cancel() }
+        }
 
     private fun extractTranslatableLines(
         pageOneBased: Int,
@@ -224,51 +273,48 @@ class PdfTranslationTool(
                     val imported = importPage(outDoc, sourcePage)
 
                     val pageItems = pageItemsByPage[pageIndex + 1].orEmpty()
-                    if (pageItems.isEmpty()) return@repeat
+                    if (pageItems.isNotEmpty()) {
+                        val box = imported.cropBox ?: imported.mediaBox
+                        val pageWidth = box.width.coerceAtLeast(1f)
+                        val pageHeight = box.height.coerceAtLeast(1f)
 
-                    val box = imported.cropBox ?: imported.mediaBox
-                    val pageWidth = box.width.coerceAtLeast(1f)
-                    val pageHeight = box.height.coerceAtLeast(1f)
+                        PDPageContentStream(
+                            outDoc, imported,
+                            PDPageContentStream.AppendMode.APPEND, true, true
+                        ).use { stream ->
+                            pageItems.forEach { (line, translated) ->
+                                val sx = pageWidth / line.bitmapWidth.toFloat().coerceAtLeast(1f)
+                                val sy = pageHeight / line.bitmapHeight.toFloat().coerceAtLeast(1f)
 
-                    PDPageContentStream(
-                        outDoc,
-                        imported,
-                        PDPageContentStream.AppendMode.APPEND,
-                        true,
-                        true
-                    ).use { stream ->
-                        pageItems.forEach { (line, translated) ->
-                            val sx = pageWidth / line.bitmapWidth.toFloat().coerceAtLeast(1f)
-                            val sy = pageHeight / line.bitmapHeight.toFloat().coerceAtLeast(1f)
+                                val left = box.lowerLeftX + (line.bbox.left * sx)
+                                val top = box.lowerLeftY + (pageHeight - (line.bbox.top * sy))
+                                val bottom = box.lowerLeftY + (pageHeight - (line.bbox.bottom * sy))
+                                val width = (line.bbox.width() * sx).coerceAtLeast(12f)
+                                val height = (top - bottom).coerceAtLeast(10f)
 
-                            val left = box.lowerLeftX + (line.bbox.left * sx)
-                            val top = box.lowerLeftY + (pageHeight - (line.bbox.top * sy))
-                            val bottom = box.lowerLeftY + (pageHeight - (line.bbox.bottom * sy))
-                            val width = (line.bbox.width() * sx).coerceAtLeast(12f)
-                            val height = (top - bottom).coerceAtLeast(10f)
+                                stream.setNonStrokingColor(255, 255, 255)
+                                stream.addRect(left, bottom, width, height)
+                                stream.fill()
 
-                            stream.setNonStrokingColor(255, 255, 255)
-                            stream.addRect(left, bottom, width, height)
-                            stream.fill()
+                                val fontSize = height.coerceIn(8f, 18f)
+                                val wrapped = wrapText(
+                                    text = sanitizePdfText(translated),
+                                    maxWidth = width,
+                                    fontSize = fontSize
+                                )
+                                if (wrapped.isEmpty()) return@forEach
 
-                            val fontSize = height.coerceIn(8f, 18f)
-                            val wrapped = wrapText(
-                                text = sanitizePdfText(translated),
-                                maxWidth = width,
-                                fontSize = fontSize
-                            )
-                            if (wrapped.isEmpty()) return@forEach
-
-                            stream.setNonStrokingColor(0, 0, 0)
-                            var cursorY = bottom + height - fontSize
-                            for (lineText in wrapped) {
-                                if (cursorY < bottom) break
-                                stream.beginText()
-                                stream.setFont(PDType1Font.HELVETICA, fontSize)
-                                stream.newLineAtOffset(left + 1f, cursorY)
-                                stream.showText(lineText)
-                                stream.endText()
-                                cursorY -= (fontSize * 1.1f)
+                                stream.setNonStrokingColor(0, 0, 0)
+                                var cursorY = bottom + height - fontSize
+                                for (lineText in wrapped) {
+                                    if (cursorY < bottom) break
+                                    stream.beginText()
+                                    stream.setFont(PDType1Font.HELVETICA, fontSize)
+                                    stream.newLineAtOffset(left + 1f, cursorY)
+                                    stream.showText(lineText)
+                                    stream.endText()
+                                    cursorY -= (fontSize * 1.1f)
+                                }
                             }
                         }
                     }
@@ -300,7 +346,9 @@ class PdfTranslationTool(
 
         words.forEach { word ->
             val candidate = if (buffer.isEmpty()) word else "${buffer} $word"
-            val width = (PDType1Font.HELVETICA.getStringWidth(candidate) / 1000f) * fontSize
+            val width = runCatching {
+                (PDType1Font.HELVETICA.getStringWidth(candidate) / 1000f) * fontSize
+            }.getOrElse { candidate.length * fontSize * 0.55f }
             if (width <= maxWidth || buffer.isEmpty()) {
                 buffer.clear()
                 buffer.append(candidate)
@@ -311,9 +359,7 @@ class PdfTranslationTool(
             }
         }
 
-        if (buffer.isNotEmpty()) {
-            lines += buffer.toString()
-        }
+        if (buffer.isNotEmpty()) lines += buffer.toString()
         return lines.take(3)
     }
 
@@ -328,101 +374,5 @@ class PdfTranslationTool(
         imported.cropBox = sourcePage.cropBox
         imported.resources = sourcePage.resources
         return imported
-    }
-
-    private suspend fun <T> Task<T>.awaitTask(): T = suspendCancellableCoroutine { continuation ->
-        addOnSuccessListener { result -> if (continuation.isActive) continuation.resume(result) }
-        addOnFailureListener { error -> if (continuation.isActive) continuation.resumeWithException(error) }
-        addOnCanceledListener { continuation.cancel() }
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.S)
-private object TranslationRuntime {
-    suspend fun translate(
-        context: Context,
-        sourceLanguageTag: String,
-        targetLanguageTag: String,
-        sourceTexts: List<String>,
-        batchSize: Int,
-        onBatchProgress: ((processed: Int, total: Int) -> Unit)?
-    ): List<String> {
-        if (sourceTexts.isEmpty()) return emptyList()
-        val normalizedBatchSize = batchSize.coerceIn(1, 128)
-
-        val manager = context.getSystemService(TranslationManager::class.java)
-            ?: error("Translation service unavailable on this device.")
-
-        val sourceSpec = TranslationSpec(android.icu.util.ULocale.forLanguageTag(sourceLanguageTag), TranslationSpec.DATA_FORMAT_TEXT)
-        val targetSpec = TranslationSpec(android.icu.util.ULocale.forLanguageTag(targetLanguageTag), TranslationSpec.DATA_FORMAT_TEXT)
-        val translationContext = TranslationContext.Builder(sourceSpec, targetSpec)
-            .setTranslationFlags(TranslationContext.FLAG_LOW_LATENCY)
-            .build()
-
-        val executor = Executors.newSingleThreadExecutor()
-        try {
-            val translator = manager.awaitTranslator(translationContext, executor)
-            try {
-                val output = ArrayList<String>(sourceTexts.size)
-                var processed = 0
-                sourceTexts.chunked(normalizedBatchSize).forEach { chunk ->
-                    val values = chunk.map { text -> TranslationRequestValue.forText(text) }
-                    val request = TranslationRequest.Builder()
-                        .setFlags(TranslationRequest.FLAG_TRANSLATION_RESULT)
-                        .setTranslationRequestValues(values)
-                        .build()
-
-                    val response = translator.awaitResponse(request, executor)
-                    if (response.translationStatus != TranslationResponse.TRANSLATION_STATUS_SUCCESS) {
-                        error("Translation engine could not translate this language pair offline.")
-                    }
-
-                    val translated = response.translationResponseValues
-                    chunk.indices.forEach { index ->
-                        val translatedValue = translated[index]?.text?.toString()?.trim().orEmpty()
-                        output += translatedValue.ifBlank { chunk[index] }
-                    }
-                    processed += chunk.size
-                    onBatchProgress?.invoke(processed, sourceTexts.size)
-                }
-                return output
-            } finally {
-                translator.destroy()
-            }
-        } finally {
-            executor.shutdown()
-        }
-    }
-
-    private suspend fun TranslationManager.awaitTranslator(
-        translationContext: TranslationContext,
-        executor: java.util.concurrent.Executor
-    ): Translator = suspendCancellableCoroutine { continuation ->
-        createOnDeviceTranslator(translationContext, executor) { translator ->
-            if (!continuation.isActive) {
-                translator?.destroy()
-                return@createOnDeviceTranslator
-            }
-            if (translator == null) {
-                continuation.resumeWithException(IllegalStateException("Unable to initialize on-device translator."))
-            } else {
-                continuation.resume(translator)
-            }
-        }
-    }
-
-    private suspend fun Translator.awaitResponse(
-        request: TranslationRequest,
-        executor: java.util.concurrent.Executor
-    ): TranslationResponse = suspendCancellableCoroutine { continuation ->
-        val cancellation = CancellationSignal()
-        continuation.invokeOnCancellation {
-            cancellation.cancel()
-        }
-        translate(request, cancellation, executor) { response ->
-            if (continuation.isActive) {
-                continuation.resume(response)
-            }
-        }
     }
 }

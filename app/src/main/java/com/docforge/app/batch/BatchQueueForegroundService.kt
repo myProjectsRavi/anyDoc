@@ -33,6 +33,11 @@ class BatchQueueForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannelIfNeeded()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             BatchQueueServiceContract.ACTION_CANCEL_QUEUE -> {
@@ -56,7 +61,6 @@ class BatchQueueForegroundService : Service() {
                     return START_NOT_STICKY
                 }
 
-                createNotificationChannelIfNeeded()
                 startForeground(
                     BatchQueueServiceContract.NOTIFICATION_ID,
                     buildProgressNotification(

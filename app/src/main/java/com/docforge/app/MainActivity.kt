@@ -16,6 +16,7 @@ import com.docforge.app.share.ShareLaunchRequest
 import com.docforge.core.ui.theme.DocForgeTheme
 
 class MainActivity : ComponentActivity() {
+    private val deps by lazy { AppDependencies(applicationContext) }
     private var sharedLaunchRequest by mutableStateOf<ShareLaunchRequest?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +26,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val deps = remember { AppDependencies(applicationContext) }
             val startDestination = remember {
                 if (deps.settingsRepository.isOnboardingCompleted()) {
                     com.docforge.app.navigation.Routes.HOME

@@ -3,7 +3,6 @@ package com.docforge.core.pdf
 import android.content.Context
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +20,6 @@ data class PdfTextExtractionResult(
 class PdfTextExtractor(
     private val context: Context
 ) {
-
-    init {
-        PDFBoxResourceLoader.init(context.applicationContext)
-    }
 
     suspend fun extractToTxt(
         inputUri: android.net.Uri,

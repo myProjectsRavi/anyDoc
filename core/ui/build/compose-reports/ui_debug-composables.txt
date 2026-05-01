@@ -1,0 +1,4 @@
+restartable skippable scheme("[0, [0]]") fun DocForgeTheme(
+  stable darkTheme: Boolean = @static false
+  stable content: Function2<Composer, Int, Unit>
+)
