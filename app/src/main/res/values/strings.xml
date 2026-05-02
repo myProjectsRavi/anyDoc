@@ -36,4 +36,21 @@
     <!-- Common -->
     <string name="error_password_blank">Password cannot be blank.</string>
     <string name="error_password_too_short">Password must be at least 6 characters.</string>
+
+    <!-- Sign Screen (Q1) -->
+    <string name="sign_title">Add Signature Image</string>
+    <string name="sign_disclaimer">⚠️ This adds a visual signature image to the PDF. It is not a legally-binding digital (PKCS#7/PAdES) signature.</string>
+
+    <!-- Redact Screen (Q2) -->
+    <string name="redact_title">Cover / Black-Out Text</string>
+    <string name="redact_disclaimer">⚠️ Hides text visually. Underlying text may still be recoverable in some cases. For legal or forensic redaction, use a certified tool.</string>
+
+    <!-- Common -->
+    <string name="select_pdf">Select PDF</string>
+    <string name="replace_pdf">Replace PDF</string>
+    <string name="output_file_name">Output File Name</string>
+    <string name="dismiss_error">Dismiss Error</string>
+    <string name="batch_queue_title">DocForge batch queue</string>
+    <string name="batch_starting">Starting queue…</string>
+    <string name="batch_preparing">Preparing…</string>
 </resources>

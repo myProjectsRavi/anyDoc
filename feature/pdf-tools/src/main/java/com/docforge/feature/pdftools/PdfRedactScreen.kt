@@ -88,8 +88,22 @@ fun PdfRedactScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("True PDF Redaction", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("Cover / Black-Out Text", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text("Removes matching text operators from PDF content streams and verifies output before saving.")
+
+        androidx.compose.material3.Card(
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "\u26A0\uFE0F Hides text visually. Underlying text may still be recoverable " +
+                    "in some cases. For legal or forensic redaction, use a certified tool.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
 
         Button(onClick = onPickPdf, enabled = !state.isProcessing, modifier = Modifier.fillMaxWidth()) {
             Text(if (state.selectedUri == null) "Select PDF" else "Replace PDF")

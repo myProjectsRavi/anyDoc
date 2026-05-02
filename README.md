@@ -4,7 +4,7 @@
   <h3><strong>Your All-in-One Document & Media Super App</strong></h3>
   <p><em>Replace all your paid document apps with one completely free, blazing-fast, and 100% private tool.</em></p>
   <p>
-    <b>100% Free forever</b> • <b>Zero Ads</b> • <b>Works Offline</b> • <b>No Subscriptions</b>
+    <b>Free during launch</b> • <b>Zero Ads</b> • <b>Works Offline</b> • <b>No Subscriptions</b>
   </p>
 </div>
 
@@ -20,9 +20,10 @@ Because AnyDoc works entirely on your phone (no cloud uploads!), it is **lightni
 
 ## ✨ What can you do with AnyDoc?
 
-### ✍️ Sign & Fill Documents Instantly
-*   **Sign Contracts in Seconds:** Draw your signature once, save it, and drag-and-drop it onto any PDF.
-*   **Sign Multiple Pages:** Apply your signature to 50 pages at once with built-in templates. Perfect for massive contracts!
+### ✍️ Add Your Signature to Documents
+*   **Add Your Signature to Any PDF:** Draw your signature once, save it, and place it on any PDF page.
+*   **Sign Multiple Pages:** Apply your signature image to 50 pages at once with built-in templates. Perfect for massive contracts!
+*   **Visual Signatures:** These are visual signature marks — not legally-binding digital (PKCS#7) signatures.
 *   **Fill Forms:** Type text, add dates, and drop sticky notes exactly where you need them.
 *   **Draw & Highlight:** Freehand draw or highlight important sections with your finger.
 
@@ -40,6 +41,7 @@ Because AnyDoc works entirely on your phone (no cloud uploads!), it is **lightni
 ### 🔒 Protect Your Privacy
 *   **Military-Grade Passwords:** Lock sensitive financial or legal documents with strong encryption.
 *   **Unlock PDFs:** Remove annoying passwords from documents you already own so you don't have to type them every time.
+*   **Cover / Black-Out Text:** Visually hide sensitive text in PDFs. Note: this is a visual cover — for forensic-grade redaction, use a certified tool.
 *   **100% Offline:** AnyDoc doesn't even have the ability to connect to the internet. Your data is physically impossible to leak or hack.
 
 ### 🔄 The Ultimate Media Converter

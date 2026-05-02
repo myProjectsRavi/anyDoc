@@ -56,3 +56,9 @@
 # ─── DocForge data/model classes ─────────────────────────────────────────────
 -keep class com.docforge.core.domain.** { *; }
 -keep class com.docforge.core.storage.db.** { *; }
+
+# ─── Hilt / Dagger ───────────────────────────────────────────────────────────
+-keep class dagger.hilt.** { *; }
+-keep class javax.inject.** { *; }
+-keep class * extends dagger.hilt.android.internal.managers.ViewComponentManager$FragmentContextWrapper { *; }
+-dontwarn dagger.hilt.**

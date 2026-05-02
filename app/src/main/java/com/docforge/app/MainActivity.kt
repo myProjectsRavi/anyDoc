@@ -14,7 +14,9 @@ import com.docforge.app.runtime.EngineWarmup
 import com.docforge.app.share.ShareIntentRouter
 import com.docforge.app.share.ShareLaunchRequest
 import com.docforge.core.ui.theme.DocForgeTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val deps: AppDependencies get() = (application as DocForgeApp).dependencies
     private var sharedLaunchRequest by mutableStateOf<ShareLaunchRequest?>(null)
@@ -55,10 +57,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun takePersistablePermissions(request: ShareLaunchRequest) {
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         request.uris.forEach { uri ->
+            // Try read+write first, fall back to read-only
+            val readWrite = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            val readOnly = Intent.FLAG_GRANT_READ_URI_PERMISSION
             runCatching {
-                contentResolver.takePersistableUriPermission(uri, flags)
+                contentResolver.takePersistableUriPermission(uri, readWrite)
+            }.recoverCatching {
+                contentResolver.takePersistableUriPermission(uri, readOnly)
             }
         }
     }

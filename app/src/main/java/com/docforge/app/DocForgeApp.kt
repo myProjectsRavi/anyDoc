@@ -3,12 +3,14 @@ package com.docforge.app
 import android.app.Application
 import android.content.ComponentCallbacks2
 import android.os.StrictMode
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.io.File
 
+@HiltAndroidApp
 class DocForgeApp : Application() {
 
     val dependencies: AppDependencies by lazy { AppDependencies(this) }

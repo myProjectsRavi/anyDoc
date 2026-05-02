@@ -214,8 +214,22 @@ fun PdfSignScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("PDF Sign", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("Add Signature Image", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text("Draw your signature and place it on one or multiple PDF pages.")
+
+        androidx.compose.material3.Card(
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "\u26A0\uFE0F This adds a visual signature image to the PDF. " +
+                    "It is not a legally-binding digital (PKCS#7/PAdES) signature.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
 
         Button(onClick = onPickPdf, enabled = !state.isProcessing, modifier = Modifier.fillMaxWidth()) {
             Text(if (state.selectedUri == null) "Select PDF" else "Replace PDF")

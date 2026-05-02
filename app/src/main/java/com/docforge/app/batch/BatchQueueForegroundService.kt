@@ -29,7 +29,7 @@ class BatchQueueForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var processingJob: Job? = null
 
-    private val dependencies by lazy { AppDependencies(applicationContext) }
+    private val dependencies by lazy { (application as com.docforge.app.DocForgeApp).dependencies }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -39,9 +39,22 @@ class BatchQueueForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // CRITICAL: startForeground must be called within 5s of startForegroundService
+        startForeground(
+            BatchQueueServiceContract.NOTIFICATION_ID,
+            buildProgressNotification(
+                title = "DocForge batch queue",
+                text = "Preparing...",
+                processed = 0,
+                total = 1,
+                ongoing = true
+            )
+        )
+
         when (intent?.action) {
             BatchQueueServiceContract.ACTION_CANCEL_QUEUE -> {
                 processingJob?.cancel()
+                stopForeground(STOP_FOREGROUND_REMOVE)
                 return START_NOT_STICKY
             }
 
@@ -57,19 +70,15 @@ class BatchQueueForegroundService : Service() {
 
                 if (taskIds.isEmpty()) {
                     BatchQueueRuntimeStore.failProcessing("No queued tasks to run.")
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf(startId)
                     return START_NOT_STICKY
                 }
 
-                startForeground(
-                    BatchQueueServiceContract.NOTIFICATION_ID,
-                    buildProgressNotification(
-                        title = "DocForge batch queue",
-                        text = "Starting queue...",
-                        processed = 0,
-                        total = taskIds.size,
-                        ongoing = true
-                    )
+                notifyProgress(
+                    text = "Starting queue...",
+                    processed = 0,
+                    total = taskIds.size
                 )
 
                 processingJob = serviceScope.launch {
@@ -80,7 +89,10 @@ class BatchQueueForegroundService : Service() {
                 return START_STICKY
             }
 
-            else -> return START_NOT_STICKY
+            else -> {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                return START_NOT_STICKY
+            }
         }
     }
 
