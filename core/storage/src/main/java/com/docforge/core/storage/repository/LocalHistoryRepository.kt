@@ -20,6 +20,14 @@ class LocalHistoryRepository(
     override suspend fun insert(record: ConversionRecord) {
         dao.insert(record.toEntity())
     }
+
+    override suspend fun deleteById(id: Long) {
+        dao.deleteById(id)
+    }
+
+    override suspend fun deleteAll() {
+        dao.deleteAll()
+    }
 }
 
 private fun ConversionHistoryEntity.toDomain(): ConversionRecord {
@@ -27,6 +35,8 @@ private fun ConversionHistoryEntity.toDomain(): ConversionRecord {
         id = id,
         sourceLabel = sourceLabel,
         outputPath = outputPath,
+        outputUri = outputUri,
+        displayName = displayName,
         operation = operation,
         createdAtMillis = createdAtMillis,
         inputCount = inputCount,
@@ -39,6 +49,8 @@ private fun ConversionRecord.toEntity(): ConversionHistoryEntity {
         id = id,
         sourceLabel = sourceLabel,
         outputPath = outputPath,
+        outputUri = outputUri,
+        displayName = displayName,
         operation = operation,
         createdAtMillis = createdAtMillis,
         inputCount = inputCount,

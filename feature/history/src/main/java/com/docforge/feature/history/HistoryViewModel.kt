@@ -19,9 +19,21 @@ class HistoryViewModel(
 
     init {
         viewModelScope.launch {
-            historyRepository.observeRecent(limit = 20).collect { records ->
+            historyRepository.observeRecent(limit = 50).collect { records ->
                 _uiState.update { it.copy(records = records) }
             }
+        }
+    }
+
+    fun deleteRecord(id: Long) {
+        viewModelScope.launch {
+            historyRepository.deleteById(id)
+        }
+    }
+
+    fun clearAllHistory() {
+        viewModelScope.launch {
+            historyRepository.deleteAll()
         }
     }
 }
