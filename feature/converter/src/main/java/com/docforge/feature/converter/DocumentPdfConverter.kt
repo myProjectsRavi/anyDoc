@@ -142,14 +142,25 @@ class DocumentPdfConverter(
     private fun extractDocxLines(inputUri: Uri): List<String> {
         return context.contentResolver.openInputStream(inputUri)?.use { input ->
             ZipInputStream(input).use { zip ->
-                generateSequence { zip.nextEntry }
-                    .firstNotNullOfOrNull { entry ->
-                        if (entry.name == "word/document.xml") {
-                            parseDocxDocumentXml(zip)
-                        } else {
-                            null
+                var documentXml: List<String>? = null
+                val imageEntries = mutableListOf<String>()
+                generateSequence { zip.nextEntry }.forEach { entry ->
+                    when {
+                        entry.name == "word/document.xml" -> {
+                            documentXml = parseDocxDocumentXml(zip)
+                        }
+                        entry.name.startsWith("word/media/") -> {
+                            imageEntries += entry.name
                         }
                     }
+                }
+                val lines = documentXml ?: error("Unable to read DOCX file.")
+                // Append image references for user awareness
+                if (imageEntries.isNotEmpty()) {
+                    lines + listOf("", "[${imageEntries.size} embedded image(s) detected — visual rendering not yet supported]")
+                } else {
+                    lines
+                }
             }
         } ?: error("Unable to read DOCX file.")
     }
@@ -312,34 +323,104 @@ class DocumentPdfConverter(
         val lines = mutableListOf<String>()
         val paragraph = StringBuilder()
         var insideTextNode = false
+        var isBold = false
+        var isItalic = false
+        var insideTable = false
+        val tableRow = mutableListOf<String>()
+        val tableCell = StringBuilder()
+        var insideTableCell = false
+        var isListItem = false
 
         var event = parser.eventType
         while (event != XmlPullParser.END_DOCUMENT) {
             when (event) {
                 XmlPullParser.START_TAG -> {
                     when (parser.name) {
-                        "w:p" -> paragraph.clear()
-                        "w:t" -> insideTextNode = true
-                        "w:tab" -> paragraph.append('\t')
-                        "w:br", "w:cr" -> paragraph.append('\n')
+                        // Table elements
+                        "tbl" -> insideTable = true
+                        "tr" -> tableRow.clear()
+                        "tc" -> {
+                            insideTableCell = true
+                            tableCell.clear()
+                        }
+                        // Paragraph
+                        "p" -> {
+                            paragraph.clear()
+                            isBold = false
+                            isItalic = false
+                            isListItem = false
+                        }
+                        // Run properties
+                        "b" -> isBold = true
+                        "i" -> isItalic = true
+                        // List numbering
+                        "numPr" -> isListItem = true
+                        // Text run
+                        "t" -> insideTextNode = true
+                        // Whitespace
+                        "tab" -> paragraph.append('\t')
+                        "br", "cr" -> paragraph.append('\n')
                     }
                 }
 
                 XmlPullParser.TEXT -> {
                     if (insideTextNode) {
-                        paragraph.append(parser.text)
+                        val text = parser.text
+                        // Apply inline formatting markers for PDF rendering
+                        val formatted = buildString {
+                            if (isBold && isItalic) append("***")
+                            else if (isBold) append("**")
+                            else if (isItalic) append("*")
+                            append(text)
+                            if (isBold && isItalic) append("***")
+                            else if (isBold) append("**")
+                            else if (isItalic) append("*")
+                        }
+                        if (insideTableCell) {
+                            tableCell.append(text)
+                        } else {
+                            paragraph.append(formatted)
+                        }
                     }
                 }
 
                 XmlPullParser.END_TAG -> {
                     when (parser.name) {
-                        "w:t" -> insideTextNode = false
-                        "w:p" -> {
-                            val content = paragraph.toString().trimEnd()
-                            if (content.isNotBlank()) {
-                                lines += content
+                        "t" -> insideTextNode = false
+                        "rPr" -> {
+                            // Reset run properties at end of run props
+                        }
+                        "r" -> {
+                            isBold = false
+                            isItalic = false
+                        }
+                        "p" -> {
+                            if (insideTableCell) {
+                                // Accumulate cell text
+                                if (tableCell.isNotEmpty()) tableCell.append(" ")
+                            } else {
+                                val content = paragraph.toString().trimEnd()
+                                if (content.isNotBlank()) {
+                                    val prefix = if (isListItem) "  • " else ""
+                                    lines += "$prefix$content"
+                                }
+                                paragraph.clear()
                             }
-                            paragraph.clear()
+                        }
+                        "tc" -> {
+                            insideTableCell = false
+                            tableRow += tableCell.toString().trim()
+                            tableCell.clear()
+                        }
+                        "tr" -> {
+                            if (tableRow.isNotEmpty()) {
+                                lines += tableRow.joinToString(" | ") { it.ifBlank { " " } }
+                            }
+                            tableRow.clear()
+                        }
+                        "tbl" -> {
+                            insideTable = false
+                            lines += "" // blank line after table
                         }
                     }
                 }
