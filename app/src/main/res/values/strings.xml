@@ -9,6 +9,17 @@
     <string name="nav_pdf_tools">PDF Tools</string>
     <string name="nav_history">History</string>
 
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to DocForge</string>
+    <string name="onboarding_subtitle">Private, offline file conversions and PDF tools without accounts or watermarks.</string>
+    <string name="onboarding_features_heading">What you get</string>
+    <string name="onboarding_get_started">Get Started</string>
+
+    <!-- Home -->
+    <string name="home_title">DocForge</string>
+    <string name="home_search_hint">What do you want to do?</string>
+    <string name="home_quick_actions">Quick Actions</string>
+
     <!-- Scanner -->
     <string name="scanner_title">Document Scanner</string>
     <string name="scanner_subtitle">Capture pages, import from gallery, then export as PDF or high-res JPG/PNG.</string>
@@ -33,9 +44,27 @@
     <string name="scanner_zip_on">ZIP Bundle: ON</string>
     <string name="scanner_zip_off">ZIP Bundle: OFF</string>
 
-    <!-- Common -->
-    <string name="error_password_blank">Password cannot be blank.</string>
-    <string name="error_password_too_short">Password must be at least 6 characters.</string>
+    <!-- Converter -->
+    <string name="converter_images_to_pdf">Images to PDF</string>
+    <string name="converter_offline_notice">Offline conversion. Your files never leave your phone.</string>
+    <string name="converter_text_to_pdf">Text to PDF</string>
+    <string name="converter_text_to_pdf_subtitle">Paste or type text and instantly export a clean offline PDF.</string>
+    <string name="converter_image_format">Image Format Convert</string>
+    <string name="converter_audio_format">Audio Format Convert</string>
+    <string name="converter_video_to_audio">Video to Audio</string>
+    <string name="converter_video_to_audio_subtitle">Extract audio tracks locally using stream demux. No upload, no re-encode.</string>
+
+    <!-- PDF Tools -->
+    <string name="pdf_merge_title">Mixed Merge</string>
+    <string name="pdf_compress_title">PDF Compress</string>
+    <string name="pdf_split_title">PDF Split</string>
+    <string name="pdf_password_title">PDF Password</string>
+    <string name="pdf_export_images_title">PDF to Images</string>
+    <string name="pdf_ocr_title">PDF OCR</string>
+    <string name="pdf_id_card_title">ID Card PDF</string>
+    <string name="pdf_watermark_title">Watermark</string>
+    <string name="pdf_page_numbers_title">Page Numbers</string>
+    <string name="pdf_rotate_title">Rotate Pages</string>
 
     <!-- Sign Screen (Q1) -->
     <string name="sign_title">Add Signature Image</string>
@@ -45,12 +74,67 @@
     <string name="redact_title">Cover / Black-Out Text</string>
     <string name="redact_disclaimer">⚠️ Hides text visually. Underlying text may still be recoverable in some cases. For legal or forensic redaction, use a certified tool.</string>
 
+    <!-- Resume Builder (Q6) -->
+    <string name="resume_builder_title">Resume Builder</string>
+    <string name="resume_choose_template">Choose Template</string>
+    <string name="resume_your_details">Your Details</string>
+    <string name="resume_full_name">Full Name</string>
+    <string name="resume_job_title">Job Title</string>
+    <string name="resume_email">Email</string>
+    <string name="resume_phone">Phone</string>
+    <string name="resume_location">Location</string>
+    <string name="resume_summary">Professional Summary</string>
+    <string name="resume_skills">Skills (comma-separated)</string>
+    <string name="resume_preview">Preview</string>
+    <string name="resume_export_pdf">Export PDF</string>
+
+    <!-- History -->
+    <string name="history_title">Recent Conversions</string>
+    <string name="history_empty">No conversion history yet.</string>
+    <string name="history_clear_all">Clear All</string>
+    <string name="history_delete">Delete</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_defaults">Defaults</string>
+    <string name="settings_default_page_size">Default PDF page size</string>
+    <string name="settings_default_compression">Default PDF compression</string>
+    <string name="settings_image_quality">Default image quality (10–100)</string>
+    <string name="settings_output_folders">Default Output Folders</string>
+    <string name="settings_save_folders">Save Output Folders</string>
+
+    <!-- Batch -->
+    <string name="batch_queue_title">Batch Queue</string>
+    <string name="batch_queue_subtitle">Queue mixed offline operations and run them sequentially.</string>
+    <string name="batch_add_task">Add Task</string>
+    <string name="batch_run_queue">Run Queue</string>
+    <string name="batch_task_presets">Task Presets</string>
+    <string name="batch_save_preset">Save Queued As Preset</string>
+    <string name="batch_starting">Starting queue…</string>
+    <string name="batch_preparing">Preparing…</string>
+    <string name="batch_foreground_title">DocForge batch queue</string>
+
     <!-- Common -->
     <string name="select_pdf">Select PDF</string>
     <string name="replace_pdf">Replace PDF</string>
     <string name="output_file_name">Output File Name</string>
     <string name="dismiss_error">Dismiss Error</string>
-    <string name="batch_queue_title">DocForge batch queue</string>
-    <string name="batch_starting">Starting queue…</string>
-    <string name="batch_preparing">Preparing…</string>
+    <string name="error_password_blank">Password cannot be blank.</string>
+    <string name="error_password_too_short">Password must be at least 6 characters.</string>
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="done">Done</string>
+    <string name="save">Save</string>
+    <string name="share">Share</string>
+    <string name="open">Open</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading…</string>
+    <string name="processing">Processing…</string>
+    <string name="success">Success</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="no_file_selected">No file selected</string>
+    <string name="compression_high">High</string>
+    <string name="compression_medium">Medium</string>
+    <string name="compression_low">Low</string>
 </resources>

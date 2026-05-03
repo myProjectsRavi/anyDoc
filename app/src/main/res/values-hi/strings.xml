@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DocForge</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">होम</string>
+    <string name="nav_scanner">स्कैनर</string>
+    <string name="nav_convert">कन्वर्ट</string>
+    <string name="nav_pdf_tools">PDF टूल्स</string>
+    <string name="nav_history">इतिहास</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">DocForge में आपका स्वागत है</string>
+    <string name="onboarding_subtitle">बिना अकाउंट या वॉटरमार्क के प्राइवेट, ऑफ़लाइन फ़ाइल कन्वर्शन और PDF टूल्स।</string>
+    <string name="onboarding_features_heading">आपको क्या मिलेगा</string>
+    <string name="onboarding_get_started">शुरू करें</string>
+
+    <!-- Home -->
+    <string name="home_title">DocForge</string>
+    <string name="home_search_hint">आप क्या करना चाहते हैं?</string>
+    <string name="home_quick_actions">त्वरित कार्य</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">दस्तावेज़ स्कैनर</string>
+    <string name="scanner_subtitle">पेज कैप्चर करें, गैलरी से इंपोर्ट करें, फिर PDF या हाई-रेज़ JPG/PNG में एक्सपोर्ट करें।</string>
+    <string name="scanner_capture_page">पेज कैप्चर करें</string>
+    <string name="scanner_import_gallery">गैलरी से इंपोर्ट</string>
+    <string name="scanner_camera_permission_title">कैमरा अनुमति आवश्यक है</string>
+    <string name="scanner_camera_permission_body">DocForge स्कैनर पूरी तरह ऑफ़लाइन है, लेकिन दस्तावेज़ पेज कैप्चर करने के लिए कैमरा एक्सेस चाहिए।</string>
+    <string name="scanner_grant_permission">कैमरा अनुमति दें</string>
+
+    <!-- Converter -->
+    <string name="converter_images_to_pdf">छवियाँ PDF में</string>
+    <string name="converter_offline_notice">ऑफ़लाइन कन्वर्शन। आपकी फ़ाइलें आपके फ़ोन से बाहर नहीं जातीं।</string>
+    <string name="converter_text_to_pdf">टेक्स्ट PDF में</string>
+
+    <!-- PDF Tools -->
+    <string name="pdf_merge_title">मिक्स्ड मर्ज</string>
+    <string name="pdf_compress_title">PDF कंप्रेस</string>
+    <string name="pdf_split_title">PDF स्प्लिट</string>
+    <string name="pdf_password_title">PDF पासवर्ड</string>
+
+    <!-- Sign / Redact -->
+    <string name="sign_title">हस्ताक्षर छवि जोड़ें</string>
+    <string name="sign_disclaimer">⚠️ यह PDF में एक विज़ुअल हस्ताक्षर छवि जोड़ता है। यह कानूनी रूप से बाध्यकारी डिजिटल हस्ताक्षर नहीं है।</string>
+    <string name="redact_title">टेक्स्ट कवर / ब्लैक-आउट</string>
+    <string name="redact_disclaimer">⚠️ टेक्स्ट को विज़ुअली छुपाता है। कुछ मामलों में टेक्स्ट रिकवर हो सकता है।</string>
+
+    <!-- Resume -->
+    <string name="resume_builder_title">रिज़्यूमे बिल्डर</string>
+    <string name="resume_choose_template">टेम्पलेट चुनें</string>
+    <string name="resume_your_details">आपका विवरण</string>
+    <string name="resume_full_name">पूरा नाम</string>
+    <string name="resume_preview">पूर्वावलोकन</string>
+    <string name="resume_export_pdf">PDF एक्सपोर्ट</string>
+
+    <!-- History -->
+    <string name="history_title">हाल के कन्वर्शन</string>
+    <string name="history_empty">अभी तक कोई कन्वर्शन इतिहास नहीं।</string>
+    <string name="history_clear_all">सब साफ़ करें</string>
+
+    <!-- Settings -->
+    <string name="settings_title">सेटिंग्स</string>
+
+    <!-- Common -->
+    <string name="select_pdf">PDF चुनें</string>
+    <string name="dismiss_error">त्रुटि खारिज करें</string>
+    <string name="back">वापस</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="confirm">पुष्टि करें</string>
+    <string name="done">हो गया</string>
+    <string name="save">सहेजें</string>
+    <string name="share">शेयर</string>
+    <string name="loading">लोड हो रहा है…</string>
+    <string name="processing">प्रोसेसिंग…</string>
+    <string name="success">सफल</string>
+    <string name="error_generic">कुछ गलत हो गया। कृपया पुनः प्रयास करें।</string>
+    <string name="compression_high">उच्च</string>
+    <string name="compression_medium">मध्यम</string>
+    <string name="compression_low">निम्न</string>
+</resources>

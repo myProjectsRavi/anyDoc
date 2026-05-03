@@ -39,10 +39,14 @@ class PdfCompressor(
     private val context: Context
 ) {
 
+    /**
+     * @param onProgress called with (completedPages, totalPages) after each page is compressed.
+     */
     suspend fun compress(
         inputUri: Uri,
         outputName: String,
-        level: PdfCompressionLevel
+        level: PdfCompressionLevel,
+        onProgress: ((completed: Int, total: Int) -> Unit)? = null
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         PdfBoxInit.ensure(context)
         val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
@@ -59,7 +63,8 @@ class PdfCompressor(
                 sourceFile = sourceFile,
                 outputFile = outputFile,
                 renderDpi = level.renderDpi,
-                jpegQuality = level.jpegQuality
+                jpegQuality = level.jpegQuality,
+                onProgress = onProgress
             )
 
             PdfCreationResult(
@@ -89,7 +94,8 @@ class PdfCompressor(
         sourceFile: File,
         outputFile: File,
         renderDpi: Int,
-        jpegQuality: Int
+        jpegQuality: Int,
+        onProgress: ((completed: Int, total: Int) -> Unit)? = null
     ): Int = withContext(Dispatchers.IO) {
         val checkCancelled = { coroutineContext.ensureActive() }
         val scale = renderDpi / 72f  // PDF native unit = 1/72 inch
@@ -139,6 +145,7 @@ class PdfCompressor(
                                 bitmap.recycle()
                             }
                         }
+                        onProgress?.invoke(i + 1, renderer.pageCount)
                     }
 
                     outDoc.save(outputFile)

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DocForge</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_scanner">Escáner</string>
+    <string name="nav_convert">Convertir</string>
+    <string name="nav_pdf_tools">Herramientas PDF</string>
+    <string name="nav_history">Historial</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Bienvenido a DocForge</string>
+    <string name="onboarding_subtitle">Conversiones de archivos y herramientas PDF privadas y sin conexión, sin cuentas ni marcas de agua.</string>
+    <string name="onboarding_features_heading">Lo que obtienes</string>
+    <string name="onboarding_get_started">Comenzar</string>
+
+    <!-- Home -->
+    <string name="home_title">DocForge</string>
+    <string name="home_search_hint">¿Qué quieres hacer?</string>
+    <string name="home_quick_actions">Acciones rápidas</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">Escáner de documentos</string>
+    <string name="scanner_subtitle">Captura páginas, importa de la galería y exporta como PDF o JPG/PNG de alta resolución.</string>
+    <string name="scanner_capture_page">Capturar página</string>
+    <string name="scanner_import_gallery">Importar de galería</string>
+    <string name="scanner_camera_permission_title">Se requiere permiso de cámara</string>
+    <string name="scanner_camera_permission_body">El escáner de DocForge es completamente sin conexión, pero necesita acceso a la cámara para capturar páginas.</string>
+    <string name="scanner_grant_permission">Conceder permiso de cámara</string>
+
+    <!-- Converter -->
+    <string name="converter_images_to_pdf">Imágenes a PDF</string>
+    <string name="converter_offline_notice">Conversión sin conexión. Tus archivos nunca salen de tu teléfono.</string>
+    <string name="converter_text_to_pdf">Texto a PDF</string>
+
+    <!-- PDF Tools -->
+    <string name="pdf_merge_title">Fusión mixta</string>
+    <string name="pdf_compress_title">Comprimir PDF</string>
+    <string name="pdf_split_title">Dividir PDF</string>
+    <string name="pdf_password_title">Contraseña PDF</string>
+
+    <!-- Sign / Redact -->
+    <string name="sign_title">Agregar imagen de firma</string>
+    <string name="sign_disclaimer">⚠️ Esto agrega una imagen visual de firma al PDF. No es una firma digital legalmente vinculante.</string>
+    <string name="redact_title">Cubrir / tachar texto</string>
+    <string name="redact_disclaimer">⚠️ Oculta el texto visualmente. El texto subyacente puede seguir siendo recuperable.</string>
+
+    <!-- Resume -->
+    <string name="resume_builder_title">Creador de currículum</string>
+    <string name="resume_choose_template">Elegir plantilla</string>
+    <string name="resume_your_details">Tus datos</string>
+    <string name="resume_full_name">Nombre completo</string>
+    <string name="resume_preview">Vista previa</string>
+    <string name="resume_export_pdf">Exportar PDF</string>
+
+    <!-- History -->
+    <string name="history_title">Conversiones recientes</string>
+    <string name="history_empty">Aún no hay historial de conversiones.</string>
+    <string name="history_clear_all">Borrar todo</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ajustes</string>
+
+    <!-- Common -->
+    <string name="select_pdf">Seleccionar PDF</string>
+    <string name="dismiss_error">Descartar error</string>
+    <string name="back">Atrás</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="done">Hecho</string>
+    <string name="save">Guardar</string>
+    <string name="share">Compartir</string>
+    <string name="loading">Cargando…</string>
+    <string name="processing">Procesando…</string>
+    <string name="success">Éxito</string>
+    <string name="error_generic">Algo salió mal. Por favor, inténtalo de nuevo.</string>
+    <string name="compression_high">Alta</string>
+    <string name="compression_medium">Media</string>
+    <string name="compression_low">Baja</string>
+</resources>

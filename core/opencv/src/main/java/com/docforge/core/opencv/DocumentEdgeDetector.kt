@@ -175,13 +175,22 @@ class DocumentEdgeDetector {
         }
     }
 
-    fun applyBlackWhiteFilter(bitmap: Bitmap, threshold: Double = 150.0): Bitmap? {
+    /**
+     * Applies Otsu's adaptive thresholding for B&W conversion.
+     * If [threshold] > 0 it is used as a fixed cutoff; otherwise Otsu picks the optimal value.
+     */
+    fun applyBlackWhiteFilter(bitmap: Bitmap, threshold: Double = 0.0): Bitmap? {
         return transformBitmap(bitmap) { sourceRgba, outputRgba ->
             val gray = Mat()
             val binary = Mat()
             try {
                 Imgproc.cvtColor(sourceRgba, gray, Imgproc.COLOR_RGBA2GRAY)
-                Imgproc.threshold(gray, binary, threshold, 255.0, Imgproc.THRESH_BINARY)
+                if (threshold > 0.0) {
+                    Imgproc.threshold(gray, binary, threshold, 255.0, Imgproc.THRESH_BINARY)
+                } else {
+                    // Otsu automatically determines the best global threshold
+                    Imgproc.threshold(gray, binary, 0.0, 255.0, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU)
+                }
                 Imgproc.cvtColor(binary, outputRgba, Imgproc.COLOR_GRAY2RGBA)
             } finally {
                 binary.release()

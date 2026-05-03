@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DocForge</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_scanner">Pemindai</string>
+    <string name="nav_convert">Konversi</string>
+    <string name="nav_pdf_tools">Alat PDF</string>
+    <string name="nav_history">Riwayat</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Selamat datang di DocForge</string>
+    <string name="onboarding_subtitle">Konversi file dan alat PDF pribadi secara offline, tanpa akun atau tanda air.</string>
+    <string name="onboarding_features_heading">Apa yang Anda dapatkan</string>
+    <string name="onboarding_get_started">Mulai</string>
+
+    <!-- Home -->
+    <string name="home_title">DocForge</string>
+    <string name="home_search_hint">Apa yang ingin Anda lakukan?</string>
+    <string name="home_quick_actions">Aksi Cepat</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">Pemindai Dokumen</string>
+    <string name="scanner_subtitle">Ambil halaman, impor dari galeri, lalu ekspor sebagai PDF atau JPG/PNG resolusi tinggi.</string>
+    <string name="scanner_capture_page">Ambil Halaman</string>
+    <string name="scanner_import_gallery">Impor dari Galeri</string>
+    <string name="scanner_camera_permission_title">Izin kamera diperlukan</string>
+    <string name="scanner_camera_permission_body">Pemindai DocForge sepenuhnya offline, tetapi membutuhkan akses kamera untuk mengambil halaman dokumen.</string>
+    <string name="scanner_grant_permission">Berikan Izin Kamera</string>
+
+    <!-- Converter -->
+    <string name="converter_images_to_pdf">Gambar ke PDF</string>
+    <string name="converter_offline_notice">Konversi offline. File Anda tidak pernah keluar dari ponsel.</string>
+    <string name="converter_text_to_pdf">Teks ke PDF</string>
+
+    <!-- PDF Tools -->
+    <string name="pdf_merge_title">Gabung Campuran</string>
+    <string name="pdf_compress_title">Kompres PDF</string>
+    <string name="pdf_split_title">Pisahkan PDF</string>
+    <string name="pdf_password_title">Kata Sandi PDF</string>
+
+    <!-- Sign / Redact -->
+    <string name="sign_title">Tambahkan Gambar Tanda Tangan</string>
+    <string name="sign_disclaimer">⚠️ Ini menambahkan gambar tanda tangan visual ke PDF. Ini bukan tanda tangan digital yang mengikat secara hukum.</string>
+    <string name="redact_title">Tutupi / Hitamkan Teks</string>
+    <string name="redact_disclaimer">⚠️ Menyembunyikan teks secara visual. Teks yang mendasari mungkin masih dapat dipulihkan.</string>
+
+    <!-- Resume -->
+    <string name="resume_builder_title">Pembuat Resume</string>
+    <string name="resume_choose_template">Pilih Templat</string>
+    <string name="resume_your_details">Detail Anda</string>
+    <string name="resume_full_name">Nama Lengkap</string>
+    <string name="resume_preview">Pratinjau</string>
+    <string name="resume_export_pdf">Ekspor PDF</string>
+
+    <!-- History -->
+    <string name="history_title">Konversi Terbaru</string>
+    <string name="history_empty">Belum ada riwayat konversi.</string>
+    <string name="history_clear_all">Hapus Semua</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Pengaturan</string>
+
+    <!-- Common -->
+    <string name="select_pdf">Pilih PDF</string>
+    <string name="dismiss_error">Tutup Error</string>
+    <string name="back">Kembali</string>
+    <string name="cancel">Batal</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="done">Selesai</string>
+    <string name="save">Simpan</string>
+    <string name="share">Bagikan</string>
+    <string name="loading">Memuat…</string>
+    <string name="processing">Memproses…</string>
+    <string name="success">Berhasil</string>
+    <string name="error_generic">Terjadi kesalahan. Silakan coba lagi.</string>
+    <string name="compression_high">Tinggi</string>
+    <string name="compression_medium">Sedang</string>
+    <string name="compression_low">Rendah</string>
+</resources>

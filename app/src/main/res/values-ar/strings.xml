@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DocForge</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_scanner">الماسح</string>
+    <string name="nav_convert">تحويل</string>
+    <string name="nav_pdf_tools">أدوات PDF</string>
+    <string name="nav_history">السجل</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">مرحبًا بك في DocForge</string>
+    <string name="onboarding_subtitle">تحويل ملفات خاص وبدون إنترنت وأدوات PDF بدون حسابات أو علامات مائية.</string>
+    <string name="onboarding_features_heading">ما ستحصل عليه</string>
+    <string name="onboarding_get_started">ابدأ</string>
+
+    <!-- Home -->
+    <string name="home_title">DocForge</string>
+    <string name="home_search_hint">ماذا تريد أن تفعل؟</string>
+    <string name="home_quick_actions">إجراءات سريعة</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">ماسح المستندات</string>
+    <string name="scanner_subtitle">التقط الصفحات، استورد من المعرض، ثم صدّر كـ PDF أو JPG/PNG عالي الدقة.</string>
+    <string name="scanner_capture_page">التقاط صفحة</string>
+    <string name="scanner_import_gallery">استيراد من المعرض</string>
+    <string name="scanner_camera_permission_title">إذن الكاميرا مطلوب</string>
+    <string name="scanner_camera_permission_body">ماسح DocForge يعمل بالكامل بدون إنترنت، لكنه يحتاج إذن الكاميرا لالتقاط صفحات المستندات.</string>
+    <string name="scanner_grant_permission">منح إذن الكاميرا</string>
+
+    <!-- Converter -->
+    <string name="converter_images_to_pdf">صور إلى PDF</string>
+    <string name="converter_offline_notice">تحويل بدون إنترنت. ملفاتك لا تغادر هاتفك أبدًا.</string>
+    <string name="converter_text_to_pdf">نص إلى PDF</string>
+
+    <!-- PDF Tools -->
+    <string name="pdf_merge_title">دمج مختلط</string>
+    <string name="pdf_compress_title">ضغط PDF</string>
+    <string name="pdf_split_title">تقسيم PDF</string>
+    <string name="pdf_password_title">كلمة مرور PDF</string>
+
+    <!-- Sign / Redact -->
+    <string name="sign_title">إضافة صورة توقيع</string>
+    <string name="sign_disclaimer">⚠️ هذا يضيف صورة توقيع مرئية إلى PDF. ليس توقيعًا رقميًا ملزمًا قانونيًا.</string>
+    <string name="redact_title">تغطية / إخفاء النص</string>
+    <string name="redact_disclaimer">⚠️ يخفي النص بصريًا. قد يكون النص الأساسي قابلاً للاسترداد في بعض الحالات.</string>
+
+    <!-- Resume -->
+    <string name="resume_builder_title">منشئ السيرة الذاتية</string>
+    <string name="resume_choose_template">اختر قالبًا</string>
+    <string name="resume_your_details">بياناتك</string>
+    <string name="resume_full_name">الاسم الكامل</string>
+    <string name="resume_preview">معاينة</string>
+    <string name="resume_export_pdf">تصدير PDF</string>
+
+    <!-- History -->
+    <string name="history_title">التحويلات الأخيرة</string>
+    <string name="history_empty">لا يوجد سجل تحويلات بعد.</string>
+    <string name="history_clear_all">مسح الكل</string>
+
+    <!-- Settings -->
+    <string name="settings_title">الإعدادات</string>
+
+    <!-- Common -->
+    <string name="select_pdf">اختر PDF</string>
+    <string name="dismiss_error">تجاهل الخطأ</string>
+    <string name="back">رجوع</string>
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="done">تم</string>
+    <string name="save">حفظ</string>
+    <string name="share">مشاركة</string>
+    <string name="loading">جارٍ التحميل…</string>
+    <string name="processing">جارٍ المعالجة…</string>
+    <string name="success">تم بنجاح</string>
+    <string name="error_generic">حدث خطأ ما. يرجى المحاولة مرة أخرى.</string>
+    <string name="compression_high">عالي</string>
+    <string name="compression_medium">متوسط</string>
+    <string name="compression_low">منخفض</string>
+</resources>
