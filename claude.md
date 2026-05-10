@@ -724,3 +724,14 @@ object EngineWarmup {
 #### 🟡 DEFERRED (valid but not urgent)
 - **Bitmap Pooling**: Valid optimization for GC pause reduction, but modern Android (API 26+) ART GC is efficient enough. Deferred to post-launch optimization sprint.
 - **MED-13 Noto Sans font embedding**: Already tracked since Sprint 3 as deferred. Requires ~500KB asset bundling + `PDType0Font.load()` integration. Deferred to internationalization sprint.
+
+### Sprint 8 — UI/UX Overhaul & Candy Design System (Week 14) ✅ COMPLETED
+- ✅ Implemented vibrant "Candy Design System" color palette mapping across `MaterialTheme.colorScheme`.
+- ✅ Complete redesign of `HomeScreen` with Hero section, Recents horizontal carousel, Super-App tools grid, and Bento Highlights.
+- ✅ Built and integrated the `VaultScreen` with biometric prompt and AES-256 locking visuals.
+- ✅ Redesigned all 25+ tool screens (Converters, PDF Tools, History, Scanner) with:
+  - Rounded container hierarchies (`surfaceContainerLowest` through `surfaceContainerHighest`).
+  - `CircleShape` major action buttons with deep drop shadows.
+  - Dashed-styled soft-background "Drop Zones" for file uploading.
+  - Distinctly colored circular icon containers.
+- ✅ Resolved `material-icons-extended` dependency for `feature/history`.

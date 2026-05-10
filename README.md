@@ -20,6 +20,10 @@ Because AnyDoc works entirely on your phone (no cloud uploads!), it is **lightni
 
 ## ✨ What can you do with AnyDoc?
 
+### 🎨 Elegant & Modern UI
+*   **Candy Design System:** Enjoy a vibrant, modern, and playful interface designed for maximum ease of use.
+*   **Intuitive Workspace:** Drag, drop, and organize files in a clean, visual workspace that feels native to your device.
+
 ### ✍️ Add Your Signature to Documents
 *   **Add Your Signature to Any PDF:** Draw your signature once, save it, and place it on any PDF page.
 *   **Sign Multiple Pages:** Apply your signature image to 50 pages at once with built-in templates. Perfect for massive contracts!

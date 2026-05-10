@@ -532,3 +532,14 @@ The following patterns are engineering excellence and must never be regressed:
 - ✅ Already correct: Thread isolation — all tools use `withContext(Dispatchers.IO)` internally
 - ❌ Gemini wrong: "ML Kit depends on Play Services" → we use `com.google.mlkit:text-recognition:16.0.1` (bundled, offline, all devices)
 - 🟡 Deferred: Bitmap Pooling (post-launch), MED-13 Noto Sans (internationalization sprint)
+
+### Sprint 8 — UI/UX Overhaul & Candy Design System (Week 14) ✅ COMPLETED
+- ✅ Implemented vibrant "Candy Design System" color palette mapping across `MaterialTheme.colorScheme`.
+- ✅ Complete redesign of `HomeScreen` with Hero section, Recents horizontal carousel, Super-App tools grid, and Bento Highlights.
+- ✅ Built and integrated the `VaultScreen` with biometric prompt and AES-256 locking visuals.
+- ✅ Redesigned all 25+ tool screens (Converters, PDF Tools, History, Scanner) with:
+  - Rounded container hierarchies (`surfaceContainerLowest` through `surfaceContainerHighest`).
+  - `CircleShape` major action buttons with deep drop shadows.
+  - Dashed-styled soft-background "Drop Zones" for file uploading.
+  - Distinctly colored circular icon containers.
+- ✅ Resolved `material-icons-extended` dependency for `feature/history`.

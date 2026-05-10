@@ -627,3 +627,14 @@ targetSdk = 34  → 35
 #### Deferred
 - Bitmap Pooling → post-launch optimization
 - MED-13 Noto Sans font embedding → internationalization sprint
+
+### Sprint 8 — UI/UX Overhaul & Candy Design System (Week 14) ✅ COMPLETED
+- ✅ Implemented vibrant "Candy Design System" color palette mapping across `MaterialTheme.colorScheme`.
+- ✅ Complete redesign of `HomeScreen` with Hero section, Recents horizontal carousel, Super-App tools grid, and Bento Highlights.
+- ✅ Built and integrated the `VaultScreen` with biometric prompt and AES-256 locking visuals.
+- ✅ Redesigned all 25+ tool screens (Converters, PDF Tools, History, Scanner) with:
+  - Rounded container hierarchies (`surfaceContainerLowest` through `surfaceContainerHighest`).
+  - `CircleShape` major action buttons with deep drop shadows.
+  - Dashed-styled soft-background "Drop Zones" for file uploading.
+  - Distinctly colored circular icon containers.
+- ✅ Resolved `material-icons-extended` dependency for `feature/history`.
