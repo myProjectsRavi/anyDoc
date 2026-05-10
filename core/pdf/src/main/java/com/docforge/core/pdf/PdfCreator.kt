@@ -114,7 +114,13 @@ class PdfCreator(
             PdfPageSize.A4 -> 595 to 842
             PdfPageSize.LETTER -> 612 to 792
             PdfPageSize.LEGAL -> 612 to 1008
-            PdfPageSize.AUTO -> firstBitmap.width to firstBitmap.height
+            PdfPageSize.AUTO -> {
+                // Convert pixels to PDF points assuming 72 DPI (1 point = 1/72 inch)
+                // Decoded bitmaps are ~150 DPI, so scale by 72/150
+                val scale = 72f / 150f
+                (firstBitmap.width * scale).toInt().coerceAtLeast(1) to
+                    (firstBitmap.height * scale).toInt().coerceAtLeast(1)
+            }
         }
     }
 }

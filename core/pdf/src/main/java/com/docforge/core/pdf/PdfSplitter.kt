@@ -38,7 +38,7 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "split")
-            val outputFile = File(outputDir, "$sanitized.pdf")
+            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
             PDDocument().use { outDoc ->
                 for (pageOneBased in startPageOneBased..endPageOneBased) {
@@ -208,7 +208,7 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "reorder")
-            val outputFile = File(outputDir, "$sanitized.pdf")
+            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
             PDDocument().use { outDoc ->
                 orderedPagesOneBased.forEach { pageOneBased ->
@@ -247,7 +247,7 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "delete")
-            val outputFile = File(outputDir, "$sanitized.pdf")
+            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
             PDDocument().use { outDoc ->
                 keptPages.forEach { pageOneBased ->
@@ -285,7 +285,7 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "rotate")
-            val outputFile = File(outputDir, "$sanitized.pdf")
+            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
             PDDocument().use { outDoc ->
                 for (pageOneBased in 1..sourceDoc.numberOfPages) {
@@ -330,7 +330,7 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "workspace")
-            val outputFile = File(outputDir, "$sanitized.pdf")
+            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
             PDDocument().use { outDoc ->
                 visualOrderOneBased.forEach { pageOneBased ->

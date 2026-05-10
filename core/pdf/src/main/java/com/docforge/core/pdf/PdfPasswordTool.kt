@@ -22,7 +22,7 @@ class PdfPasswordTool(
         ownerPassword: String = userPassword
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(userPassword.isNotBlank()) { "User password cannot be blank." }
-        require(userPassword.length >= 6) { "Password must be at least 6 characters." }
+        require(userPassword.length >= 8) { "Password must be at least 8 characters." }
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_pwd_", suffix = ".pdf") { sourceFile ->
             loadPdfDocument(sourceFile).use { document ->
                 require(document.numberOfPages > 0) { "Input PDF has no pages." }
@@ -33,7 +33,7 @@ class PdfPasswordTool(
                     userPassword,
                     permissions
                 ).apply {
-                    setEncryptionKeyLength(128)
+                    setEncryptionKeyLength(256)
                     setPermissions(permissions)
                 }
 

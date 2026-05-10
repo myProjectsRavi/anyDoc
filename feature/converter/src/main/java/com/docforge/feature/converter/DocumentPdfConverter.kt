@@ -51,7 +51,7 @@ class DocumentPdfConverter(
 
         val sanitized = outputName.ifBlank { "doc_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = File(outputDir, "$sanitized.pdf")
+        val outputFile = com.docforge.core.pdf.resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
         val pageCount = writeLinesAsPdf(lines, outputFile)
 
@@ -179,6 +179,13 @@ class DocumentPdfConverter(
         plain = Regex("\\\\'[0-9A-Fa-f]{2}").replace(plain) { match ->
             val hex = match.value.substring(2)
             hex.toInt(16).toChar().toString()
+        }
+
+        // Handle \uN unicode escapes (e.g., \u8212? → em-dash)
+        plain = Regex("\\\\u(-?\\d+).").replace(plain) { match ->
+            val codePoint = match.groupValues[1].toIntOrNull() ?: return@replace match.value
+            val cp = if (codePoint < 0) codePoint + 65536 else codePoint
+            runCatching { String(Character.toChars(cp)) }.getOrDefault(match.value)
         }
 
         plain = plain

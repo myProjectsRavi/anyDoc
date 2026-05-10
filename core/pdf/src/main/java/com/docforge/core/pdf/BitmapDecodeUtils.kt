@@ -12,6 +12,18 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 private const val DEFAULT_MAX_LONG_EDGE = 2200
+private const val THUMBNAIL_MAX_LONG_EDGE = 400
+
+/**
+ * Decodes a lightweight thumbnail (~400px) suitable for UI preview lists.
+ * Uses ~640 KB per image vs ~19 MB for full-resolution decode.
+ * Always prefer this for LazyColumn / grid previews to prevent OOM on 4 GB devices.
+ */
+fun decodeBitmapThumbnail(
+    context: Context,
+    uri: Uri,
+    maxLongEdge: Int = THUMBNAIL_MAX_LONG_EDGE
+): Bitmap? = decodeBitmapConstrained(context, uri, maxLongEdge.coerceIn(100, 800))
 
 /**
  * Decodes a bitmap from [uri], down-sampling to fit within [maxLongEdge] pixels,
@@ -72,7 +84,7 @@ fun decodeBitmapConstrained(
  * Reads EXIF orientation from the URI and rotates the bitmap if needed.
  * Used only on the BitmapFactory (pre-P) path; ImageDecoder handles it natively.
  */
-private fun applyExifRotation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap {
+private fun applyExifRotation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap? {
     val rotation = runCatching {
         context.contentResolver.openInputStream(uri)?.use { stream ->
             val exif = ExifInterface(stream)
@@ -80,19 +92,28 @@ private fun applyExifRotation(context: Context, uri: Uri, bitmap: Bitmap): Bitma
                 ExifInterface.ORIENTATION_ROTATE_90 -> 90f
                 ExifInterface.ORIENTATION_ROTATE_180 -> 180f
                 ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-                ExifInterface.ORIENTATION_TRANSVERSE -> 270f
-                ExifInterface.ORIENTATION_TRANSPOSE -> 90f
+                ExifInterface.ORIENTATION_TRANSVERSE -> -270f  // marker for rotate+flip
+                ExifInterface.ORIENTATION_TRANSPOSE -> -90f    // marker for rotate+flip
                 else -> 0f
             }
         } ?: 0f
     }.getOrDefault(0f)
 
     if (rotation == 0f) return bitmap
-    val matrix = Matrix().apply { postRotate(rotation) }
+    val needsFlip = rotation < 0f
+    val actualRotation = if (needsFlip) -rotation else rotation
+    val matrix = Matrix().apply {
+        postRotate(actualRotation)
+        if (needsFlip) postScale(-1f, 1f)
+    }
     return try {
         Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true).also {
             if (it !== bitmap) bitmap.recycle()
         }
+    } catch (oom: OutOfMemoryError) {
+        // Recycle the source bitmap to free memory, then return null to signal failure
+        bitmap.recycle()
+        null
     } catch (_: Throwable) {
         bitmap
     }

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
@@ -155,6 +156,20 @@ fun DocForgeNavHost(
                         icon = { Icon(Icons.Filled.CameraAlt, contentDescription = stringResource(R.string.nav_scanner)) }
                     )
                     NavigationBarItem(
+                        selected = currentRoute == "vault",
+                        onClick = {
+                            navController.navigate("vault") {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        label = { Text("Vault") },
+                        icon = { Icon(Icons.Filled.Lock, contentDescription = "Vault") }
+                    )
+                    NavigationBarItem(
                         selected = currentRoute == Routes.CONVERTER,
                         onClick = {
                             navController.navigate(Routes.CONVERTER) {
@@ -250,7 +265,8 @@ fun DocForgeNavHost(
                     onOpenPdfTranslate = { navController.navigate(Routes.PDF_TRANSLATE) },
                     onOpenPdfRedact = { navController.navigate(Routes.PDF_REDACT) },
                     onOpenHistory = { navController.navigate(Routes.HISTORY) },
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenVault = { navController.navigate("vault") }
                 )
             }
             composable(Routes.SETTINGS) {
@@ -261,6 +277,12 @@ fun DocForgeNavHost(
                 )
                 SettingsRoute(
                     viewModel = settingsViewModel,
+                    paddingValues = paddingValues,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("vault") {
+                com.docforge.app.vault.VaultScreen(
                     paddingValues = paddingValues,
                     onBack = { navController.popBackStack() }
                 )

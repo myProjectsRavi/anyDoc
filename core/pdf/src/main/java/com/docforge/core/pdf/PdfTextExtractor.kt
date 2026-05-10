@@ -50,7 +50,7 @@ class PdfTextExtractor(
                 val output = File(outputDir, "$sanitized.txt")
 
                 FileOutputStream(output).use { stream ->
-                    stream.write(extracted.toByteArray())
+                    stream.write(extracted.toByteArray(Charsets.UTF_8))
                 }
 
                 PdfTextExtractionResult(

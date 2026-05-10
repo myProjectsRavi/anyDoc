@@ -55,7 +55,7 @@ class ScanImageExporter(
             checkCancelled()
             val bitmap = decodeBitmap(uri) ?: error("Failed to decode page ${index + 1}: $uri")
             val extension = if (format == ScanImageFormat.JPG) "jpg" else "png"
-            val outputFile = File(outputDir, "${base}_p${index + 1}.$extension")
+            val outputFile = resolveNonConflictingFile(outputDir, "${base}_p${index + 1}", extension)
 
             FileOutputStream(outputFile).use { stream ->
                 val success = bitmap.compress(
@@ -83,14 +83,16 @@ class ScanImageExporter(
                     }
                 }
             }
+            // Delete individual files — ZIP contains them all
+            outputFiles.forEach { it.delete() }
             zip
         } else {
             null
         }
 
         ScanImageExportResult(
-            outputFiles = outputFiles,
-            outputSizeBytes = totalBytes + (zipFile?.length() ?: 0L),
+            outputFiles = if (zipFile != null) emptyList() else outputFiles,
+            outputSizeBytes = zipFile?.length() ?: totalBytes,
             bundleZipFile = zipFile
         )
     }

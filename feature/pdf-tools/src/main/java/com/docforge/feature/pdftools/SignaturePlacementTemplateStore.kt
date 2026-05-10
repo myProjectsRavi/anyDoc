@@ -141,7 +141,9 @@ class SignaturePlacementTemplateStore(
         root.put("templates", array)
 
         templatesFile.parentFile?.mkdirs()
-        templatesFile.writeText(root.toString())
+        val tmpFile = File(templatesFile.parentFile, templatesFile.name + ".tmp")
+        tmpFile.writeText(root.toString())
+        tmpFile.renameTo(templatesFile)
     }
 
     private fun normalizeName(raw: String): String {

@@ -7,6 +7,7 @@ import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.MatOfDouble
 import org.opencv.core.MatOfPoint
 import org.opencv.core.MatOfPoint2f
 import org.opencv.core.Point
@@ -16,8 +17,157 @@ import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.max
 
+/**
+ * Result from the auto-capture analyzer indicating whether a frame is suitable
+ * for automatic shutter trigger.
+ */
+data class AutoCaptureResult(
+    /** Whether this frame should trigger automatic capture. */
+    val shouldCapture: Boolean,
+    /** Detected document (if any). */
+    val document: DetectedDocument?,
+    /** Laplacian variance — higher = sharper. Below [AutoCaptureAnalyzer.BLUR_THRESHOLD] is blurry. */
+    val sharpness: Double,
+    /** Whether the camera is considered stable (low frame-to-frame corner drift). */
+    val isStable: Boolean,
+    /** Consecutive stable-and-sharp frame count. */
+    val stableFrameCount: Int
+)
+
+/**
+ * Stateful analyzer that tracks frame-to-frame stability and sharpness
+ * to determine when to auto-trigger the shutter.
+ *
+ * Usage: call [analyzeFrame] on every preview frame. When [AutoCaptureResult.shouldCapture]
+ * is `true`, capture the image and call [reset] to restart the cooldown.
+ *
+ * Gemini 3.1 Pro feedback — auto-capture for scanner.
+ */
+class AutoCaptureAnalyzer(private val detector: DocumentEdgeDetector) {
+
+    companion object {
+        /** Laplacian variance below this → frame is too blurry for capture. */
+        const val BLUR_THRESHOLD = 100.0
+
+        /** Max average corner drift (in pixels) between frames to be considered "stable". */
+        const val STABILITY_THRESHOLD_PX = 8.0f
+
+        /** Number of consecutive stable+sharp+detected frames required to trigger capture. */
+        const val REQUIRED_STABLE_FRAMES = 5
+
+        /** Minimum confidence from edge detection to consider a document present. */
+        const val MIN_CONFIDENCE = 0.35f
+    }
+
+    private var previousCorners: List<PointF>? = null
+    private var stableFrameCount = 0
+
+    /**
+     * Analyze a single preview frame.
+     *
+     * @param lumaBytes Y-plane bytes from CameraX ImageProxy
+     * @param frameWidth width in pixels
+     * @param frameHeight height in pixels
+     * @param rotationDegrees sensor rotation
+     */
+    fun analyzeFrame(
+        lumaBytes: ByteArray,
+        frameWidth: Int,
+        frameHeight: Int,
+        rotationDegrees: Int = 0
+    ): AutoCaptureResult {
+        // 1. Detect document edges
+        val detected = detector.detectDocumentBounds(lumaBytes, frameWidth, frameHeight, rotationDegrees)
+        val hasDocument = detected != null && detected.confidence >= MIN_CONFIDENCE
+
+        // 2. Measure sharpness via Laplacian variance
+        val sharpness = if (hasDocument) {
+            measureSharpness(lumaBytes, frameWidth, frameHeight)
+        } else {
+            0.0
+        }
+        val isSharp = sharpness >= BLUR_THRESHOLD
+
+        // 3. Check frame-to-frame stability (corner drift)
+        val isStable = if (hasDocument && detected != null) {
+            val stable = checkStability(detected.corners)
+            previousCorners = detected.corners
+            stable
+        } else {
+            previousCorners = null
+            stableFrameCount = 0
+            false
+        }
+
+        // 4. Accumulate stable frames
+        if (hasDocument && isSharp && isStable) {
+            stableFrameCount++
+        } else {
+            stableFrameCount = 0
+        }
+
+        val shouldCapture = stableFrameCount >= REQUIRED_STABLE_FRAMES
+
+        return AutoCaptureResult(
+            shouldCapture = shouldCapture,
+            document = detected,
+            sharpness = sharpness,
+            isStable = isStable,
+            stableFrameCount = stableFrameCount
+        )
+    }
+
+    /** Reset state after a capture is taken or the user cancels. */
+    fun reset() {
+        previousCorners = null
+        stableFrameCount = 0
+    }
+
+    /**
+     * Compute Laplacian variance as a focus/sharpness metric.
+     * Higher values = sharper image.
+     */
+    private fun measureSharpness(lumaBytes: ByteArray, width: Int, height: Int): Double {
+        if (!detector.isAvailable()) return 0.0
+        val required = width * height
+        if (lumaBytes.size < required) return 0.0
+
+        val gray = Mat(height, width, CvType.CV_8UC1)
+        val laplacian = Mat()
+        val mean = MatOfDouble()
+        val stddev = MatOfDouble()
+        return try {
+            gray.put(0, 0, lumaBytes, 0, required)
+            Imgproc.Laplacian(gray, laplacian, CvType.CV_64F)
+            Core.meanStdDev(laplacian, mean, stddev)
+            val std = stddev.get(0, 0)?.firstOrNull() ?: 0.0
+            std * std // variance
+        } catch (_: Throwable) {
+            0.0
+        } finally {
+            stddev.release()
+            mean.release()
+            laplacian.release()
+            gray.release()
+        }
+    }
+
+    /**
+     * Check if the current corners are close enough to the previous frame's corners
+     * to be considered "stable" (camera not moving).
+     */
+    private fun checkStability(currentCorners: List<PointF>): Boolean {
+        val prev = previousCorners ?: return false
+        if (prev.size != 4 || currentCorners.size != 4) return false
+        val avgDrift = prev.zip(currentCorners).map { (a, b) ->
+            hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble())
+        }.average()
+        return avgDrift <= STABILITY_THRESHOLD_PX
+    }
+}
+
 class DocumentEdgeDetector {
-    private val openCvReady: Boolean = OpenCVLoader.initLocal()
+    private val openCvReady: Boolean by lazy { OpenCVLoader.initLocal() }
     private val maxPerspectiveEdgePx = 2000.0
 
     fun isAvailable(): Boolean = openCvReady

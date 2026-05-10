@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 val enableComposeCompilerMetrics = providers.gradleProperty("enableComposeCompilerMetrics")
@@ -9,7 +10,7 @@ val enableComposeCompilerMetrics = providers.gradleProperty("enableComposeCompil
 
 android {
     namespace = "com.docforge.core.ui"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26
@@ -34,10 +35,6 @@ android {
 
     buildFeatures {
         compose = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
     }
 }
 

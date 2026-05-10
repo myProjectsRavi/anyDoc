@@ -40,7 +40,7 @@ class PdfPageImageExporter(
         outputBaseName: String,
         format: PdfPageImageFormat,
         jpegQuality: Int = 90,
-        scaleFactor: Float = 1f,
+        scaleFactor: Float = 2.5f,
         zipBundle: Boolean = false
     ): PdfPageImageExportResult = withContext(Dispatchers.IO) {
         val checkCancelled = { coroutineContext.ensureActive() }
@@ -73,7 +73,7 @@ class PdfPageImageExporter(
                                 PdfPageImageFormat.PNG -> "png"
                                 PdfPageImageFormat.WEBP -> "webp"
                             }
-                            val file = File(outputDir, "${base}_p${pageIndex + 1}.$ext")
+                            val file = resolveNonConflictingFile(outputDir, "${base}_p${pageIndex + 1}", ext)
 
                             FileOutputStream(file).use { stream ->
                                 val ok = bitmap.compress(format.toBitmapCompressFormat(), jpegQuality.coerceIn(10, 100), stream)
@@ -98,14 +98,16 @@ class PdfPageImageExporter(
                                 }
                             }
                         }
+                        // Delete individual files — ZIP contains them all
+                        files.forEach { it.delete() }
                         zip
                     } else {
                         null
                     }
 
                     PdfPageImageExportResult(
-                        outputFiles = files,
-                        outputSizeBytes = totalBytes + (zipFile?.length() ?: 0L),
+                        outputFiles = if (zipFile != null) emptyList() else files,
+                        outputSizeBytes = zipFile?.length() ?: totalBytes,
                         pageCount = renderer.pageCount,
                         bundleZipFile = zipFile
                     )

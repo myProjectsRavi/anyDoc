@@ -18,17 +18,38 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.automirrored.filled.CallSplit
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DragIndicator
+import androidx.compose.material.icons.filled.FilterCenterFocus
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.Reorder
+import androidx.compose.material.icons.automirrored.filled.RotateRight
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -40,7 +61,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -48,10 +70,75 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+@Composable
+private fun BigActionButton(
+    text: String,
+    onClick: () -> Unit,
+    isProcessing: Boolean,
+    enabled: Boolean = true,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null
+) {
+    Button(
+        onClick = onClick,
+        enabled = !isProcessing && enabled,
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        shape = CircleShape,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .shadow(8.dp, CircleShape)
+    ) {
+        if (isProcessing) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text("Processing...", fontWeight = FontWeight.Black, fontSize = 18.sp)
+        } else {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+            Text(text, fontWeight = FontWeight.Black, fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun ToolCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    content: @Composable () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
+            }
+            Text(title.uppercase(), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        }
+        content()
+    }
+}
 
 @Composable
 fun PdfSplitRoute(
@@ -169,497 +256,549 @@ fun PdfSplitScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(paddingValues)
+            .padding(top = paddingValues.calculateTopPadding())
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Text("PDF Split", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text("Split, extract, reorder, delete, rotate, or bookmark-split PDF pages offline.")
-
-        Button(onClick = onPickPdf, enabled = !state.isProcessing, modifier = Modifier.fillMaxWidth()) {
-            Text(if (state.selectedUri == null) "Select PDF" else "Replace PDF")
+        // Title & Subtitle
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.CallSplit, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(24.dp))
+                }
+                Text("Split & Extract", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            }
+            Text("Split, extract, reorder, delete, rotate, or bookmark-split PDF pages offline.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
-        state.inputLabel?.let { label ->
-            Text("Input: $label", style = MaterialTheme.typography.bodySmall)
+        // Drop Zone
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                .clickable(onClick = onPickPdf)
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.UploadFile, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                }
+                Text(if (state.selectedUri == null) "Upload Document" else "Replace Document", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Tap to browse files", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                Text("Supports PDF", color = MaterialTheme.colorScheme.outline, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            }
         }
 
-        state.pageCount?.let { count ->
-            Text("Total pages: $count", style = MaterialTheme.typography.bodySmall)
+        // Document List Selected Item
+        if (state.inputLabel != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "SELECTED FILE",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.DragIndicator, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Description, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(state.inputLabel, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("PDF Document • ${state.pageCount ?: 0} Pages", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
         }
 
-        OutlinedTextField(
-            value = state.outputBaseName,
-            onValueChange = onOutputBaseNameChanged,
-            label = { Text("Output Base Name") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Tools
+        ToolCard("General Settings", Icons.Default.Settings) {
+            OutlinedTextField(
+                value = state.outputBaseName,
+                onValueChange = onOutputBaseNameChanged,
+                label = { Text("Output Base Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         val selectedPdfUri = state.selectedUri
         val totalPages = state.pageCount
         if (selectedPdfUri != null && totalPages != null && totalPages > 0) {
             val baselineVisualOrder = (1..totalPages).toList()
-            val hasPendingWorkspaceEdits =
-                visualOrder != baselineVisualOrder || pendingRotationByPage.isNotEmpty()
+            val hasPendingWorkspaceEdits = visualOrder != baselineVisualOrder || pendingRotationByPage.isNotEmpty()
 
-            Text("Visual Pages", fontWeight = FontWeight.SemiBold)
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = { selectedVisualPages = emptySet() },
-                    enabled = !state.isProcessing
+            ToolCard("Visual Workspace", Icons.Default.Visibility) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Clear Selection")
-                }
-                Button(
-                    onClick = {
-                        visualOrder = baselineVisualOrder
-                        pendingRotationByPage = emptyMap()
-                        selectedVisualPages = emptySet()
-                        onReorderPagesChanged(visualOrder.joinToString(","))
-                    },
-                    enabled = !state.isProcessing
-                ) {
-                    Text("Reset Workspace")
-                }
-                Button(
-                    onClick = {
-                        val pages = selectedVisualPages.toList().sorted()
-                        if (pages.isNotEmpty()) {
-                            onExtractPagesChanged(formatPageExpression(pages))
-                        }
-                    },
-                    enabled = !state.isProcessing && selectedVisualPages.isNotEmpty()
-                ) {
-                    Text("Selection -> Extract")
-                }
-                Button(
-                    onClick = {
-                        val pages = selectedVisualPages.toList().sorted()
-                        if (pages.isNotEmpty()) {
-                            onDeletePagesChanged(formatPageExpression(pages))
-                            val pageSet = pages.toSet()
-                            visualOrder = visualOrder.filterNot { page -> pageSet.contains(page) }
-                            pendingRotationByPage = pendingRotationByPage.filterKeys { key ->
-                                visualOrder.contains(key)
-                            }
-                            selectedVisualPages = emptySet()
-                        }
-                    },
-                    enabled = !state.isProcessing && selectedVisualPages.isNotEmpty()
-                ) {
-                    Text("Queue Delete (0ms)")
-                }
-                Button(
-                    onClick = {
-                        val pages = selectedVisualPages.toList().sorted()
-                        if (pages.isNotEmpty()) {
-                            onRotatePagesChanged(formatPageExpression(pages))
-                            val updated = pendingRotationByPage.toMutableMap()
-                            pages.forEach { page ->
-                                val totalRotation = ((updated[page] ?: 0) + state.rotateDegrees) % 360
-                                if (totalRotation == 0) {
-                                    updated.remove(page)
-                                } else {
-                                    updated[page] = totalRotation
-                                }
-                            }
-                            pendingRotationByPage = updated
-                        }
-                    },
-                    enabled = !state.isProcessing && selectedVisualPages.isNotEmpty()
-                ) {
-                    Text("Queue Rotate (0ms)")
-                }
-                Button(
-                    onClick = {
-                        val order = if (selectedVisualPages.isEmpty()) {
-                            visualOrder
-                        } else {
-                            visualOrder.filter { page -> selectedVisualPages.contains(page) }
-                        }
-                        if (order.isNotEmpty()) {
-                            onReorderPagesChanged(order.joinToString(","))
-                        }
-                    },
-                    enabled = !state.isProcessing && visualOrder.isNotEmpty()
-                ) {
-                    Text("Visual Order -> Reorder")
-                }
-                Button(
-                    onClick = {
-                        onSaveVisualWorkspace(visualOrder, pendingRotationByPage)
-                    },
-                    enabled = !state.isProcessing && hasPendingWorkspaceEdits && visualOrder.isNotEmpty()
-                ) {
-                    Text("Save Workspace Edits")
-                }
-            }
-
-            if (pendingRotationByPage.isNotEmpty()) {
-                Text(
-                    "Pending rotations: ${
-                        pendingRotationByPage.entries
-                            .sortedBy { it.key }
-                            .joinToString(", ") { entry -> "p${entry.key}:${entry.value}°" }
-                    }",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Text("Thumbnail Quality", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                PdfSplitThumbnailQuality.entries.forEach { quality ->
+                    Button(
+                        onClick = { selectedVisualPages = emptySet() },
+                        enabled = !state.isProcessing,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ) {
+                        Text("Clear Selection")
+                    }
                     Button(
                         onClick = {
-                            thumbnailQuality = quality
-                            thumbnailsError = if (totalPages > 120) {
-                                "Large PDF detected: thumbnails are rendered on-demand for smooth scrolling."
-                            } else {
-                                null
+                            visualOrder = baselineVisualOrder
+                            pendingRotationByPage = emptyMap()
+                            selectedVisualPages = emptySet()
+                            onReorderPagesChanged(visualOrder.joinToString(","))
+                        },
+                        enabled = !state.isProcessing,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ) {
+                        Text("Reset Workspace")
+                    }
+                    Button(
+                        onClick = {
+                            val pages = selectedVisualPages.toList().sorted()
+                            if (pages.isNotEmpty()) {
+                                onExtractPagesChanged(formatPageExpression(pages))
                             }
                         },
-                        enabled = !state.isProcessing
+                        enabled = !state.isProcessing && selectedVisualPages.isNotEmpty(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
                     ) {
-                        val selected = if (quality == thumbnailQuality) " ON" else ""
-                        Text("${quality.label}$selected")
+                        Text("Selection -> Extract")
                     }
-                }
-            }
-
-            val visualIndexByPage = visualOrder.withIndex().associate { it.value to it.index }
-            val cacheTick = thumbnailCacheVersion
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(460.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(items = visualOrder, key = { page -> page }) { page ->
-                    // Keep item subscribed to LRU cache changes.
-                    val cachedThumbnail = remember(page, cacheTick) {
-                        thumbnailCache.get(page)
-                    }
-                    val isLoading = thumbnailLoading[page] == true
-                    LaunchedEffect(selectedPdfUri, page, thumbnailQuality, cachedThumbnail) {
-                        suspend fun renderPageIfNeeded(targetPage: Int) {
-                            if (targetPage !in 1..totalPages) return
-                            if (thumbnailCache.get(targetPage) != null) return
-                            if (thumbnailLoading[targetPage] == true) return
-
-                            thumbnailLoading[targetPage] = true
-                            val rendered = withContext(Dispatchers.IO) {
-                                renderSinglePdfThumbnail(
-                                    context = context,
-                                    inputUri = selectedPdfUri,
-                                    pageOneBased = targetPage,
-                                    targetWidthPx = thumbnailQuality.targetWidthPx
-                                )
-                            }
-                            if (rendered != null) {
-                                val previous = thumbnailCache.put(targetPage, rendered)
-                                if (previous != null && previous !== rendered && !previous.isRecycled) {
-                                    previous.recycle()
+                    Button(
+                        onClick = {
+                            val pages = selectedVisualPages.toList().sorted()
+                            if (pages.isNotEmpty()) {
+                                onDeletePagesChanged(formatPageExpression(pages))
+                                val pageSet = pages.toSet()
+                                visualOrder = visualOrder.filterNot { page -> pageSet.contains(page) }
+                                pendingRotationByPage = pendingRotationByPage.filterKeys { key ->
+                                    visualOrder.contains(key)
                                 }
-                                thumbnailCacheVersion += 1
-                            } else if (thumbnailsError == null) {
-                                thumbnailsError = "Some thumbnails could not be rendered."
+                                selectedVisualPages = emptySet()
                             }
-                            thumbnailLoading.remove(targetPage)
-                        }
-
-                        // Render current row and prefetch nearby pages for smoother scrolling.
-                        for (targetPage in (page - 2)..(page + 10)) {
-                            renderPageIfNeeded(targetPage)
-                        }
-                    }
-
-                    val selected = selectedVisualPages.contains(page)
-                    val pendingRotation = pendingRotationByPage[page] ?: 0
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                width = if (selected) 2.dp else 1.dp,
-                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                            )
-                            .clickable(enabled = !state.isProcessing) {
-                                selectedVisualPages = selectedVisualPages.toMutableSet().also { set ->
-                                    if (set.contains(page)) set.remove(page) else set.add(page)
-                                }
-                            }
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        },
+                        enabled = !state.isProcessing && selectedVisualPages.isNotEmpty(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .height(110.dp)
-                                .fillMaxWidth(0.35f)
-                                .border(1.dp, MaterialTheme.colorScheme.outline),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val thumb = cachedThumbnail
-                            if (thumb != null) {
-                                Image(
-                                    bitmap = thumb.asImageBitmap(),
-                                    contentDescription = "Page $page thumbnail",
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .graphicsLayer { rotationZ = pendingRotation.toFloat() },
-                                    contentScale = ContentScale.FillBounds
-                                )
+                        Text("Queue Delete (0ms)")
+                    }
+                    Button(
+                        onClick = {
+                            val pages = selectedVisualPages.toList().sorted()
+                            if (pages.isNotEmpty()) {
+                                onRotatePagesChanged(formatPageExpression(pages))
+                                val updated = pendingRotationByPage.toMutableMap()
+                                pages.forEach { page ->
+                                    val totalRotation = ((updated[page] ?: 0) + state.rotateDegrees) % 360
+                                    if (totalRotation == 0) {
+                                        updated.remove(page)
+                                    } else {
+                                        updated[page] = totalRotation
+                                    }
+                                }
+                                pendingRotationByPage = updated
+                            }
+                        },
+                        enabled = !state.isProcessing && selectedVisualPages.isNotEmpty(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                    ) {
+                        Text("Queue Rotate (0ms)")
+                    }
+                    Button(
+                        onClick = {
+                            val order = if (selectedVisualPages.isEmpty()) {
+                                visualOrder
                             } else {
-                                Text(
-                                    text = if (isLoading) "Loading..." else "Preview",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                                visualOrder.filter { page -> selectedVisualPages.contains(page) }
+                            }
+                            if (order.isNotEmpty()) {
+                                onReorderPagesChanged(order.joinToString(","))
+                            }
+                        },
+                        enabled = !state.isProcessing && visualOrder.isNotEmpty(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                    ) {
+                        Text("Visual Order -> Reorder")
+                    }
+                }
+
+                if (pendingRotationByPage.isNotEmpty()) {
+                    Text(
+                        "Pending rotations: ${
+                            pendingRotationByPage.entries
+                                .sortedBy { it.key }
+                                .joinToString(", ") { entry -> "p${entry.key}:${entry.value}°" }
+                        }",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Text("Thumbnail Quality", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PdfSplitThumbnailQuality.entries.forEach { quality ->
+                        val isSelected = quality == thumbnailQuality
+                        Button(
+                            onClick = {
+                                thumbnailQuality = quality
+                                thumbnailsError = if (totalPages > 120) {
+                                    "Large PDF detected: thumbnails are rendered on-demand for smooth scrolling."
+                                } else {
+                                    null
+                                }
+                            },
+                            enabled = !state.isProcessing,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            Text(quality.label)
+                        }
+                    }
+                }
+
+                val visualIndexByPage = visualOrder.withIndex().associate { it.value to it.index }
+                val cacheTick = thumbnailCacheVersion
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(460.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(items = visualOrder, key = { page -> page }) { page ->
+                        // Keep item subscribed to LRU cache changes.
+                        val cachedThumbnail = remember(page, cacheTick) {
+                            thumbnailCache.get(page)
+                        }
+                        val isLoading = thumbnailLoading[page] == true
+                        LaunchedEffect(selectedPdfUri, page, thumbnailQuality, cachedThumbnail) {
+                            suspend fun renderPageIfNeeded(targetPage: Int) {
+                                if (targetPage !in 1..totalPages) return
+                                if (thumbnailCache.get(targetPage) != null) return
+                                if (thumbnailLoading[targetPage] == true) return
+
+                                thumbnailLoading[targetPage] = true
+                                val rendered = withContext(Dispatchers.IO) {
+                                    renderSinglePdfThumbnail(
+                                        context = context,
+                                        inputUri = selectedPdfUri,
+                                        pageOneBased = targetPage,
+                                        targetWidthPx = thumbnailQuality.targetWidthPx
+                                    )
+                                }
+                                if (rendered != null) {
+                                    val previous = thumbnailCache.put(targetPage, rendered)
+                                    if (previous != null && previous !== rendered && !previous.isRecycled) {
+                                        previous.recycle()
+                                    }
+                                    thumbnailCacheVersion += 1
+                                } else if (thumbnailsError == null) {
+                                    thumbnailsError = "Some thumbnails could not be rendered."
+                                }
+                                thumbnailLoading.remove(targetPage)
+                            }
+
+                            // Render current row and prefetch nearby pages for smoother scrolling.
+                            for (targetPage in (page - 2)..(page + 10)) {
+                                renderPageIfNeeded(targetPage)
                             }
                         }
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text("Page $page", fontWeight = FontWeight.SemiBold)
-                            if (pendingRotation != 0) {
-                                Text(
-                                    "Queued rotation: ${pendingRotation}°",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary
+
+                        val selected = selectedVisualPages.contains(page)
+                        val pendingRotation = pendingRotationByPage[page] ?: 0
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow)
+                                .border(
+                                    width = if (selected) 2.dp else 1.dp,
+                                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                    shape = RoundedCornerShape(12.dp)
                                 )
-                            }
-                            Text(
-                                if (selected) "Selected" else "Tap to select",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(
-                                    onClick = {
-                                        val index = visualIndexByPage[page] ?: -1
-                                        if (index > 0) {
-                                            val updated = visualOrder.toMutableList()
-                                            val temp = updated[index - 1]
-                                            updated[index - 1] = updated[index]
-                                            updated[index] = temp
-                                            visualOrder = updated
-                                            onReorderPagesChanged(updated.joinToString(","))
-                                        }
-                                    },
-                                    enabled = !state.isProcessing && (visualIndexByPage[page] ?: 0) > 0
-                                ) {
-                                    Text("Up")
+                                .clickable(enabled = !state.isProcessing) {
+                                    selectedVisualPages = selectedVisualPages.toMutableSet().also { set ->
+                                        if (set.contains(page)) set.remove(page) else set.add(page)
+                                    }
                                 }
-                                Button(
-                                    onClick = {
-                                        val index = visualIndexByPage[page] ?: -1
-                                        if (index >= 0 && index < visualOrder.lastIndex) {
-                                            val updated = visualOrder.toMutableList()
-                                            val temp = updated[index + 1]
-                                            updated[index + 1] = updated[index]
-                                            updated[index] = temp
-                                            visualOrder = updated
-                                            onReorderPagesChanged(updated.joinToString(","))
-                                        }
-                                    },
-                                    enabled = !state.isProcessing &&
-                                        (visualIndexByPage[page] ?: visualOrder.size) < visualOrder.lastIndex
-                                ) {
-                                    Text("Down")
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .height(110.dp)
+                                    .fillMaxWidth(0.35f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val thumb = cachedThumbnail
+                                if (thumb != null) {
+                                    Image(
+                                        bitmap = thumb.asImageBitmap(),
+                                        contentDescription = "Page $page thumbnail",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .graphicsLayer { rotationZ = pendingRotation.toFloat() },
+                                        contentScale = ContentScale.FillBounds
+                                    )
+                                } else {
+                                    Text(
+                                        text = if (isLoading) "Loading..." else "Preview",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("Page $page", fontWeight = FontWeight.SemiBold, color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+                                if (pendingRotation != 0) {
+                                    Text(
+                                        "Queued rotation: ${pendingRotation}°",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Text(
+                                    if (selected) "Selected" else "Tap to select",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick = {
+                                            val index = visualIndexByPage[page] ?: -1
+                                            if (index > 0) {
+                                                val updated = visualOrder.toMutableList()
+                                                val temp = updated[index - 1]
+                                                updated[index - 1] = updated[index]
+                                                updated[index] = temp
+                                                visualOrder = updated
+                                                onReorderPagesChanged(updated.joinToString(","))
+                                            }
+                                        },
+                                        enabled = !state.isProcessing && (visualIndexByPage[page] ?: 0) > 0,
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    ) {
+                                        Text("Up")
+                                    }
+                                    Button(
+                                        onClick = {
+                                            val index = visualIndexByPage[page] ?: -1
+                                            if (index >= 0 && index < visualOrder.lastIndex) {
+                                                val updated = visualOrder.toMutableList()
+                                                val temp = updated[index + 1]
+                                                updated[index + 1] = updated[index]
+                                                updated[index] = temp
+                                                visualOrder = updated
+                                                onReorderPagesChanged(updated.joinToString(","))
+                                            }
+                                        },
+                                        enabled = !state.isProcessing &&
+                                            (visualIndexByPage[page] ?: visualOrder.size) < visualOrder.lastIndex,
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    ) {
+                                        Text("Down")
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            thumbnailsError?.let { message ->
-                Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                thumbnailsError?.let { message ->
+                    Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+
+                if (hasPendingWorkspaceEdits) {
+                    BigActionButton(
+                        text = "Save Workspace Edits",
+                        onClick = { onSaveVisualWorkspace(visualOrder, pendingRotationByPage) },
+                        isProcessing = state.isProcessing,
+                        enabled = visualOrder.isNotEmpty()
+                    )
+                }
             }
         }
 
-        Text("Split by Range", fontWeight = FontWeight.SemiBold)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ToolCard("Split by Range", Icons.Default.ContentCut) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = state.startPageInput,
+                    onValueChange = onStartPageChanged,
+                    label = { Text("Start") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = state.endPageInput,
+                    onValueChange = onEndPageChanged,
+                    label = { Text("End") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            BigActionButton("Create Range PDF", onSplitRange, state.isProcessing, enabled = state.selectedUri != null)
+        }
+
+        ToolCard("Split Every N Pages", Icons.Default.FormatListNumbered) {
             OutlinedTextField(
-                value = state.startPageInput,
-                onValueChange = onStartPageChanged,
-                label = { Text("Start") },
+                value = state.splitEveryNInput,
+                onValueChange = onSplitEveryNChanged,
+                label = { Text("Pages per split file") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+            BigActionButton("Create Chunked PDFs", onSplitEveryN, state.isProcessing, enabled = state.selectedUri != null)
         }
-        OutlinedTextField(
-            value = state.endPageInput,
-            onValueChange = onEndPageChanged,
-            label = { Text("End") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
 
-        Button(
-            onClick = onSplitRange,
-            enabled = !state.isProcessing,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isProcessing) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Create Range PDF")
+        ToolCard("Split by Bookmarks", Icons.Default.Bookmark) {
+            Text("Automatically split the PDF at every top-level bookmark.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+            BigActionButton("Split by Bookmarks", onSplitByBookmarks, state.isProcessing, enabled = state.selectedUri != null)
+        }
+
+        ToolCard("Extract Specific Pages", Icons.Default.FilterCenterFocus) {
+            OutlinedTextField(
+                value = state.extractPagesInput,
+                onValueChange = onExtractPagesChanged,
+                label = { Text("Pages (e.g. 1,3,5-7)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            BigActionButton("Extract Pages", onExtractPages, state.isProcessing, enabled = state.selectedUri != null)
+        }
+
+        ToolCard("Reorder Pages", Icons.Default.Reorder) {
+            OutlinedTextField(
+                value = state.reorderPagesInput,
+                onValueChange = onReorderPagesChanged,
+                label = { Text("New order (e.g. 3,1,2 or 10-1)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            BigActionButton("Create Reordered PDF", onReorderPages, state.isProcessing, enabled = state.selectedUri != null)
+        }
+
+        ToolCard("Delete Pages", Icons.Default.Delete) {
+            OutlinedTextField(
+                value = state.deletePagesInput,
+                onValueChange = onDeletePagesChanged,
+                label = { Text("Pages to remove (e.g. 2,4,8-10)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            BigActionButton("Delete Pages and Save", onDeletePages, state.isProcessing, enabled = state.selectedUri != null)
+        }
+
+        ToolCard("Rotate Pages", Icons.AutoMirrored.Filled.RotateRight) {
+            OutlinedTextField(
+                value = state.rotatePagesInput,
+                onValueChange = onRotatePagesChanged,
+                label = { Text("Pages to rotate (e.g. 1,4,7-9)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(90, 180, 270).forEach { degrees ->
+                    val isSelected = state.rotateDegrees == degrees
+                    Button(
+                        onClick = { onRotateDegreesChanged(degrees) },
+                        enabled = !state.isProcessing,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        Text("$degrees°")
+                    }
+                }
             }
+            BigActionButton("Rotate Pages and Save", onRotatePages, state.isProcessing, enabled = state.selectedUri != null)
         }
 
-        Text("Split Every N Pages", fontWeight = FontWeight.SemiBold)
-        OutlinedTextField(
-            value = state.splitEveryNInput,
-            onValueChange = onSplitEveryNChanged,
-            label = { Text("Pages per split file") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Status & Progress
+        if (state.isProcessing || state.statusMessage != null || state.errorMessage != null || state.lastOutputPaths.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (state.isProcessing) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
 
-        Button(
-            onClick = onSplitEveryN,
-            enabled = !state.isProcessing,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isProcessing) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Create Chunked PDFs")
-            }
-        }
-
-        Button(
-            onClick = onSplitByBookmarks,
-            enabled = !state.isProcessing,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isProcessing) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Split by Bookmarks")
-            }
-        }
-
-        Text("Extract Specific Pages", fontWeight = FontWeight.SemiBold)
-        OutlinedTextField(
-            value = state.extractPagesInput,
-            onValueChange = onExtractPagesChanged,
-            label = { Text("Pages (e.g. 1,3,5-7)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = onExtractPages,
-            enabled = !state.isProcessing,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isProcessing) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Extract Pages")
-            }
-        }
-
-        Text("Reorder Pages", fontWeight = FontWeight.SemiBold)
-        OutlinedTextField(
-            value = state.reorderPagesInput,
-            onValueChange = onReorderPagesChanged,
-            label = { Text("New order (e.g. 3,1,2 or 10-1)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = onReorderPages,
-            enabled = !state.isProcessing,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isProcessing) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Create Reordered PDF")
-            }
-        }
-
-        Text("Delete Pages", fontWeight = FontWeight.SemiBold)
-        OutlinedTextField(
-            value = state.deletePagesInput,
-            onValueChange = onDeletePagesChanged,
-            label = { Text("Pages to remove (e.g. 2,4,8-10)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = onDeletePages,
-            enabled = !state.isProcessing,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isProcessing) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Delete Pages and Save")
-            }
-        }
-
-        Text("Rotate Pages", fontWeight = FontWeight.SemiBold)
-        OutlinedTextField(
-            value = state.rotatePagesInput,
-            onValueChange = onRotatePagesChanged,
-            label = { Text("Pages to rotate (e.g. 1,4,7-9)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            listOf(90, 180, 270).forEach { degrees ->
-                Button(
-                    onClick = { onRotateDegreesChanged(degrees) },
-                    enabled = !state.isProcessing
-                ) {
-                    val selected = if (state.rotateDegrees == degrees) " ON" else ""
-                    Text("$degrees°$selected")
+                state.statusMessage?.let { Text(it, color = MaterialTheme.colorScheme.tertiary, fontSize = 14.sp) }
+                state.errorMessage?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Button(onClick = onClearError, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+                        Text("Dismiss Error")
+                    }
+                }
+                
+                if (state.lastOutputPaths.isNotEmpty()) {
+                    Text("Outputs Saved:", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    state.lastOutputPaths.forEach { path ->
+                        Text(path, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                    Text("Total size: ${state.lastOutputSizeBytes ?: 0} bytes", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
 
-        Button(
-            onClick = onRotatePages,
-            enabled = !state.isProcessing,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isProcessing) {
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Rotate Pages and Save")
-            }
-        }
-
-        state.statusMessage?.let { message ->
-            Text(message, color = MaterialTheme.colorScheme.tertiary)
-        }
-
-        state.errorMessage?.let { message ->
-            Text(message, color = MaterialTheme.colorScheme.error)
-            Button(onClick = onClearError) {
-                Text("Dismiss Error")
-            }
-        }
-
-        if (state.lastOutputPaths.isNotEmpty()) {
-            Text("Outputs", fontWeight = FontWeight.SemiBold)
-            state.lastOutputPaths.forEach { path ->
-                Text(path, style = MaterialTheme.typography.bodySmall)
-            }
-            Text("Total size: ${state.lastOutputSizeBytes ?: 0} bytes", style = MaterialTheme.typography.bodySmall)
-        }
+        Spacer(modifier = Modifier.height(paddingValues.calculateBottomPadding() + 80.dp))
     }
 }
 

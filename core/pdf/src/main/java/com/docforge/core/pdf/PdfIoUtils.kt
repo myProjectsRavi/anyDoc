@@ -76,7 +76,7 @@ internal fun loadPdfDocument(file: File, password: String): PDDocument {
     return PDDocument.load(file, password, pdfMemoryUsageSetting())
 }
 
-internal fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
+fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
     val candidate = File(directory, "$baseName.$extension")
     if (!candidate.exists()) return candidate
     var counter = 1
@@ -85,4 +85,19 @@ internal fun resolveNonConflictingFile(directory: File, baseName: String, extens
         if (!numbered.exists()) return numbered
         counter++
     }
+}
+
+/**
+ * Imports a page from one PDDocument into another, preserving rotation,
+ * media box, crop box, and resources.
+ *
+ * Shared utility extracted from 7+ tool classes (Sprint 6 — LOW-2).
+ */
+internal fun importPageFull(outDoc: com.tom_roush.pdfbox.pdmodel.PDDocument, sourcePage: com.tom_roush.pdfbox.pdmodel.PDPage): com.tom_roush.pdfbox.pdmodel.PDPage {
+    val imported = outDoc.importPage(sourcePage)
+    imported.rotation = sourcePage.rotation
+    imported.mediaBox = sourcePage.mediaBox
+    imported.cropBox = sourcePage.cropBox
+    imported.resources = sourcePage.resources
+    return imported
 }

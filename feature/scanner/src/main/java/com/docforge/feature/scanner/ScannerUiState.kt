@@ -36,6 +36,6 @@ data class ScannerUiState(
 )
 
 private fun defaultOutputName(): String {
-    val sdf = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
-    return "scan_${sdf.format(java.util.Date())}"
+    val timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+    return "scan_$timestamp"
 }

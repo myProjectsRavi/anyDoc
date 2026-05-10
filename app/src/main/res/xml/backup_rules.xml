@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <include domain="sharedpref" path="docforge_settings.xml" />
+    <include domain="file" path="saved_signatures/" />
+    <include domain="file" path="pdf_sign_placement_templates.json" />
     <exclude domain="database" path="docforge.db" />
-    <exclude domain="file" path="." />
+    <exclude domain="file" path="vault/" />
     <exclude domain="external" path="." />
 </full-backup-content>

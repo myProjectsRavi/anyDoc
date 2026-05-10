@@ -60,7 +60,7 @@ class ImageFormatConverter(
                 ImageOutputFormat.PNG -> "png"
                 ImageOutputFormat.WEBP -> "webp"
             }
-            val output = File(outputDir, "${base}_${index + 1}.$ext")
+            val output = com.docforge.core.pdf.resolveNonConflictingFile(outputDir, "${base}_${index + 1}", ext)
 
             FileOutputStream(output).use { stream ->
                 val ok = scaled.compress(outputFormat.toCompressFormat(), quality.coerceIn(10, 100), stream)

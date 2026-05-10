@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.docforge.core.storage"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26
@@ -30,5 +30,7 @@ dependencies {
 
     api(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
+    api(libs.androidx.paging.runtime)
 }

@@ -140,7 +140,7 @@ class PdfTranslationTool(
                 val sanitized = outputName.ifBlank {
                     "translated_${targetLanguageTag}_${System.currentTimeMillis()}"
                 }.replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                val outputFile = File(outputDir, "$sanitized.pdf")
+                val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
                 writeTranslatedOverlayPdf(
                     sourceFile = sourceFile,
@@ -180,7 +180,7 @@ class PdfTranslationTool(
 
         try {
             // Download model (works offline if previously downloaded, or downloads on first use)
-            val conditions = DownloadConditions.Builder().build()
+            val conditions = DownloadConditions.Builder().requireWifi().build()
             translator.downloadModelIfNeeded(conditions).awaitTask()
 
             val output = ArrayList<String>(sourceTexts.size)

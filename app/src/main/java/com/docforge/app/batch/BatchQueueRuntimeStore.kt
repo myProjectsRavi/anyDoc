@@ -26,7 +26,7 @@ object BatchQueueRuntimeStore {
 
         val taskId = taskIdCounter.getAndIncrement()
         val summary = buildInputSummary(type, uniqueUris.size, inputLabels)
-        val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+        val timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
         val outputBaseName = "${type.defaultOutputPrefix}_${timestamp}_$taskId"
 
         val task = BatchQueueTask(

@@ -123,7 +123,6 @@ private fun SidebarResume(
             Column(
                 Modifier
                     .width(160.dp)
-                    .fillMaxHeight()
                     .background(t.primaryColor.copy(alpha = 0.08f))
                     .padding(12.dp)
             ) {

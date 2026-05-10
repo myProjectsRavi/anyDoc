@@ -40,7 +40,7 @@ object ShareIntentRouter {
         if (isDocumentMime(normalized)) return Routes.DOC_TO_PDF
 
         val extension = uris.firstOrNull()
-            ?.toString()
+            ?.lastPathSegment
             ?.substringAfterLast('.', missingDelimiterValue = "")
             ?.lowercase(Locale.US)
             .orEmpty()

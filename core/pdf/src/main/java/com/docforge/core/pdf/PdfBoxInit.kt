@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * PDFBoxResourceLoader.init() is idempotent but has internal synchronization cost.
  * This ensures it is called exactly once per process, on the IO thread via EngineWarmup.
  */
-internal object PdfBoxInit {
+object PdfBoxInit {
     private val initialized = AtomicBoolean(false)
 
     fun ensure(context: Context) {

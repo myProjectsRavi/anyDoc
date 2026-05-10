@@ -106,7 +106,14 @@ class PdfRedactionTool(
                 if (options.scrubMetadata) {
                     scrubMetadata(document)
                 }
+                // Scrub annotations on every page that may contain redaction terms
+                scrubAnnotations(document, terms, options.caseSensitive)
 
+                // Remove embedded files that could contain recoverable content
+                scrubEmbeddedFiles(document)
+
+                // Remove optional content (layers) that might hide redacted text
+                scrubOptionalContent(document)
                 val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
                     context = context,
                     bucket = DocForgeOutputBucket.DOCUMENTS
@@ -261,8 +268,37 @@ class PdfRedactionTool(
 
     private fun scrubMetadata(document: PDDocument) {
         document.setDocumentInformation(PDDocumentInformation())
+        // Scrub XMP metadata stream entirely
         runCatching {
-            document.documentCatalog?.setMetadata(null)
+            document.documentCatalog?.metadata = null
+        }
+    }
+
+    private fun scrubAnnotations(document: PDDocument, terms: List<String>, caseSensitive: Boolean) {
+        for (i in 0 until document.numberOfPages) {
+            val page = document.getPage(i)
+            val annotations = page.annotations.orEmpty()
+            val toRemove = annotations.filter { annot ->
+                val contents = annot.contents.orEmpty()
+                containsAnyTerm(contents, terms, caseSensitive)
+            }
+            if (toRemove.isNotEmpty()) {
+                val remaining = annotations.toMutableList()
+                remaining.removeAll(toRemove.toSet())
+                page.annotations = remaining
+            }
+        }
+    }
+
+    private fun scrubEmbeddedFiles(document: PDDocument) {
+        runCatching {
+            document.documentCatalog?.names?.embeddedFiles = null
+        }
+    }
+
+    private fun scrubOptionalContent(document: PDDocument) {
+        runCatching {
+            document.documentCatalog?.ocProperties = null
         }
     }
 
@@ -283,6 +319,22 @@ class PdfRedactionTool(
                 error(
                     "Redaction verification failed. Term '$remaining' is still discoverable in output text."
                 )
+            }
+            // Also verify annotations are clean
+            for (i in 0 until verificationDoc.numberOfPages) {
+                for (annot in verificationDoc.getPage(i).annotations.orEmpty()) {
+                    val annotRemaining = findFirstRemainingTerm(
+                        text = annot.contents.orEmpty(),
+                        terms = terms,
+                        caseSensitive = caseSensitive
+                    )
+                    if (annotRemaining != null) {
+                        outputFile.delete()
+                        error(
+                            "Redaction verification failed. Term '$annotRemaining' found in annotation."
+                        )
+                    }
+                }
             }
         }
     }
