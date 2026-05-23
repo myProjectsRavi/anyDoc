@@ -1,14 +1,18 @@
 package com.docforge.app.batch
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.docforge.app.AppDependencies
 import com.docforge.core.domain.model.ConversionRecord
 import com.docforge.core.domain.settings.DocForgeSettingsStore
@@ -43,7 +47,7 @@ class BatchQueueForegroundService : Service() {
         startForeground(
             BatchQueueServiceContract.NOTIFICATION_ID,
             buildProgressNotification(
-                title = "DocForge batch queue",
+                title = "AnyDoc batch queue",
                 text = "Preparing...",
                 processed = 0,
                 total = 1,
@@ -284,10 +288,10 @@ class BatchQueueForegroundService : Service() {
     }
 
     private fun notifyProgress(text: String, processed: Int, total: Int) {
-        NotificationManagerCompat.from(this).notify(
-            BatchQueueServiceContract.NOTIFICATION_ID,
-            buildProgressNotification(
-                title = "DocForge batch queue",
+        notifySafely(
+            notificationId = BatchQueueServiceContract.NOTIFICATION_ID,
+            notification = buildProgressNotification(
+                title = "AnyDoc batch queue",
                 text = text,
                 processed = processed,
                 total = total,
@@ -299,16 +303,32 @@ class BatchQueueForegroundService : Service() {
     private fun showCompletionNotification(summary: String) {
         val notification = NotificationCompat.Builder(this, BatchQueueServiceContract.NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_agenda)
-            .setContentTitle("DocForge batch queue")
+            .setContentTitle("AnyDoc batch queue")
             .setContentText(summary)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(this).notify(
-            BatchQueueServiceContract.NOTIFICATION_ID + 1,
-            notification
+        notifySafely(
+            notificationId = BatchQueueServiceContract.NOTIFICATION_ID + 1,
+            notification = notification
         )
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun notifySafely(notificationId: Int, notification: Notification) {
+        if (!canPostNotifications()) return
+        runCatching {
+            NotificationManagerCompat.from(this).notify(notificationId, notification)
+        }
+    }
+
+    private fun canPostNotifications(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun buildProgressNotification(
@@ -338,7 +358,7 @@ class BatchQueueForegroundService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
         val channel = NotificationChannel(
             BatchQueueServiceContract.NOTIFICATION_CHANNEL_ID,
-            "DocForge Batch Queue",
+            "AnyDoc Batch Queue",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = "Progress for queued offline conversion tasks"

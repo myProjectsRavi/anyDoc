@@ -12,7 +12,7 @@ enum class DocForgeOutputBucket(val mediaDirectory: String) {
 
 object DocForgeSettingsStore {
     const val PREFS_NAME = "docforge_settings"
-    const val DEFAULT_OUTPUT_FOLDER = "DocForge"
+    const val DEFAULT_OUTPUT_FOLDER = "AnyDoc"
     private val VALID_FOLDER_REGEX = Regex("[^a-zA-Z0-9 _-]")
 
     const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"

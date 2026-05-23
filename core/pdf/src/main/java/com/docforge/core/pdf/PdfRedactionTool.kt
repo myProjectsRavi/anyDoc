@@ -30,7 +30,8 @@ data class PdfRedactionOptions(
     val caseSensitive: Boolean = false,
     val scrubMetadata: Boolean = true,
     val scrubFormValues: Boolean = true,
-    val verifyIrreversible: Boolean = true
+    val verifyIrreversible: Boolean = true,
+    val autoDetectPii: Boolean = false
 )
 
 data class PdfRedactionProgress(
@@ -57,11 +58,13 @@ class PdfRedactionTool(
         pageProgressChunk: Int = 2,
         onProgress: ((PdfRedactionProgress) -> Unit)? = null
     ): PdfRedactionResult = withContext(Dispatchers.IO) {
-        val terms = options.terms
+        val userTerms = options.terms
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .distinct()
-        require(terms.isNotEmpty()) { "Provide at least one term to redact." }
+        require(userTerms.isNotEmpty() || options.autoDetectPii) {
+            "Provide at least one term to redact, or enable auto-detect PII."
+        }
 
         val progressChunk = pageProgressChunk.coerceAtLeast(1)
         val coroutineCtx = currentCoroutineContext()
@@ -71,6 +74,22 @@ class PdfRedactionTool(
                 document.setAllSecurityToBeRemoved(true)
                 val pageCount = document.numberOfPages
                 require(pageCount > 0) { "Input PDF has no pages." }
+
+                // Build effective terms list (user-provided + auto-detected PII).
+                val terms: List<String> = if (options.autoDetectPii) {
+                    onProgress?.invoke(PdfRedactionProgress(stage = "Detecting sensitive data", current = 0, total = pageCount))
+                    val extractedText = runCatching {
+                        PDFTextStripper().getText(document)
+                    }.getOrDefault("")
+                    val auto = detectPiiTerms(extractedText)
+                    (userTerms + auto).distinct()
+                } else {
+                    userTerms
+                }
+
+                require(terms.isNotEmpty()) {
+                    "Auto-detect found no emails, phone numbers, or SSNs in this PDF."
+                }
 
                 onProgress?.invoke(PdfRedactionProgress(stage = "Redacting content streams", current = 0, total = pageCount))
 
@@ -365,6 +384,33 @@ class PdfRedactionTool(
                 term.lowercase(Locale.getDefault())
             }
             needle.isNotBlank() && haystack.contains(needle)
+        }
+    }
+
+    private companion object {
+        // PII detection regex patterns (offline, no ML).
+        private val EMAIL_REGEX = Regex("""\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b""")
+        // North-American + international phone numbers (7-15 digits, optional country code, optional formatting).
+        private val PHONE_REGEX = Regex("""\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b""")
+        // US SSN with dashes; deliberately strict to avoid false positives.
+        private val SSN_REGEX = Regex("""\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b""")
+        // Credit card-like 13-19 digit sequences with optional spaces/dashes.
+        private val CREDIT_CARD_REGEX = Regex("""\b(?:\d[ -]?){12,18}\d\b""")
+
+        fun detectPiiTerms(text: String): List<String> {
+            if (text.isBlank()) return emptyList()
+            val matches = LinkedHashSet<String>()
+            EMAIL_REGEX.findAll(text).forEach { matches.add(it.value) }
+            PHONE_REGEX.findAll(text).forEach {
+                val digits = it.value.filter { ch -> ch.isDigit() }
+                if (digits.length in 7..15) matches.add(it.value)
+            }
+            SSN_REGEX.findAll(text).forEach { matches.add(it.value) }
+            CREDIT_CARD_REGEX.findAll(text).forEach {
+                val digits = it.value.filter { ch -> ch.isDigit() }
+                if (digits.length in 13..19) matches.add(it.value)
+            }
+            return matches.toList()
         }
     }
 }

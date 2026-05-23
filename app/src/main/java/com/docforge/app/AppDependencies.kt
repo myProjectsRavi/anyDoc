@@ -22,7 +22,6 @@ import com.docforge.core.pdf.PdfRedactionTool
 import com.docforge.core.pdf.PdfSigner
 import com.docforge.core.pdf.PdfSplitter
 import com.docforge.core.pdf.PdfTextExtractor
-import com.docforge.core.pdf.PdfTranslationTool
 import com.docforge.core.pdf.ScanImageExporter
 import com.docforge.feature.pdftools.SavedSignatureStore
 import com.docforge.feature.pdftools.SignaturePlacementTemplateStore
@@ -50,7 +49,6 @@ class AppDependencies(private val context: Context) {
     val pdfOcrTool: PdfOcrTool by lazy { PdfOcrTool(context) }
     val pdfFormTool: PdfFormTool by lazy { PdfFormTool(context) }
     val pdfIdCardTool: PdfIdCardTool by lazy { PdfIdCardTool(context) }
-    val pdfTranslationTool: PdfTranslationTool by lazy { PdfTranslationTool(context) }
     val pdfRedactionTool: PdfRedactionTool by lazy { PdfRedactionTool(context) }
     val imageFormatConverter: ImageFormatConverter by lazy { ImageFormatConverter(context) }
     val audioFormatConverter: AudioFormatConverter by lazy { AudioFormatConverter(context) }

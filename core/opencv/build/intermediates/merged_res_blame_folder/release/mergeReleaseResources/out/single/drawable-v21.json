@@ -1,0 +1,6 @@
+[
+    {
+        "merged": "com.docforge.core.opencv-release-12:/drawable-v21/notification_action_background.xml",
+        "source": "com.docforge.core.opencv-core-1.15.0-6:/drawable-v21/notification_action_background.xml"
+    }
+]

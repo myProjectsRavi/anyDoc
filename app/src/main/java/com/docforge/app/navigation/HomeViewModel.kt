@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.Immutable
+import com.docforge.core.domain.model.ConversionRecord
 import com.docforge.core.domain.repository.HistoryRepository
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -37,13 +38,28 @@ enum class HomeToolId {
     PDF_OCR,
     PDF_FORM,
     ID_CARD,
-    PDF_TRANSLATE,
     PDF_REDACT
 }
 
+data class HomeTool(
+    val id: HomeToolId,
+    val title: String,
+    val subtitle: String,
+    val keywords: String,
+    val onClick: () -> Unit
+)
+
+@Immutable
+data class HomeRecentItem(
+    val id: Long,
+    val title: String,
+    val subtitle: String
+)
+
 @Immutable
 data class HomeUiState(
-    val quickActionToolIds: ImmutableList<HomeToolId> = persistentListOf()
+    val quickActionToolIds: ImmutableList<HomeToolId> = persistentListOf(),
+    val recentItems: ImmutableList<HomeRecentItem> = persistentListOf()
 )
 
 class HomeViewModel(
@@ -60,11 +76,49 @@ class HomeViewModel(
                     .mapNotNull { record -> operationToToolId(record.operation) }
                     .distinct()
                     .take(4)
+                val now = System.currentTimeMillis()
+                val recents = records
+                    .take(8)
+                    .map { record ->
+                        HomeRecentItem(
+                            id = record.id,
+                            title = recentTitle(record),
+                            subtitle = "${record.operation} • ${formatRelativeTime(record.createdAtMillis, now)}"
+                        )
+                    }
 
                 _uiState.update {
-                    it.copy(quickActionToolIds = mapped.toPersistentList())
+                    it.copy(
+                        quickActionToolIds = mapped.toPersistentList(),
+                        recentItems = recents.toPersistentList()
+                    )
                 }
             }
+        }
+    }
+
+    private fun recentTitle(record: ConversionRecord): String {
+        val explicitName = record.displayName?.trim().orEmpty()
+        if (explicitName.isNotEmpty()) return explicitName
+
+        val outputName = record.outputPath.substringAfterLast('/').trim()
+        if (outputName.isNotEmpty()) return outputName
+
+        return record.sourceLabel.trim().ifEmpty { "Conversion #${record.id}" }
+    }
+
+    private fun formatRelativeTime(timestampMillis: Long, nowMillis: Long): String {
+        val deltaMillis = (nowMillis - timestampMillis).coerceAtLeast(0L)
+        val minuteMillis = 60_000L
+        val hourMillis = 60 * minuteMillis
+        val dayMillis = 24 * hourMillis
+
+        return when {
+            deltaMillis < minuteMillis -> "Just now"
+            deltaMillis < hourMillis -> "${deltaMillis / minuteMillis}m ago"
+            deltaMillis < dayMillis -> "${deltaMillis / hourMillis}h ago"
+            deltaMillis < 7 * dayMillis -> "${deltaMillis / dayMillis}d ago"
+            else -> "Earlier"
         }
     }
 
@@ -91,7 +145,6 @@ class HomeViewModel(
             operation == "PDF OCR" -> HomeToolId.PDF_OCR
             operation == "PDF Form Fill" || operation == "PDF Form Builder" -> HomeToolId.PDF_FORM
             operation == "ID Card -> PDF" -> HomeToolId.ID_CARD
-            operation == "PDF Translate" -> HomeToolId.PDF_TRANSLATE
             operation == "PDF Redact" -> HomeToolId.PDF_REDACT
             operation == "Text -> PDF" -> HomeToolId.TEXT_TO_PDF
             operation.endsWith("-> PDF") -> HomeToolId.DOC_TO_PDF

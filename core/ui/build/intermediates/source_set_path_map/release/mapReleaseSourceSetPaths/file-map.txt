@@ -1,0 +1,44 @@
+com.docforge.core.ui-foundation-layout-release-0 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/02d46c67753716c7fbfe47d67a8e7e36/transformed/foundation-layout-release/res
+com.docforge.core.ui-ui-graphics-release-1 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/17038dd5aaf8860d7da798e6fa5450f7/transformed/ui-graphics-release/res
+com.docforge.core.ui-core-1.13.1-2 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/177bb9cde87a0e306243becf60f8cb07/transformed/core-1.13.1/res
+com.docforge.core.ui-lifecycle-process-2.8.3-3 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/1b0d62a119148b46166cef3fe8540e8a/transformed/lifecycle-process-2.8.3/res
+com.docforge.core.ui-customview-poolingcontainer-1.0.0-4 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/1b3e46000ddd6da6d5030053193d573a/transformed/customview-poolingcontainer-1.0.0/res
+com.docforge.core.ui-ui-release-5 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/1bb28a2f13dc21dcd2b35e315bba885c/transformed/ui-release/res
+com.docforge.core.ui-core-runtime-2.2.0-6 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/225261802dfdea27a2ad5734384d5bab/transformed/core-runtime-2.2.0/res
+com.docforge.core.ui-startup-runtime-1.1.1-7 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/2d46ed0c6a2150807939e15eaf86f76c/transformed/startup-runtime-1.1.1/res
+com.docforge.core.ui-runtime-release-8 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/41a7757ba4aaa92ced68b6fbe77349a6/transformed/runtime-release/res
+com.docforge.core.ui-activity-compose-1.8.2-9 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/46c9a6e4061bc6de14c681253a8c704e/transformed/activity-compose-1.8.2/res
+com.docforge.core.ui-core-ktx-1.13.1-10 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/47d07905ceb8d783b8b6e41090d5cf05/transformed/core-ktx-1.13.1/res
+com.docforge.core.ui-material-ripple-release-11 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/4cb6f6c51c17f46ac9f48a22fd04e49a/transformed/material-ripple-release/res
+com.docforge.core.ui-runtime-saveable-release-12 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/509850eebdebcfb3d70f03cd74feee73/transformed/runtime-saveable-release/res
+com.docforge.core.ui-material-icons-core-release-13 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/53039d8b184271bfb0e326e91784bbc8/transformed/material-icons-core-release/res
+com.docforge.core.ui-lifecycle-runtime-ktx-release-14 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/54c1d761cf669ea577ae277de8cd8619/transformed/lifecycle-runtime-ktx-release/res
+com.docforge.core.ui-animation-release-15 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/6677e82845358e8398b7da1d86b5894a/transformed/animation-release/res
+com.docforge.core.ui-lifecycle-viewmodel-ktx-2.8.3-16 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/7237cc547a1681c28c82fac392a7428e/transformed/lifecycle-viewmodel-ktx-2.8.3/res
+com.docforge.core.ui-ui-unit-release-17 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/767d731733f4b64f523b7a15f7ce8c12/transformed/ui-unit-release/res
+com.docforge.core.ui-ui-text-release-18 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/786c372c395bde7b038d19904ec81ba4/transformed/ui-text-release/res
+com.docforge.core.ui-savedstate-ktx-1.2.1-19 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/7a9d8739c9e2d4347d2ca86ae0ad4e86/transformed/savedstate-ktx-1.2.1/res
+com.docforge.core.ui-foundation-release-20 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/7c076c94897161b0e68f18c9a2e9d849/transformed/foundation-release/res
+com.docforge.core.ui-activity-1.8.2-21 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/7d9527169b153841152f9a5e5802d1b1/transformed/activity-1.8.2/res
+com.docforge.core.ui-material3-release-22 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/85f6d4c1945705d98cc4fb329b50a046/transformed/material3-release/res
+com.docforge.core.ui-lifecycle-runtime-release-23 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/8c144de632bdae8a59f296248bb084bd/transformed/lifecycle-runtime-release/res
+com.docforge.core.ui-animation-core-release-24 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/939f26f2ae19e9db5e5ff281d8871aec/transformed/animation-core-release/res
+com.docforge.core.ui-lifecycle-runtime-compose-release-25 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/95d2f7bfbc95d1b7e92cd24d1b13f7f0/transformed/lifecycle-runtime-compose-release/res
+com.docforge.core.ui-lifecycle-viewmodel-release-26 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/9e081e8486e458b85e47858f1f2a8d07/transformed/lifecycle-viewmodel-release/res
+com.docforge.core.ui-savedstate-1.2.1-27 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/9e27fe4630f49e6734a60249fe833af0/transformed/savedstate-1.2.1/res
+com.docforge.core.ui-ui-util-release-28 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/a3b63965660274b6a24165a81e9971d9/transformed/ui-util-release/res
+com.docforge.core.ui-profileinstaller-1.3.1-29 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/aaa431ce8954c70b57b86fca7889608d/transformed/profileinstaller-1.3.1/res
+com.docforge.core.ui-lifecycle-livedata-core-2.8.3-30 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/bdea91e77b2686aaf28788eaf8b5b794/transformed/lifecycle-livedata-core-2.8.3/res
+com.docforge.core.ui-graphics-path-1.0.1-31 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/be3bcbba28c3925e5760a1aaebe6ca4c/transformed/graphics-path-1.0.1/res
+com.docforge.core.ui-emoji2-1.3.0-32 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/c115170e173e5936332f2069f850e69e/transformed/emoji2-1.3.0/res
+com.docforge.core.ui-annotation-experimental-1.4.1-33 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/c514d06899093ebea34952930e1b311a/transformed/annotation-experimental-1.4.1/res
+com.docforge.core.ui-ui-geometry-release-34 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/d6aa8df6d0b10da5fcefe228a2c6366f/transformed/ui-geometry-release/res
+com.docforge.core.ui-lifecycle-viewmodel-savedstate-2.8.3-35 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/e66cadba381161e457568be4da831d94/transformed/lifecycle-viewmodel-savedstate-2.8.3/res
+com.docforge.core.ui-activity-ktx-1.8.2-36 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/f2bd500e72f6bd9606db32e2ecbb5ce9/transformed/activity-ktx-1.8.2/res
+com.docforge.core.ui-pngs-37 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/ui/build/generated/res/pngs/release
+com.docforge.core.ui-resValues-38 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/ui/build/generated/res/resValues/release
+com.docforge.core.ui-mergeReleaseResources-39 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/ui/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+com.docforge.core.ui-mergeReleaseResources-40 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/ui/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+com.docforge.core.ui-release-41 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/ui/build/intermediates/merged_res/release/mergeReleaseResources
+com.docforge.core.ui-main-42 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/ui/src/main/res
+com.docforge.core.ui-release-43 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/ui/src/release/res

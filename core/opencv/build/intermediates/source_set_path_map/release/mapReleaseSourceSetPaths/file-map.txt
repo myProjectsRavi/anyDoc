@@ -1,0 +1,16 @@
+com.docforge.core.opencv-core-ktx-1.15.0-0 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/004035d79a76f5212d7392f0aec67aa4/transformed/core-ktx-1.15.0/res
+com.docforge.core.opencv-core-runtime-2.2.0-1 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/225261802dfdea27a2ad5734384d5bab/transformed/core-runtime-2.2.0/res
+com.docforge.core.opencv-lifecycle-runtime-2.6.2-2 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/2486f24efdfd795fead5ad9a1b35dfcf/transformed/lifecycle-runtime-2.6.2/res
+com.docforge.core.opencv-startup-runtime-1.1.1-3 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/2d46ed0c6a2150807939e15eaf86f76c/transformed/startup-runtime-1.1.1/res
+com.docforge.core.opencv-opencv-4.9.0-4 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/57d17ae1fa77ecee4ead872d37602772/transformed/opencv-4.9.0/res
+com.docforge.core.opencv-annotation-experimental-1.4.1-5 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/c514d06899093ebea34952930e1b311a/transformed/annotation-experimental-1.4.1/res
+com.docforge.core.opencv-core-1.15.0-6 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/d5eb2dd8b742e4fe174dee64d761dc77/transformed/core-1.15.0/res
+com.docforge.core.opencv-profileinstaller-1.3.0-7 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/eed8a54bded4dcd15dae9cd9c3306888/transformed/profileinstaller-1.3.0/res
+com.docforge.core.opencv-tracing-1.2.0-8 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/f6b9cf607ca22477adb42ec8e54ccb5e/transformed/tracing-1.2.0/res
+com.docforge.core.opencv-pngs-9 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/opencv/build/generated/res/pngs/release
+com.docforge.core.opencv-resValues-10 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/opencv/build/generated/res/resValues/release
+com.docforge.core.opencv-mergeReleaseResources-11 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/opencv/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+com.docforge.core.opencv-mergeReleaseResources-12 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/opencv/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+com.docforge.core.opencv-release-13 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/opencv/build/intermediates/merged_res/release/mergeReleaseResources
+com.docforge.core.opencv-main-14 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/opencv/src/main/res
+com.docforge.core.opencv-release-15 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/opencv/src/release/res

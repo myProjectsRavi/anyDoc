@@ -113,10 +113,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providePdfTranslationTool(@ApplicationContext context: Context): PdfTranslationTool = PdfTranslationTool(context)
-
-    @Provides
-    @Singleton
     fun providePdfRedactionTool(@ApplicationContext context: Context): PdfRedactionTool = PdfRedactionTool(context)
 
     @Provides

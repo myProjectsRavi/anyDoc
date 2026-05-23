@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DocForge</string>
+    <string name="app_name">AnyDoc</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_home">الرئيسية</string>
@@ -10,13 +10,13 @@
     <string name="nav_history">السجل</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_title">مرحبًا بك في DocForge</string>
+    <string name="onboarding_title">مرحبًا بك في AnyDoc</string>
     <string name="onboarding_subtitle">تحويل ملفات خاص وبدون إنترنت وأدوات PDF بدون حسابات أو علامات مائية.</string>
     <string name="onboarding_features_heading">ما ستحصل عليه</string>
     <string name="onboarding_get_started">ابدأ</string>
 
     <!-- Home -->
-    <string name="home_title">DocForge</string>
+    <string name="home_title">AnyDoc</string>
     <string name="home_search_hint">ماذا تريد أن تفعل؟</string>
     <string name="home_quick_actions">إجراءات سريعة</string>
 
@@ -26,7 +26,7 @@
     <string name="scanner_capture_page">التقاط صفحة</string>
     <string name="scanner_import_gallery">استيراد من المعرض</string>
     <string name="scanner_camera_permission_title">إذن الكاميرا مطلوب</string>
-    <string name="scanner_camera_permission_body">ماسح DocForge يعمل بالكامل بدون إنترنت، لكنه يحتاج إذن الكاميرا لالتقاط صفحات المستندات.</string>
+    <string name="scanner_camera_permission_body">ماسح AnyDoc يعمل بالكامل بدون إنترنت، لكنه يحتاج إذن الكاميرا لالتقاط صفحات المستندات.</string>
     <string name="scanner_grant_permission">منح إذن الكاميرا</string>
 
     <!-- Converter -->

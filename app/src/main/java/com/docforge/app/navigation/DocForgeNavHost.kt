@@ -91,9 +91,6 @@ import com.docforge.feature.pdftools.PdfSplitViewModelFactory
 import com.docforge.feature.pdftools.PdfTextExtractRoute
 import com.docforge.feature.pdftools.PdfTextExtractViewModel
 import com.docforge.feature.pdftools.PdfTextExtractViewModelFactory
-import com.docforge.feature.pdftools.PdfTranslateRoute
-import com.docforge.feature.pdftools.PdfTranslateViewModel
-import com.docforge.feature.pdftools.PdfTranslateViewModelFactory
 import com.docforge.feature.pdftools.PdfToolsViewModel
 import com.docforge.feature.pdftools.PdfToolsViewModelFactory
 import com.docforge.feature.scanner.ScannerRoute
@@ -121,6 +118,35 @@ fun DocForgeNavHost(
         onSharedLaunchHandled()
     }
 
+    val converterRoutes = remember {
+        setOf(
+            Routes.CONVERTER,
+            Routes.IMAGE_FORMAT,
+            Routes.AUDIO_FORMAT,
+            Routes.DOC_TO_PDF,
+            Routes.TEXT_TO_PDF,
+            Routes.VIDEO_TO_AUDIO,
+            Routes.BATCH_QUEUE
+        )
+    }
+    val pdfRoutes = remember {
+        setOf(
+            Routes.PDF_MERGE,
+            Routes.PDF_SPLIT,
+            Routes.PDF_SIGN,
+            Routes.PDF_ANNOTATE,
+            Routes.PDF_PASSWORD,
+            Routes.PDF_COMPRESS,
+            Routes.PDF_TEXT,
+            Routes.PDF_TO_IMAGES,
+            Routes.PDF_BATCH_STAMP,
+            Routes.PDF_OCR,
+            Routes.PDF_FORM,
+            Routes.ID_CARD,
+            Routes.PDF_REDACT
+        )
+    }
+
     Scaffold(
         bottomBar = {
             val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -131,7 +157,8 @@ fun DocForgeNavHost(
                         selected = currentRoute == Routes.HOME,
                         onClick = {
                             navController.navigate(Routes.HOME) {
-                                popUpTo(navController.graph.findStartDestination().id) {
+                                popUpTo(Routes.HOME) {
+                                    inclusive = false
                                     saveState = true
                                 }
                                 launchSingleTop = true
@@ -156,9 +183,9 @@ fun DocForgeNavHost(
                         icon = { Icon(Icons.Filled.CameraAlt, contentDescription = stringResource(R.string.nav_scanner)) }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == "vault",
+                        selected = currentRoute == Routes.VAULT,
                         onClick = {
-                            navController.navigate("vault") {
+                            navController.navigate(Routes.VAULT) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -170,7 +197,7 @@ fun DocForgeNavHost(
                         icon = { Icon(Icons.Filled.Lock, contentDescription = "Vault") }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == Routes.CONVERTER,
+                        selected = currentRoute in converterRoutes,
                         onClick = {
                             navController.navigate(Routes.CONVERTER) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -184,7 +211,7 @@ fun DocForgeNavHost(
                         icon = { Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.nav_convert)) }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == Routes.PDF_MERGE,
+                        selected = currentRoute in pdfRoutes,
                         onClick = {
                             navController.navigate(Routes.PDF_MERGE) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -262,11 +289,10 @@ fun DocForgeNavHost(
                     onOpenPdfOcr = { navController.navigate(Routes.PDF_OCR) },
                     onOpenPdfForm = { navController.navigate(Routes.PDF_FORM) },
                     onOpenIdCard = { navController.navigate(Routes.ID_CARD) },
-                    onOpenPdfTranslate = { navController.navigate(Routes.PDF_TRANSLATE) },
                     onOpenPdfRedact = { navController.navigate(Routes.PDF_REDACT) },
                     onOpenHistory = { navController.navigate(Routes.HISTORY) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                    onOpenVault = { navController.navigate("vault") }
+                    onOpenVault = { navController.navigate(Routes.VAULT) }
                 )
             }
             composable(Routes.SETTINGS) {
@@ -281,7 +307,7 @@ fun DocForgeNavHost(
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable("vault") {
+            composable(Routes.VAULT) {
                 com.docforge.app.vault.VaultScreen(
                     paddingValues = paddingValues,
                     onBack = { navController.popBackStack() }
@@ -315,7 +341,14 @@ fun DocForgeNavHost(
                 )
                 ConverterRoute(
                     viewModel = converterViewModel,
-                    paddingValues = paddingValues
+                    paddingValues = paddingValues,
+                    onOpenImageFormat = { navController.navigate(Routes.IMAGE_FORMAT) },
+                    onOpenAudioFormat = { navController.navigate(Routes.AUDIO_FORMAT) },
+                    onOpenDocumentToPdf = { navController.navigate(Routes.DOC_TO_PDF) },
+                    onOpenTextToPdf = { navController.navigate(Routes.TEXT_TO_PDF) },
+                    onOpenVideoToAudio = { navController.navigate(Routes.VIDEO_TO_AUDIO) },
+                    onOpenPdfToImages = { navController.navigate(Routes.PDF_TO_IMAGES) },
+                    onOpenPdfToText = { navController.navigate(Routes.PDF_TEXT) }
                 )
             }
             composable(Routes.IMAGE_FORMAT) {
@@ -579,18 +612,6 @@ fun DocForgeNavHost(
                 )
                 PdfIdCardRoute(
                     viewModel = idCardViewModel,
-                    paddingValues = paddingValues
-                )
-            }
-            composable(Routes.PDF_TRANSLATE) {
-                val translateViewModel: PdfTranslateViewModel = viewModel(
-                    factory = PdfTranslateViewModelFactory(
-                        historyRepository = dependencies.historyRepository,
-                        translationTool = dependencies.pdfTranslationTool
-                    )
-                )
-                PdfTranslateRoute(
-                    viewModel = translateViewModel,
                     paddingValues = paddingValues
                 )
             }

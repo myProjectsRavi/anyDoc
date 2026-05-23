@@ -1,9 +1,13 @@
 package com.docforge.app.batch
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -100,6 +104,16 @@ fun BatchQueueRoute(
         pendingTaskType = null
     }
 
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            viewModel.runQueue()
+        } else {
+            viewModel.onNotificationPermissionDenied()
+        }
+    }
+
     BatchQueueScreen(
         state = state,
         selectedTaskType = selectedTaskType,
@@ -112,7 +126,21 @@ fun BatchQueueRoute(
                 singlePicker.launch(taskType.mimeFilter)
             }
         },
-        onRunQueue = viewModel::runQueue,
+        onRunQueue = {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                viewModel.runQueue()
+                return@BatchQueueScreen
+            }
+            val hasNotificationPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (hasNotificationPermission) {
+                viewModel.runQueue()
+            } else {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        },
         onCancelQueue = viewModel::cancelQueue,
         onClearQueue = viewModel::clearQueue,
         onRemoveTask = viewModel::removeTask,

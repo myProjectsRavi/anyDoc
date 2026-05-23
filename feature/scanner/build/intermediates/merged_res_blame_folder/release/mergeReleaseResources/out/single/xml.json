@@ -1,0 +1,6 @@
+[
+    {
+        "merged": "com.docforge.feature.scanner-release-63:/xml/rapid_response_client_defaults.xml",
+        "source": "com.docforge.feature.scanner-translate-17.0.3-55:/xml/rapid_response_client_defaults.xml"
+    }
+]

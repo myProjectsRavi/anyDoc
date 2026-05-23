@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DocForge</string>
+    <string name="app_name">AnyDoc</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_home">Beranda</string>
@@ -10,13 +10,13 @@
     <string name="nav_history">Riwayat</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_title">Selamat datang di DocForge</string>
+    <string name="onboarding_title">Selamat datang di AnyDoc</string>
     <string name="onboarding_subtitle">Konversi file dan alat PDF pribadi secara offline, tanpa akun atau tanda air.</string>
     <string name="onboarding_features_heading">Apa yang Anda dapatkan</string>
     <string name="onboarding_get_started">Mulai</string>
 
     <!-- Home -->
-    <string name="home_title">DocForge</string>
+    <string name="home_title">AnyDoc</string>
     <string name="home_search_hint">Apa yang ingin Anda lakukan?</string>
     <string name="home_quick_actions">Aksi Cepat</string>
 
@@ -26,7 +26,7 @@
     <string name="scanner_capture_page">Ambil Halaman</string>
     <string name="scanner_import_gallery">Impor dari Galeri</string>
     <string name="scanner_camera_permission_title">Izin kamera diperlukan</string>
-    <string name="scanner_camera_permission_body">Pemindai DocForge sepenuhnya offline, tetapi membutuhkan akses kamera untuk mengambil halaman dokumen.</string>
+    <string name="scanner_camera_permission_body">Pemindai AnyDoc sepenuhnya offline, tetapi membutuhkan akses kamera untuk mengambil halaman dokumen.</string>
     <string name="scanner_grant_permission">Berikan Izin Kamera</string>
 
     <!-- Converter -->

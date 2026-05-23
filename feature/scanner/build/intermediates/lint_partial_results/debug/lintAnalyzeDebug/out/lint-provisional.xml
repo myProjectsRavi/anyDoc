@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.7.3" type="conditional_incidents">
+
+    <incident
+        id="NewApi"
+        severity="error"
+        message="">
+        <fix-data minSdk="fffffffffe000000" requiresApi="ffffffffc0000000"/>
+        <location
+            file="${:feature:scanner*debug*MAIN*sourceProvider*0*javaDir*0}/com/docforge/feature/scanner/ScannerScreen.kt"
+            line="1028"
+            column="43"
+            startOffset="40273"
+            endLine="1028"
+            endColumn="54"
+            endOffset="40284"/>
+        <map>
+            <entry
+                name="desc"
+                string="(Ljava.io.InputStream;)"/>
+            <entry
+                name="message"
+                string="Call requires API level 31 (current min is %1$s): `android.graphics.BitmapRegionDecoder#newInstance`"/>
+            <api-levels id="minSdk"
+                value="fffffffffe000000"/>
+            <entry
+                name="name"
+                string="newInstance"/>
+            <entry
+                name="owner"
+                string="android.graphics.BitmapRegionDecoder"/>
+            <api-levels id="requiresApi"
+                value="ffffffffc0000000"/>
+        </map>
+    </incident>
+
+</incidents>

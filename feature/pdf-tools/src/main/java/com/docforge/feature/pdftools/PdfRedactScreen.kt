@@ -85,6 +85,7 @@ fun PdfRedactRoute(
         onScrubMetadataChanged = viewModel::onScrubMetadataChanged,
         onScrubFormValuesChanged = viewModel::onScrubFormValuesChanged,
         onVerifyIrreversibleChanged = viewModel::onVerifyIrreversibleChanged,
+        onAutoDetectPiiChanged = viewModel::onAutoDetectPiiChanged,
         onRunRedaction = viewModel::redact,
         onClearError = viewModel::clearError
     )
@@ -101,6 +102,7 @@ fun PdfRedactScreen(
     onScrubMetadataChanged: (Boolean) -> Unit,
     onScrubFormValuesChanged: (Boolean) -> Unit,
     onVerifyIrreversibleChanged: (Boolean) -> Unit,
+    onAutoDetectPiiChanged: (Boolean) -> Unit,
     onRunRedaction: () -> Unit,
     onClearError: () -> Unit
 ) {
@@ -175,6 +177,7 @@ fun PdfRedactScreen(
                     Text("REDACTION RULES", color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 }
 
+                CustomSwitchRow("Auto-detect emails / phones / SSNs", state.autoDetectPii, onAutoDetectPiiChanged)
                 CustomSwitchRow("Case sensitive match", state.caseSensitive, onCaseSensitiveChanged)
                 CustomSwitchRow("Scrub metadata", state.scrubMetadata, onScrubMetadataChanged)
                 CustomSwitchRow("Scrub form field values", state.scrubFormValues, onScrubFormValuesChanged)

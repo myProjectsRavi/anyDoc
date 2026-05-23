@@ -46,6 +46,7 @@ class PdfRedactViewModel(
     fun onScrubMetadataChanged(value: Boolean) = _uiState.update { it.copy(scrubMetadata = value) }
     fun onScrubFormValuesChanged(value: Boolean) = _uiState.update { it.copy(scrubFormValues = value) }
     fun onVerifyIrreversibleChanged(value: Boolean) = _uiState.update { it.copy(verifyIrreversible = value) }
+    fun onAutoDetectPiiChanged(value: Boolean) = _uiState.update { it.copy(autoDetectPii = value) }
     fun clearError() = _uiState.update { it.copy(errorMessage = null) }
 
     fun redact() {
@@ -61,8 +62,8 @@ class PdfRedactViewModel(
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .toList()
-        if (terms.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Enter one redaction term per line.") }
+        if (terms.isEmpty() && !state.autoDetectPii) {
+            _uiState.update { it.copy(errorMessage = "Enter one redaction term per line, or enable Auto-detect PII.") }
             return
         }
 
@@ -91,7 +92,8 @@ class PdfRedactViewModel(
                         caseSensitive = state.caseSensitive,
                         scrubMetadata = state.scrubMetadata,
                         scrubFormValues = state.scrubFormValues,
-                        verifyIrreversible = state.verifyIrreversible
+                        verifyIrreversible = state.verifyIrreversible,
+                        autoDetectPii = state.autoDetectPii
                     ),
                     onProgress = { progress ->
                         _uiState.update {

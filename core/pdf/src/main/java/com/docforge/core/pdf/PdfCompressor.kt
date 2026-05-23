@@ -114,10 +114,12 @@ class PdfCompressor(
                             val bitmapWidth = (page.width * scale).roundToInt().coerceAtLeast(1)
                             val bitmapHeight = (page.height * scale).roundToInt().coerceAtLeast(1)
 
-                            // Use RGB_565 for smaller memory footprint (no alpha needed for documents)
-                            val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.RGB_565)
+                            // PdfBox-Android JPEGFactory.createFromImage REQUIRES Bitmap.Config.ARGB_8888.
+                            // Using RGB_565 throws "unsupported pixel format". We pre-fill the canvas
+                            // with white to ensure transparent PDFs (vector logos / slides) don't render
+                            // as black blocks after JPEG encoding (JPEG has no alpha channel).
+                            val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
                             try {
-                                // Paint white background before rendering (PDF pages default to white)
                                 val canvas = Canvas(bitmap)
                                 canvas.drawColor(Color.WHITE)
                                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)

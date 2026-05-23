@@ -152,6 +152,10 @@ class BatchQueueViewModel(
         context.startService(intent)
     }
 
+    fun onNotificationPermissionDenied() {
+        setError("Notification permission is required to show batch progress on Android 13+.")
+    }
+
     private fun setError(message: String) {
         _uiState.update { it.copy(errorMessage = message) }
     }

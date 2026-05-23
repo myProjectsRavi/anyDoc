@@ -1,0 +1,28 @@
+com.docforge.core.storage-core-runtime-2.2.0-0 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/225261802dfdea27a2ad5734384d5bab/transformed/core-runtime-2.2.0/res
+com.docforge.core.storage-paging-common-release-1 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/2ac540591bcb2b8dfe832e923f44890e/transformed/paging-common-release/res
+com.docforge.core.storage-lifecycle-livedata-ktx-2.4.0-2 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/310d9571f1f6d73125c252707bd49c25/transformed/lifecycle-livedata-ktx-2.4.0/res
+com.docforge.core.storage-lifecycle-runtime-2.4.0-3 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/3f2119d4c6daa8bba1767c78e757377c/transformed/lifecycle-runtime-2.4.0/res
+com.docforge.core.storage-paging-runtime-3.3.5-4 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/491efc785330c307e1c3517e9a6f90f0/transformed/paging-runtime-3.3.5/res
+com.docforge.core.storage-lifecycle-livedata-core-2.4.0-5 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/5438315041931705d63b3489884a29e7/transformed/lifecycle-livedata-core-2.4.0/res
+com.docforge.core.storage-room-ktx-2.7.0-6 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/5c554360f8b0c4b1a76d349bef156839/transformed/room-ktx-2.7.0/res
+com.docforge.core.storage-lifecycle-viewmodel-2.4.0-7 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/5ccbb938fd68a4e8acef14be75a9f566/transformed/lifecycle-viewmodel-2.4.0/res
+com.docforge.core.storage-lifecycle-livedata-core-ktx-2.4.0-8 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/687ba231af3458c2e56cecee3b35464a/transformed/lifecycle-livedata-core-ktx-2.4.0/res
+com.docforge.core.storage-room-runtime-release-9 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/6d288c406ac9eba7a3c38c82ff00a0a0/transformed/room-runtime-release/res
+com.docforge.core.storage-lifecycle-livedata-2.4.0-10 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/6dd09fcb9adbd8d01c57cf86eed477b7/transformed/lifecycle-livedata-2.4.0/res
+com.docforge.core.storage-core-1.7.0-11 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/9c339e885d119ca5e0a83aac30618d57/transformed/core-1.7.0/res
+com.docforge.core.storage-recyclerview-1.2.1-12 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/bc968f98f44eb38dcca988a20c13c6ec/transformed/recyclerview-1.2.1/res
+com.docforge.core.storage-lifecycle-runtime-ktx-2.4.0-13 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/be23d07a9ecf2e6cbdd05a091a0bb8fe/transformed/lifecycle-runtime-ktx-2.4.0/res
+com.docforge.core.storage-room-paging-release-14 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/c10069ef7a135987e4a19a98296240af/transformed/room-paging-release/res
+com.docforge.core.storage-annotation-experimental-1.4.1-15 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/c514d06899093ebea34952930e1b311a/transformed/annotation-experimental-1.4.1/res
+com.docforge.core.storage-core-ktx-1.7.0-16 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/cb0d325263b01596ef988492ebcc56a7/transformed/core-ktx-1.7.0/res
+com.docforge.core.storage-sqlite-release-17 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/d591f77fe0de5662ed983e6af45740ac/transformed/sqlite-release/res
+com.docforge.core.storage-sqlite-framework-release-18 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/e3bc0243295e0a9c4aefecf32d0c683d/transformed/sqlite-framework-release/res
+com.docforge.core.storage-lifecycle-viewmodel-ktx-2.4.0-19 /Users/ravitejanekkalapu/.gradle/caches/8.9/transforms/e9cfe3ee42c9a98e958825319d7bf4a0/transformed/lifecycle-viewmodel-ktx-2.4.0/res
+com.docforge.core.storage-release-20 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/build/intermediates/packaged_res/release/packageReleaseResources
+com.docforge.core.storage-pngs-21 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/storage/build/generated/res/pngs/release
+com.docforge.core.storage-resValues-22 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/storage/build/generated/res/resValues/release
+com.docforge.core.storage-mergeReleaseResources-23 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/storage/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+com.docforge.core.storage-mergeReleaseResources-24 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/storage/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+com.docforge.core.storage-release-25 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/storage/build/intermediates/merged_res/release/mergeReleaseResources
+com.docforge.core.storage-main-26 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/storage/src/main/res
+com.docforge.core.storage-release-27 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/storage/src/release/res

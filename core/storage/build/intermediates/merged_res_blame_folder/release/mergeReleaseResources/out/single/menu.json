@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.docforge.core.storage-release-24:/menu/example_menu.xml",
+        "source": "com.docforge.core.storage-core-1.7.0-11:/menu/example_menu.xml"
+    },
+    {
+        "merged": "com.docforge.core.storage-release-24:/menu/example_menu2.xml",
+        "source": "com.docforge.core.storage-core-1.7.0-11:/menu/example_menu2.xml"
+    }
+]

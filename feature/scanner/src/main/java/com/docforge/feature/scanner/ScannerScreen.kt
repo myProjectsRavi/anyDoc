@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,6 +40,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -187,7 +190,7 @@ private fun PermissionMissingScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Camera permission required", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text("DocForge scanner stays fully offline, but needs camera access to capture document pages.")
+        Text("AnyDoc scanner stays fully offline, but needs camera access to capture document pages.")
         Button(onClick = onRequestPermission) {
             Text("Grant Camera Permission")
         }
@@ -220,6 +223,7 @@ fun ScannerScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(paddingValues)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -326,8 +330,8 @@ fun ScannerScreen(
                 )
             }
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f, fill = false)) {
-                itemsIndexed(state.capturedUris) { index, uriRef ->
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                state.capturedUris.forEachIndexed { index, uriRef ->
                     val uri = uriRef.toUri()
                     CapturedPageItem(
                         index = index,
@@ -368,6 +372,8 @@ fun ScannerScreen(
             }
             Text("Size: ${state.lastOutputSizeBytes ?: 0} bytes", style = MaterialTheme.typography.bodySmall)
         }
+
+        Spacer(modifier = Modifier.height(paddingValues.calculateBottomPadding() + 96.dp))
     }
 }
 

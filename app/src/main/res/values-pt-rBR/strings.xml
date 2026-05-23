@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DocForge</string>
+    <string name="app_name">AnyDoc</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_home">Início</string>
@@ -10,13 +10,13 @@
     <string name="nav_history">Histórico</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_title">Bem-vindo ao DocForge</string>
+    <string name="onboarding_title">Bem-vindo ao AnyDoc</string>
     <string name="onboarding_subtitle">Conversões de arquivos e ferramentas PDF privadas e offline, sem contas ou marcas d\'água.</string>
     <string name="onboarding_features_heading">O que você recebe</string>
     <string name="onboarding_get_started">Começar</string>
 
     <!-- Home -->
-    <string name="home_title">DocForge</string>
+    <string name="home_title">AnyDoc</string>
     <string name="home_search_hint">O que você quer fazer?</string>
     <string name="home_quick_actions">Ações rápidas</string>
 
@@ -26,7 +26,7 @@
     <string name="scanner_capture_page">Capturar página</string>
     <string name="scanner_import_gallery">Importar da galeria</string>
     <string name="scanner_camera_permission_title">Permissão de câmera necessária</string>
-    <string name="scanner_camera_permission_body">O scanner do DocForge é totalmente offline, mas precisa de acesso à câmera para capturar páginas.</string>
+    <string name="scanner_camera_permission_body">O scanner do AnyDoc é totalmente offline, mas precisa de acesso à câmera para capturar páginas.</string>
     <string name="scanner_grant_permission">Conceder permissão de câmera</string>
 
     <!-- Converter -->

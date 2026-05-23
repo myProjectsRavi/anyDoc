@@ -13,11 +13,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.TextSnippet
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,7 +42,14 @@ import com.docforge.core.pdf.PdfPageSize
 @Composable
 fun ConverterRoute(
     viewModel: ConverterViewModel,
-    paddingValues: PaddingValues = PaddingValues(0.dp)
+    paddingValues: PaddingValues = PaddingValues(0.dp),
+    onOpenImageFormat: () -> Unit = {},
+    onOpenAudioFormat: () -> Unit = {},
+    onOpenDocumentToPdf: () -> Unit = {},
+    onOpenTextToPdf: () -> Unit = {},
+    onOpenVideoToAudio: () -> Unit = {},
+    onOpenPdfToImages: () -> Unit = {},
+    onOpenPdfToText: () -> Unit = {}
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value
     val launcher = rememberLauncherForActivityResult(
@@ -53,7 +65,14 @@ fun ConverterRoute(
         onOutputNameChanged = viewModel::onOutputNameChanged,
         onPageSizeChanged = viewModel::onPageSizeChanged,
         onConvert = viewModel::convertImagesToPdf,
-        onClearError = viewModel::clearError
+        onClearError = viewModel::clearError,
+        onOpenImageFormat = onOpenImageFormat,
+        onOpenAudioFormat = onOpenAudioFormat,
+        onOpenDocumentToPdf = onOpenDocumentToPdf,
+        onOpenTextToPdf = onOpenTextToPdf,
+        onOpenVideoToAudio = onOpenVideoToAudio,
+        onOpenPdfToImages = onOpenPdfToImages,
+        onOpenPdfToText = onOpenPdfToText
     )
 }
 
@@ -66,7 +85,14 @@ fun ConverterScreen(
     onOutputNameChanged: (String) -> Unit,
     onPageSizeChanged: (PdfPageSize) -> Unit,
     onConvert: () -> Unit,
-    onClearError: () -> Unit
+    onClearError: () -> Unit,
+    onOpenImageFormat: () -> Unit = {},
+    onOpenAudioFormat: () -> Unit = {},
+    onOpenDocumentToPdf: () -> Unit = {},
+    onOpenTextToPdf: () -> Unit = {},
+    onOpenVideoToAudio: () -> Unit = {},
+    onOpenPdfToImages: () -> Unit = {},
+    onOpenPdfToText: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -86,6 +112,24 @@ fun ConverterScreen(
                 Text("Images to PDF", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             }
             Text("Offline conversion. Your files never leave your phone.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
+        // Conversion hub: shortcuts to all available converters
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("MORE CONVERSIONS", color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                ConverterTile("Document → PDF", "DOCX • RTF • CSV • TXT", Icons.Default.Description, onOpenDocumentToPdf)
+                ConverterTile("Text → PDF", "Type or paste text", Icons.Default.TextSnippet, onOpenTextToPdf)
+                ConverterTile("PDF → Images", "JPG / PNG / WebP", Icons.Default.PictureAsPdf, onOpenPdfToImages)
+                ConverterTile("PDF → TXT", "Extract text", Icons.Default.TextSnippet, onOpenPdfToText)
+                ConverterTile("Image Format", "HEIC • WebP • JPG • PNG", Icons.Default.Image, onOpenImageFormat)
+                ConverterTile("Audio Format", "M4A • WAV • MP3 • FLAC", Icons.Default.Audiotrack, onOpenAudioFormat)
+                ConverterTile("Video → Audio", "Extract M4A / MP3", Icons.Default.Movie, onOpenVideoToAudio)
+            }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -226,5 +270,28 @@ fun ConverterScreen(
             }
         }
         Spacer(modifier = Modifier.height(paddingValues.calculateBottomPadding() + 80.dp))
+    }
+}
+
+@Composable
+private fun ConverterTile(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(160.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+        Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }

@@ -13,6 +13,7 @@ data class PdfRedactUiState(
     val scrubMetadata: Boolean = true,
     val scrubFormValues: Boolean = true,
     val verifyIrreversible: Boolean = true,
+    val autoDetectPii: Boolean = true,
     val isProcessing: Boolean = false,
     val statusMessage: String? = null,
     val errorMessage: String? = null,

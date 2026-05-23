@@ -1,0 +1,6 @@
+[
+    {
+        "merged": "com.docforge.core.pdf-release-27:/xml/rapid_response_client_defaults.xml",
+        "source": "com.docforge.core.pdf-translate-17.0.3-22:/xml/rapid_response_client_defaults.xml"
+    }
+]
