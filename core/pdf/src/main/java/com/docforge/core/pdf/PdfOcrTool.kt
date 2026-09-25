@@ -162,15 +162,19 @@ class PdfOcrTool(
                 textOutput.writeText(extracted)
 
                 val searchablePdf = if (createSearchablePdf) {
-                    val pdfOutput = resolveNonConflictingFile(outputDir, "${base}_searchable", "pdf")
-                    writeSearchablePdf(
-                        sourceFile = sourceFile,
-                        outputFile = pdfOutput,
-                        lines = allLines,
-                        pageProgressChunk = progressChunk,
-                        onProgress = onProgress
-                    )
-                    pdfOutput
+                    withStagedOutputFile(
+                        directory = outputDir,
+                        baseName = "${base}_searchable",
+                        extension = "pdf"
+                    ) { stagedFile ->
+                        writeSearchablePdf(
+                            sourceFile = sourceFile,
+                            outputFile = stagedFile,
+                            lines = allLines,
+                            pageProgressChunk = progressChunk,
+                            onProgress = onProgress
+                        )
+                    }.outputFile
                 } else {
                     null
                 }
@@ -219,11 +223,31 @@ class PdfOcrTool(
                 textOutput.writeText(extracted)
 
                 val searchablePdf = if (createSearchablePdf) {
-                    val pdfOutput = File(outputDir, "${base}_searchable.pdf")
-                    onProgress?.invoke(PdfOcrProgress(stage = "Embedding OCR text layer", current = 0, total = 1))
-                    writeSearchablePdfFromImage(bitmap = bitmap, outputFile = pdfOutput, lines = ocrLines)
-                    onProgress?.invoke(PdfOcrProgress(stage = "Embedding OCR text layer", current = 1, total = 1))
-                    pdfOutput
+                    withStagedOutputFile(
+                        directory = outputDir,
+                        baseName = "${base}_searchable",
+                        extension = "pdf"
+                    ) { stagedFile ->
+                        onProgress?.invoke(
+                            PdfOcrProgress(
+                                stage = "Embedding OCR text layer",
+                                current = 0,
+                                total = 1
+                            )
+                        )
+                        writeSearchablePdfFromImage(
+                            bitmap = bitmap,
+                            outputFile = stagedFile,
+                            lines = ocrLines
+                        )
+                        onProgress?.invoke(
+                            PdfOcrProgress(
+                                stage = "Embedding OCR text layer",
+                                current = 1,
+                                total = 1
+                            )
+                        )
+                    }.outputFile
                 } else {
                     null
                 }
