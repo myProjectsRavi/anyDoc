@@ -6,16 +6,16 @@
 **Current report:** `2026-09-25_1837_cycle-001`  
 **Report status:** ACTIVE / INCOMPLETE  
 **Cycle:** 001  
-**Hourly run counter:** 1  
+**Hourly run counter:** 2  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-25 UTC, run 001
+**State checkpoint timestamp:** 2026-09-25 UTC, run 002
 
 ## Git checkpoint
 
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- HEAD observed immediately before this STATE checkpoint: `b4706d874745befcb01a2bc20a20919d4dee218c`
+- Latest code HEAD validated/observed before documentation-only checkpoint commits: `903c257b1370bb6666cfa94207ad2017cd0337f8`
 - This STATE write itself advances the branch by one commit, so the next invocation MUST read actual branch HEAD rather than assuming the pre-checkpoint SHA above.
 - Draft validation PR: #1, open, **do not merge while CURRENT_REPORT is incomplete**.
 - Uncommitted work: none represented by the connected GitHub mutation flow; writes in this run were committed atomically per file.
@@ -30,20 +30,49 @@ Implemented work is not counted as COMPLETE while required CI remains unobserved
 
 ### Mandatory states
 
-1. **R001-P0-01 — Non-destructive output allocation:** CI_PENDING / audit continuation required
+1. **R001-P0-01 — Non-destructive output allocation:** CI_PENDING / recursive source collision audit complete
 2. **R001-P1-01 — Race-safe retryable PDFBox initialization:** CI_PENDING
 3. **R001-P1-02 — Active temp-file protection:** CI_PENDING
-4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** NOT_STARTED
-5. **R001-P1-04 — Lifecycle-safe shared launch:** NOT_STARTED
-6. **R001-P1-05 — Release signing safety:** NOT_STARTED
+4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** IN_PROGRESS / CI_PENDING
+5. **R001-P1-04 — Lifecycle-safe shared launch:** CI_PENDING
+6. **R001-P1-05 — Release signing safety:** CI_PENDING
 7. **R001-P2-01 — Representative large-input preflight:** NOT_STARTED
 8. **R001-P3-01 — Final CI/regression/diff/docs gate:** CI_PENDING
 
 ## Current implementation task
 
-**Primary:** obtain CI evidence for the current changes, fix any compile/test/lint problem immediately, then continue R001-P0-01 output-path audit and start R001-P1-03 staged output publishing.
+**Primary:** obtain CI evidence for the current changes, fix any compile/test/lint/R8 problem immediately, then continue R001-P1-03 staged output publishing for remaining high-risk long operations.
 
-**Current subtask:** inspect GitHub Actions for draft PR #1/current HEAD.
+**Current subtask:** observe GitHub Actions run #60 for code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`; if it passes, apply evidence to pending items; if it fails, inspect logs and fix root cause.
+
+## Work completed in run 002
+
+### Staged output safety
+- Added reusable same-directory staged-output publishing in `PdfIoUtils.kt`.
+- Final user-visible files are created only after the writer block succeeds.
+- Staging files are deleted on failure/cancellation.
+- Final publish never intentionally replaces an existing destination and retries with a non-conflicting suffix if a competing writer wins the name race.
+- Migrated `PdfCompressor`, `PdfMerger`, and searchable-PDF generation in both PDF OCR and image OCR to staged publishing.
+- Added JVM regression tests for successful staged publish with an existing destination and failure cleanup.
+
+### Expanded P0 collision audit
+- Used the current branch recursive Git tree to enumerate the actual source tree rather than relying on default-branch code search.
+- Audited the complete active `core/pdf` source set and converter engine files for direct final-output construction.
+- Found and fixed a missed direct overwrite in `BusinessCardParser` vCard export by switching to non-conflicting allocation.
+- Verified saved-signature slot replacement is intentional application state.
+- Verified vault encryption uses generated internal filenames rather than user-selected final output names.
+
+### Business-card resource safety
+- Bitmap recycling now occurs in `finally` around ML Kit recognition.
+- ML Kit recognizer is always closed.
+- Cancellation callback is handled explicitly.
+
+### Validation during run 002
+- Repeated sandbox network check still failed with `Could not resolve host: github.com`.
+- GitHub Actions run #60 was observed in progress on code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`.
+- At the last observation, checkout, Java 17 setup, Gradle setup, and wrapper setup had succeeded; core PDF unit tests were still running.
+- No CI pass is claimed yet.
+- Branch comparison: feature branch remains ahead of `main` and behind by 0; `main` was not modified.
 
 ## Work completed in run 001
 
@@ -196,8 +225,8 @@ Docs:
 
 ## Known limitations
 
-- Full current-tree enumeration is constrained by unavailable local clone and unavailable indexed connector code search.
-- The initial audit therefore remains active and must continue through known modules/files rather than pretending coverage is complete.
+- Local cloning remains unavailable because the sandbox cannot resolve `github.com`; however, GitHub's recursive tree endpoint now provides complete current-branch path enumeration for source auditing.
+- Source enumeration is no longer the blocker; executable local Gradle validation remains blocked by sandbox DNS/network.
 - No current emulator or physical-device result.
 - No performance baseline yet.
 - OCR searchable layer still needs global Unicode strategy.
@@ -208,11 +237,11 @@ Docs:
 ## Next exact action
 
 1. Read this file and `CURRENT_REPORT.md`.
-2. Fetch actual current branch HEAD.
-3. Inspect draft PR #1 workflow runs/jobs.
-4. If CI failed, inspect logs and fix before lower-priority work.
-5. If current fixes pass, update their evidence but keep R001-P0-01 open until repository-wide output audit is complete.
-6. Implement R001-P1-03 starting with one high-risk long-running PDF output using a reusable staged-output transaction pattern.
-7. Add regression tests.
-8. Update `VALIDATION.md`, `CURRENT_REPORT.md`, and this `STATE.md`.
-9. Do **not** create Cycle 002.
+2. Fetch actual current branch HEAD and draft PR #1 state.
+3. Inspect GitHub Actions run #60 (or the latest run for code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`).
+4. If CI failed, inspect logs and fix the root cause before lower-priority work.
+5. If CI passed, mark only the evidence-supported pending items COMPLETE; do not infer emulator/physical-device coverage.
+6. Continue R001-P1-03 with remaining high-risk direct-final writers, prioritizing PDF split/batch and audio conversion/extraction paths.
+7. Then begin R001-P2-01 representative input-size/free-space preflight.
+8. Update durable docs before ending.
+9. Do **not** create Cycle 002 while Cycle 001 is incomplete.
