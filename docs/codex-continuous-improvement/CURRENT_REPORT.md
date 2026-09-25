@@ -10,10 +10,10 @@
 
 | ID | Priority | Task | State |
 |---|---|---|---|
-| R001-P0-01 | P0 | Eliminate destructive same-name final outputs and finish collision audit | CI_PENDING / IN_PROGRESS |
+| R001-P0-01 | P0 | Eliminate destructive same-name final outputs and finish collision audit | CI_PENDING / AUDIT_COMPLETE |
 | R001-P1-01 | P1 | Make PDFBox initialization race-safe and retryable | CI_PENDING |
 | R001-P1-02 | P1 | Protect active temp files from memory-pressure cleanup | CI_PENDING |
-| R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | NOT_STARTED |
+| R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | IN_PROGRESS / CI_PENDING |
 | R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | CI_PENDING |
 | R001-P1-05 | P1 | Remove debug-signing default from production release | CI_PENDING |
 | R001-P2-01 | P2 | Add representative large-input/disk/memory preflight | NOT_STARTED |
@@ -31,6 +31,10 @@
 - Feature-branch GitHub Actions workflow added, including unsigned release/R8 assembly.
 - Shared-launch state moved to a saved-state-backed Activity ViewModel and consumption delayed until destination prefill completes.
 - Production release no longer falls back to the debug signing key.
+- Added same-directory staged-output publishing with failure cleanup and non-overwriting final move semantics.
+- Migrated PDF compression, PDF merge, and both searchable-OCR PDF paths to staged publishing.
+- Expanded the current-branch collision audit via a complete recursive Git tree; fixed the missed business-card `.vcf` overwrite path.
+- Business-card OCR now recycles its bitmap on failure/cancellation and always closes the ML Kit recognizer.
 - Durable backlog, changelog, validation, benchmark, feature/test matrices, UX audit and performance baseline added.
 
 ## Current blockers / limitations
@@ -41,7 +45,7 @@
 
 ## Next exact action
 
-1. Obtain observable GitHub Actions results for the current branch and fix any compile/test/lint failure.
-2. Continue repository-wide output-path audit.
-3. Implement R001-P1-03 staged/transactional publishing for representative long-running outputs.
+1. Observe GitHub Actions run #60 for code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`; fix any unit-test/build/R8/lint failure.
+2. Keep R001-P0-01 open until that code passes CI; the recursive current-branch collision audit is now complete for source output writers.
+3. Continue R001-P1-03 by reviewing remaining long-running direct-final writes, prioritizing split/batch/audio paths.
 4. Do not create another report.
