@@ -15,9 +15,7 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.docforge.app.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -102,20 +100,19 @@ fun DocForgeNavHost(
     dependencies: AppDependencies,
     startDestination: String = Routes.HOME,
     sharedLaunchRequest: ShareLaunchRequest? = null,
-    onSharedLaunchHandled: () -> Unit = {}
+    onSharedLaunchHandled: (ShareLaunchRequest) -> Unit = {}
 ) {
     val navController = rememberNavController()
-    var activeSharedLaunch by remember { mutableStateOf<ShareLaunchRequest?>(null) }
 
     LaunchedEffect(sharedLaunchRequest) {
         val request = sharedLaunchRequest ?: return@LaunchedEffect
-        activeSharedLaunch = request
-        if (request.targetRoute != Routes.HOME) {
-            navController.navigate(request.targetRoute) {
-                launchSingleTop = true
-            }
+        if (request.targetRoute == Routes.HOME) {
+            onSharedLaunchHandled(request)
+            return@LaunchedEffect
         }
-        onSharedLaunchHandled()
+        navController.navigate(request.targetRoute) {
+            launchSingleTop = true
+        }
     }
 
     val converterRoutes = remember {
@@ -242,8 +239,8 @@ fun DocForgeNavHost(
             }
         }
     ) { paddingValues ->
-        val sharedTarget = activeSharedLaunch?.targetRoute
-        val sharedUris = activeSharedLaunch?.uris.orEmpty()
+        val sharedTarget = sharedLaunchRequest?.targetRoute
+        val sharedUris = sharedLaunchRequest?.uris.orEmpty()
 
         NavHost(
             navController = navController,
@@ -364,9 +361,9 @@ fun DocForgeNavHost(
                     paddingValues = paddingValues,
                     prefillUris = if (sharedTarget == Routes.IMAGE_FORMAT) sharedUris else emptyList(),
                     onPrefillConsumed = {
-                        if (sharedTarget == Routes.IMAGE_FORMAT) {
-                            activeSharedLaunch = null
-                        }
+                        sharedLaunchRequest
+                            ?.takeIf { it.targetRoute == Routes.IMAGE_FORMAT }
+                            ?.let(onSharedLaunchHandled)
                     }
                 )
             }
@@ -382,9 +379,9 @@ fun DocForgeNavHost(
                     paddingValues = paddingValues,
                     prefillUris = if (sharedTarget == Routes.AUDIO_FORMAT) sharedUris else emptyList(),
                     onPrefillConsumed = {
-                        if (sharedTarget == Routes.AUDIO_FORMAT) {
-                            activeSharedLaunch = null
-                        }
+                        sharedLaunchRequest
+                            ?.takeIf { it.targetRoute == Routes.AUDIO_FORMAT }
+                            ?.let(onSharedLaunchHandled)
                     }
                 )
             }
@@ -400,9 +397,9 @@ fun DocForgeNavHost(
                     paddingValues = paddingValues,
                     prefillUris = if (sharedTarget == Routes.DOC_TO_PDF) sharedUris else emptyList(),
                     onPrefillConsumed = {
-                        if (sharedTarget == Routes.DOC_TO_PDF) {
-                            activeSharedLaunch = null
-                        }
+                        sharedLaunchRequest
+                            ?.takeIf { it.targetRoute == Routes.DOC_TO_PDF }
+                            ?.let(onSharedLaunchHandled)
                     }
                 )
             }
@@ -433,9 +430,9 @@ fun DocForgeNavHost(
                     paddingValues = paddingValues,
                     prefillUris = if (sharedTarget == Routes.VIDEO_TO_AUDIO) sharedUris else emptyList(),
                     onPrefillConsumed = {
-                        if (sharedTarget == Routes.VIDEO_TO_AUDIO) {
-                            activeSharedLaunch = null
-                        }
+                        sharedLaunchRequest
+                            ?.takeIf { it.targetRoute == Routes.VIDEO_TO_AUDIO }
+                            ?.let(onSharedLaunchHandled)
                     }
                 )
             }
@@ -469,9 +466,9 @@ fun DocForgeNavHost(
                     paddingValues = paddingValues,
                     prefillUris = if (sharedTarget == Routes.PDF_MERGE) sharedUris else emptyList(),
                     onPrefillConsumed = {
-                        if (sharedTarget == Routes.PDF_MERGE) {
-                            activeSharedLaunch = null
-                        }
+                        sharedLaunchRequest
+                            ?.takeIf { it.targetRoute == Routes.PDF_MERGE }
+                            ?.let(onSharedLaunchHandled)
                     }
                 )
             }
