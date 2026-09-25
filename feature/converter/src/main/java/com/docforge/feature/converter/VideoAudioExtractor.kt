@@ -8,6 +8,7 @@ import android.media.MediaMuxer
 import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
+import com.docforge.core.pdf.resolveNonConflictingFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -165,11 +166,7 @@ class VideoAudioExtractor(
             AudioOutputFormat.MP3 -> "mp3"
         }
 
-        return File(outputDir, "$base.$extension").also { file ->
-            if (file.exists()) {
-                file.delete()
-            }
-        }
+        return resolveNonConflictingFile(outputDir, base, extension)
     }
 
     private fun selectBufferSize(trackFormat: MediaFormat): Int {
