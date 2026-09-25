@@ -9,6 +9,7 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.net.Uri
+import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import com.docforge.core.pdf.resolveNonConflictingFile
@@ -123,7 +124,7 @@ class AudioFormatConverter(
                 durationMs = decoded.durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
@@ -152,7 +153,7 @@ class AudioFormatConverter(
                 durationMs = decoded.durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
@@ -211,7 +212,7 @@ class AudioFormatConverter(
                 durationMs = durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
@@ -610,7 +611,14 @@ class AudioFormatConverter(
 
     private fun createTempPcmFile(): File {
         val tempDir = context.cacheDir
-        return File.createTempFile("docforge_audio_", ".pcm", tempDir)
+        return File.createTempFile("docforge_audio_", ".pcm", tempDir).also {
+            ActiveTempFileRegistry.register(it)
+        }
+    }
+
+    private fun deleteTempPcmFile(file: File) {
+        ActiveTempFileRegistry.unregister(file)
+        file.delete()
     }
 
     private inline fun <T> withAudioTrack(
