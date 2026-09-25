@@ -56,23 +56,31 @@ class PdfCompressor(
 
         val sanitized = outputName.ifBlank { "compressed_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-        context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_compress_src_", suffix = ".pdf") { sourceFile ->
-            val pageCount = compressWithJpegRasterization(
-                sourceFile = sourceFile,
-                outputFile = outputFile,
-                renderDpi = level.renderDpi,
-                jpegQuality = level.jpegQuality,
-                onProgress = onProgress
-            )
-
-            PdfCreationResult(
-                outputFile = outputFile,
-                pageCount = pageCount,
-                outputSizeBytes = outputFile.length()
-            )
+        val staged = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "pdf"
+        ) { stagedFile ->
+            context.withUriCopiedToCacheFile(
+                inputUri,
+                prefix = "docforge_compress_src_",
+                suffix = ".pdf"
+            ) { sourceFile ->
+                compressWithJpegRasterization(
+                    sourceFile = sourceFile,
+                    outputFile = stagedFile,
+                    renderDpi = level.renderDpi,
+                    jpegQuality = level.jpegQuality,
+                    onProgress = onProgress
+                )
+            }
         }
+
+        PdfCreationResult(
+            outputFile = staged.outputFile,
+            pageCount = staged.value,
+            outputSizeBytes = staged.outputFile.length()
+        )
     }
 
     suspend fun getPageCount(inputUri: Uri): Int = withContext(Dispatchers.IO) {
