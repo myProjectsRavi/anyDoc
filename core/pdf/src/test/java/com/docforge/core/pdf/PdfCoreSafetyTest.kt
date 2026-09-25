@@ -1,5 +1,6 @@
 package com.docforge.core.pdf
 
+import com.docforge.core.domain.io.ActiveTempFileRegistry
 import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -62,6 +63,26 @@ class PdfCoreSafetyTest {
             assertEquals(1, calls.get())
         } finally {
             executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun activeTempFileRegistryTracksOnlyCurrentLeases() {
+        val directory = Files.createTempDirectory("anydoc-temp-registry-test").toFile()
+        val file = directory.resolve("docforge_active.tmp")
+        file.writeText("active")
+
+        try {
+            assertFalse(ActiveTempFileRegistry.isActive(file))
+
+            ActiveTempFileRegistry.register(file)
+            assertTrue(ActiveTempFileRegistry.isActive(file))
+
+            ActiveTempFileRegistry.unregister(file)
+            assertFalse(ActiveTempFileRegistry.isActive(file))
+        } finally {
+            ActiveTempFileRegistry.unregister(file)
+            directory.deleteRecursively()
         }
     }
 
