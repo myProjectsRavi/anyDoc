@@ -108,8 +108,13 @@ class PdfBatchStampTool(
 
                         val base = outputBaseName.ifBlank { "batch_stamped_${System.currentTimeMillis()}" }
                             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                        val outputFile = resolveNonConflictingFile(outputDir, "${base}_${inputIndex + 1}", "pdf")
-                        outDoc.save(outputFile)
+                        val outputFile = withStagedOutputFile(
+                            directory = outputDir,
+                            baseName = "${base}_${inputIndex + 1}",
+                            extension = "pdf"
+                        ) { stagedFile ->
+                            outDoc.save(stagedFile)
+                        }.outputFile
 
                         outputs += PdfBatchStampFileResult(
                             inputUri = inputUri,
