@@ -81,7 +81,7 @@ class PdfSplitter(
 
             requested.forEach { pageOneBased ->
                 checkCancelled()
-                val out = File(outputDir, "${sanitizedBase}_p$pageOneBased.pdf")
+                val out = resolveNonConflictingFile(outputDir, "${sanitizedBase}_p$pageOneBased", "pdf")
                 PDDocument().use { outDoc ->
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                     outDoc.save(out)
@@ -118,7 +118,7 @@ class PdfSplitter(
             while (startPageOneBased <= sourceDoc.numberOfPages) {
                 checkCancelled()
                 val endPageOneBased = min(startPageOneBased + pagesPerChunk - 1, sourceDoc.numberOfPages)
-                val out = File(outputDir, "${sanitizedBase}_${startPageOneBased}_${endPageOneBased}.pdf")
+                val out = resolveNonConflictingFile(outputDir, "${sanitizedBase}_${startPageOneBased}_${endPageOneBased}", "pdf")
 
                 PDDocument().use { outDoc ->
                     for (pageOneBased in startPageOneBased..endPageOneBased) {
