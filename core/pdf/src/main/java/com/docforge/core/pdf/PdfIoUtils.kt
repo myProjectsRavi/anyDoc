@@ -8,6 +8,8 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.channels.Channels
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
 
 private const val FILE_CHANNEL_COPY_CHUNK_BYTES = 8L * 1024L * 1024L
 private val SAFE_EXTENSION_REGEX = Regex("[a-z0-9]{1,8}")
@@ -99,6 +101,78 @@ fun resolveNonConflictingFile(directory: File, baseName: String, extension: Stri
         if (!numbered.exists()) return numbered
         counter++
     }
+}
+
+
+internal data class StagedOutputResult<T>(
+    val outputFile: File,
+    val value: T
+)
+
+/**
+ * Writes a final output through a same-directory staging file.
+ *
+ * The user-visible destination is created only after [block] returns successfully. If the
+ * operation fails or is cancelled, the staging file is deleted and no partial final file is
+ * published. Publishing uses a same-filesystem move and never replaces an existing output.
+ */
+internal inline fun <T> withStagedOutputFile(
+    directory: File,
+    baseName: String,
+    extension: String,
+    block: (stagedFile: File) -> T
+): StagedOutputResult<T> {
+    require(directory.exists() || directory.mkdirs()) {
+        "Unable to create output directory: ${directory.absolutePath}"
+    }
+
+    val stagedFile = File.createTempFile(".anydoc_stage_", ".part", directory)
+    return try {
+        val value = block(stagedFile)
+        require(stagedFile.isFile) { "Staged output was not created." }
+        val outputFile = moveStagedFileWithoutOverwrite(
+            stagedFile = stagedFile,
+            directory = directory,
+            baseName = baseName,
+            extension = extension
+        )
+        StagedOutputResult(outputFile = outputFile, value = value)
+    } finally {
+        if (stagedFile.exists()) {
+            stagedFile.delete()
+        }
+    }
+}
+
+private fun moveStagedFileWithoutOverwrite(
+    stagedFile: File,
+    directory: File,
+    baseName: String,
+    extension: String
+): File {
+    var counter = 0
+    while (counter < 10_000) {
+        val candidate = if (counter == 0) {
+            File(directory, "$baseName.$extension")
+        } else {
+            File(directory, "${baseName}_$counter.$extension")
+        }
+
+        if (candidate.exists()) {
+            counter++
+            continue
+        }
+
+        try {
+            Files.move(stagedFile.toPath(), candidate.toPath())
+            return candidate
+        } catch (_: FileAlreadyExistsException) {
+            // Another writer won the race after exists(); choose the next non-conflicting name.
+            counter++
+        }
+    }
+
+    error("Unable to allocate a non-conflicting output name for $baseName.$extension")
 }
 
 /**
