@@ -2,6 +2,7 @@ package com.docforge.core.pdf
 
 import android.content.Context
 import android.net.Uri
+import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import java.io.File
@@ -14,9 +15,11 @@ private val SAFE_EXTENSION_REGEX = Regex("[a-z0-9]{1,8}")
 internal fun Context.copyUriToCacheFile(
     uri: Uri,
     prefix: String,
-    suffix: String = guessTempSuffix(uri, defaultSuffix = ".bin")
+    suffix: String = guessTempSuffix(uri, defaultSuffix = ".bin"),
+    keepRegistered: Boolean = false
 ): File {
     val tempFile = File.createTempFile(prefix, suffix, cacheDir)
+    ActiveTempFileRegistry.register(tempFile)
     return try {
         val input = contentResolver.openInputStream(uri) ?: error("Unable to open input: $uri")
         input.use { source ->
@@ -37,8 +40,13 @@ internal fun Context.copyUriToCacheFile(
         }
         tempFile
     } catch (t: Throwable) {
+        ActiveTempFileRegistry.unregister(tempFile)
         tempFile.delete()
         throw t
+    } finally {
+        if (!keepRegistered) {
+            ActiveTempFileRegistry.unregister(tempFile)
+        }
     }
 }
 
@@ -48,10 +56,16 @@ internal inline fun <T> Context.withUriCopiedToCacheFile(
     suffix: String = guessTempSuffix(uri, defaultSuffix = ".bin"),
     block: (File) -> T
 ): T {
-    val tempFile = copyUriToCacheFile(uri = uri, prefix = prefix, suffix = suffix)
+    val tempFile = copyUriToCacheFile(
+        uri = uri,
+        prefix = prefix,
+        suffix = suffix,
+        keepRegistered = true
+    )
     return try {
         block(tempFile)
     } finally {
+        ActiveTempFileRegistry.unregister(tempFile)
         tempFile.delete()
     }
 }
