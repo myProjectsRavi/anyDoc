@@ -11,7 +11,9 @@
 - Protected audio PCM temp files for their complete active lifetime.
 - Updated `DocForgeApp` cache trimming to skip active temporary files.
 - Added JVM regression tests for one-time initialization, retry after initialization failure, active temp-file registry lifecycle, and non-destructive output naming.
-- Added feature-branch GitHub Actions workflow for core PDF unit tests, debug APK assembly, and Android lint.
+- Added feature-branch GitHub Actions workflow for core PDF unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint.
+- Removed the production release build's explicit debug signing fallback; release signing is now external by design.
+- Replaced Compose-owned shared-launch buffering with a Hilt Activity ViewModel backed by SavedStateHandle, and defer consumption until the target screen accepts the shared URIs. This prevents recreation replay/duplication while keeping a pending launch durable.
 
 ### Validation state
 - ChatGPT/Codex sandbox clone is blocked by DNS/network resolution for `github.com` in the current execution environment.
