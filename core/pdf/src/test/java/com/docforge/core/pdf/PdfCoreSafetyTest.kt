@@ -107,4 +107,55 @@ class PdfCoreSafetyTest {
             directory.deleteRecursively()
         }
     }
+    @Test
+    fun stagedOutputPublishesOnlyAfterSuccessfulBlockAndPreservesExistingFile() {
+        val directory = Files.createTempDirectory("anydoc-staged-output-test").toFile()
+        try {
+            val existing = directory.resolve("compressed.pdf")
+            existing.writeText("existing")
+
+            val result = withStagedOutputFile(
+                directory = directory,
+                baseName = "compressed",
+                extension = "pdf"
+            ) { staged ->
+                staged.writeText("complete")
+                7
+            }
+
+            assertEquals(7, result.value)
+            assertEquals("compressed_1.pdf", result.outputFile.name)
+            assertEquals("existing", existing.readText())
+            assertEquals("complete", result.outputFile.readText())
+            assertTrue(directory.listFiles().orEmpty().none { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun stagedOutputDeletesPartialFileWhenOperationFails() {
+        val directory = Files.createTempDirectory("anydoc-staged-failure-test").toFile()
+        try {
+            try {
+                withStagedOutputFile(
+                    directory = directory,
+                    baseName = "compressed",
+                    extension = "pdf"
+                ) { staged ->
+                    staged.writeText("partial")
+                    error("synthetic conversion failure")
+                }
+                fail("Expected staged operation failure to propagate")
+            } catch (_: IllegalStateException) {
+                // Expected.
+            }
+
+            assertFalse(directory.resolve("compressed.pdf").exists())
+            assertTrue(directory.listFiles().orEmpty().none { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
 }
