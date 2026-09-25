@@ -19,3 +19,15 @@
 - ChatGPT/Codex sandbox clone is blocked by DNS/network resolution for `github.com` in the current execution environment.
 - GitHub connector reports no combined status/check result yet for the latest feature-branch commit.
 - Therefore the code above remains `CI_PENDING`; no CI pass is claimed.
+
+
+## Run 002 — 2026-09-25
+
+- Added reusable failure-safe staged output publishing in `PdfIoUtils.kt`.
+- Migrated PDF compression, PDF merge, and searchable OCR PDFs to staged final publication.
+- Added staged-output success/failure regression tests.
+- Completed a recursive current-branch source-tree collision audit.
+- Fixed missed destructive same-name business-card vCard export.
+- Hardened business-card OCR bitmap/recognizer cleanup.
+- Reconfirmed sandbox DNS prevents local clone/Gradle execution.
+- GitHub Actions run #60 passed core PDF unit tests and was still building the debug APK at the last checkpoint.
