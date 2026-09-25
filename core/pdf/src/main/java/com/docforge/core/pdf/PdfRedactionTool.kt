@@ -139,7 +139,7 @@ class PdfRedactionTool(
                 )
                 val sanitized = outputName.ifBlank { "redacted_${System.currentTimeMillis()}" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                val outputFile = File(outputDir, "${sanitized}_irreversible.pdf")
+                val outputFile = resolveNonConflictingFile(outputDir, "${sanitized}_irreversible", "pdf")
 
                 onProgress?.invoke(PdfRedactionProgress(stage = "Saving redacted PDF", current = 0, total = 1))
                 document.save(outputFile)
