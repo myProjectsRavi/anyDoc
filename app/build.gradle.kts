@@ -30,7 +30,8 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            // Release signing is intentionally external. Never fall back to the debug key.
+            // CI can still compile/R8 an unsigned release artifact for validation.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
