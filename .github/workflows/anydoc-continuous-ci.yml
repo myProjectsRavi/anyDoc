@@ -44,5 +44,8 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
 
+      - name: Assemble release (unsigned, R8)
+        run: ./gradlew --no-daemon :app:assembleRelease
+
       - name: Android lint
         run: ./gradlew --no-daemon :app:lintDebug
