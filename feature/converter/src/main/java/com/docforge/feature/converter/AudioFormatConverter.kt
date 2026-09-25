@@ -11,6 +11,7 @@ import android.media.MediaMuxer
 import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
+import com.docforge.core.pdf.resolveNonConflictingFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -604,9 +605,7 @@ class AudioFormatConverter(
             AudioConvertOutputFormat.FLAC -> "flac"
         }
 
-        return File(outputDir, "$base.$extension").also { file ->
-            if (file.exists()) file.delete()
-        }
+        return resolveNonConflictingFile(outputDir, base, extension)
     }
 
     private fun createTempPcmFile(): File {
