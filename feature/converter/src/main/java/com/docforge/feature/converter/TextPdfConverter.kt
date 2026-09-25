@@ -7,6 +7,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
+import com.docforge.core.pdf.resolveNonConflictingFile
 import com.docforge.core.pdf.PdfCreationResult
 import com.docforge.core.pdf.PdfPageSize
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +52,7 @@ class TextPdfConverter(
         )
         val sanitized = outputName.ifBlank { "text_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = File(outputDir, "$sanitized.pdf")
+        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
         val blocks = buildBlocks(
             title = options.title.trim(),
