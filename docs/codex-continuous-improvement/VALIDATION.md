@@ -12,9 +12,12 @@
 ### Source-level validation performed
 - Re-read every file before mutation.
 - Used content-SHA guarded GitHub updates; stale-content writes would fail instead of overwriting unseen changes.
-- Re-ran a targeted output-allocation audit across 19 primary PDF/converter source files.
+- Re-ran targeted output-allocation audits across the complete current-branch `core/pdf` source set, all converter engine files, and other file-writing source paths discovered from a recursive Git tree.
 - Verified newer fetched tools `PdfCompareTool`, `PdfPageCropTool`, `PdfHeaderFooterTool`, and `PdfAComplianceTool` already use `resolveNonConflictingFile`.
 - Verified several future-route tool class paths mentioned in prior architecture notes do not currently exist at the expected locations; no implementation was invented.
+- Recursive tree audit found and fixed an additional business-card `.vcf` same-name overwrite path outside the PDF/converter modules.
+- Verified encrypted-vault filenames are generated independently of user-selected output names; saved-signature slot replacement is intentional application state rather than an output-collision path.
+- Added staged-output regression tests covering successful publish with an existing destination and failure cleanup without exposing a final file.
 
 ### Tests added
 `core/pdf/src/test/java/com/docforge/core/pdf/PdfCoreSafetyTest.kt`
@@ -32,11 +35,11 @@ Required jobs/steps:
 - `:app:assembleRelease` (unsigned release/R8 compile gate)
 - `:app:lintDebug`
 
-Current observed state: **CI_PENDING**. Draft PR #1 was opened only to expose pull-request CI without merging to `main`. Workflow run #28 became observable and reached the core PDF unit-test step, but later feature-branch pushes superseded that checkpoint under the workflow concurrency policy. No final current-HEAD CI pass is claimed.
+Current observed state: **CI_PENDING**. Draft PR #1 exists only to expose pull-request CI without merging to `main`. The latest code HEAD before documentation-only checkpoint commits is `903c257b1370bb6666cfa94207ad2017cd0337f8`. Workflow run #60 was observed **in progress** on that exact code HEAD, with checkout, Java 17, Gradle setup, and wrapper setup successful; `:core:pdf:testDebugUnitTest` was still running. No unit-test/build/R8/lint pass is claimed yet.
 
 ### Sandbox
 Attempted repository clone into the ChatGPT/Codex container.
-Result: **BLOCKED BY ENVIRONMENT NETWORK** — `Could not resolve host: github.com`.
+Result: **BLOCKED BY ENVIRONMENT NETWORK** — repeated check in run 002 still returns `Could not resolve host: github.com`.
 
 No Gradle command from the feature branch has therefore been executed locally in this run. This limitation is explicit and must not be converted into a pass.
 
