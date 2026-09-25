@@ -29,9 +29,10 @@ Workflow: `.github/workflows/anydoc-continuous-ci.yml`
 Required jobs/steps:
 - `:core:pdf:testDebugUnitTest`
 - `:app:assembleDebug`
+- `:app:assembleRelease` (unsigned release/R8 compile gate)
 - `:app:lintDebug`
 
-Current observed state: **CI_PENDING / not observable through the current connector response**. The commit-status endpoint returned no statuses and the available commit-workflow query returned no runs. That query is limited to pull-request-triggered runs, so absence is not proof of either success or failure.
+Current observed state: **CI_PENDING**. Draft PR #1 was opened only to expose pull-request CI without merging to `main`. Workflow run #28 became observable and reached the core PDF unit-test step, but later feature-branch pushes superseded that checkpoint under the workflow concurrency policy. No final current-HEAD CI pass is claimed.
 
 ### Sandbox
 Attempted repository clone into the ChatGPT/Codex container.
