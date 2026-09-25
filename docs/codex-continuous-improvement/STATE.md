@@ -15,7 +15,7 @@
 ## Git checkpoint
 
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- HEAD observed immediately before this STATE checkpoint: `7c3ab8024d99fead0eb2653f740ec8c8d5b3bd81`
+- HEAD observed immediately before this STATE checkpoint: `b4706d874745befcb01a2bc20a20919d4dee218c`
 - This STATE write itself advances the branch by one commit, so the next invocation MUST read actual branch HEAD rather than assuming the pre-checkpoint SHA above.
 - Draft validation PR: #1, open, **do not merge while CURRENT_REPORT is incomplete**.
 - Uncommitted work: none represented by the connected GitHub mutation flow; writes in this run were committed atomically per file.
@@ -86,6 +86,17 @@ Verified fetched safe allocator usage in:
 - `DocForgeApp.cleanStaleTempFiles` skips active files.
 - Added registry lifecycle unit test.
 
+### Share lifecycle safety
+- Added `ShareLaunchViewModel` with `SavedStateHandle` persistence.
+- `MainActivity` now owns pending shared-file launches through the Activity ViewModel.
+- `DocForgeNavHost` consumes the request only after the target screen accepts prefilled URIs.
+- Recreation no longer depends on replaying the original SEND intent.
+
+### Release safety
+- Removed the release build's explicit debug signing fallback.
+- Production signing remains external; no signing secret was added.
+- CI now includes unsigned `:app:assembleRelease` to compile/R8 the release variant.
+
 ### Test / CI infrastructure
 - Added JUnit 4.13.2 to core PDF tests.
 - Added `PdfCoreSafetyTest.kt`.
@@ -135,6 +146,7 @@ Source-level:
 - Content-SHA guarded updates succeeded.
 - Targeted output-allocation source audit completed for fetched primary PDF/converter classes.
 - Draft PR #1 created without modifying main.
+- Workflow run #28 became observable and reached the core PDF unit-test step; subsequent pushes superseded that checkpoint under branch concurrency, so it is not a final pass.
 
 No Gradle/CI success is claimed yet.
 
@@ -148,7 +160,7 @@ No Gradle/CI success is claimed yet.
 
 **CI_PENDING.**
 
-Next invocation must query workflow runs associated with the current PR/head, inspect jobs/logs for failures, fix root causes, and rerun/advance the branch. Never mark the first three mandatory fixes COMPLETE until relevant checks pass.
+Draft PR workflow run #28 was observed in progress on an earlier checkpoint. The latest code/doc pushes require a fresh/synchronized run. Next invocation must query workflow runs associated with current PR/head, inspect jobs/logs for failures, fix root causes, and rerun/advance the branch. Never mark the first three mandatory fixes COMPLETE until relevant checks pass.
 
 ## Sandbox validation status
 
@@ -171,7 +183,7 @@ None claimed. Correctness/safety changes were implemented, but no performance pe
 ## Important changed files
 
 Code:
-- app `DocForgeApp.kt`
+- app `DocForgeApp.kt`, `MainActivity.kt`, `ShareLaunchViewModel.kt`, `DocForgeNavHost.kt`, and release Gradle config
 - core domain `ActiveTempFileRegistry.kt`
 - core PDF initializer/IO/output classes listed above
 - converter audio/video/text classes
@@ -189,8 +201,8 @@ Docs:
 - No current emulator or physical-device result.
 - No performance baseline yet.
 - OCR searchable layer still needs global Unicode strategy.
-- shared-launch state is not lifecycle-safe yet.
-- release build currently points at debug signing config and must be corrected in Cycle 001.
+- shared-launch lifecycle fix is implemented but still requires recreation/new-intent regression evidence.
+- release signing safety is implemented but still requires current-HEAD CI evidence.
 - final output writes are not yet uniformly transactional/atomic under failure/cancellation.
 
 ## Next exact action
