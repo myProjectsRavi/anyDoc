@@ -139,17 +139,41 @@ class PdfRedactionTool(
                 )
                 val sanitized = outputName.ifBlank { "redacted_${System.currentTimeMillis()}" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                val outputFile = resolveNonConflictingFile(outputDir, "${sanitized}_irreversible", "pdf")
+                val outputFile = withStagedOutputFile(
+                    directory = outputDir,
+                    baseName = "${sanitized}_irreversible",
+                    extension = "pdf"
+                ) { stagedFile ->
+                    onProgress?.invoke(
+                        PdfRedactionProgress(stage = "Saving redacted PDF", current = 0, total = 1)
+                    )
+                    document.save(stagedFile)
+                    onProgress?.invoke(
+                        PdfRedactionProgress(stage = "Saving redacted PDF", current = 1, total = 1)
+                    )
 
-                onProgress?.invoke(PdfRedactionProgress(stage = "Saving redacted PDF", current = 0, total = 1))
-                document.save(outputFile)
-                onProgress?.invoke(PdfRedactionProgress(stage = "Saving redacted PDF", current = 1, total = 1))
-
-                if (options.verifyIrreversible) {
-                    onProgress?.invoke(PdfRedactionProgress(stage = "Verifying irreversible redaction", current = 0, total = 1))
-                    verifyTermsRemoved(outputFile = outputFile, terms = terms, caseSensitive = options.caseSensitive)
-                    onProgress?.invoke(PdfRedactionProgress(stage = "Verifying irreversible redaction", current = 1, total = 1))
-                }
+                    if (options.verifyIrreversible) {
+                        onProgress?.invoke(
+                            PdfRedactionProgress(
+                                stage = "Verifying irreversible redaction",
+                                current = 0,
+                                total = 1
+                            )
+                        )
+                        verifyTermsRemoved(
+                            outputFile = stagedFile,
+                            terms = terms,
+                            caseSensitive = options.caseSensitive
+                        )
+                        onProgress?.invoke(
+                            PdfRedactionProgress(
+                                stage = "Verifying irreversible redaction",
+                                current = 1,
+                                total = 1
+                            )
+                        )
+                    }
+                }.outputFile
 
                 PdfRedactionResult(
                     outputFile = outputFile,
@@ -334,7 +358,6 @@ class PdfRedactionTool(
                 caseSensitive = caseSensitive
             )
             if (remaining != null) {
-                outputFile.delete()
                 error(
                     "Redaction verification failed. Term '$remaining' is still discoverable in output text."
                 )
@@ -348,7 +371,6 @@ class PdfRedactionTool(
                         caseSensitive = caseSensitive
                     )
                     if (annotRemaining != null) {
-                        outputFile.delete()
                         error(
                             "Redaction verification failed. Term '$annotRemaining' found in annotation."
                         )
