@@ -157,12 +157,12 @@ class PdfOcrTool(
                 val base = outputName.ifBlank { "ocr_${System.currentTimeMillis()}" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
-                val textOutput = File(outputDir, "${base}_ocr.txt")
+                val textOutput = resolveNonConflictingFile(outputDir, "${base}_ocr", "txt")
                 val extracted = buildOcrText(pageCount, allLines)
                 textOutput.writeText(extracted)
 
                 val searchablePdf = if (createSearchablePdf) {
-                    val pdfOutput = File(outputDir, "${base}_searchable.pdf")
+                    val pdfOutput = resolveNonConflictingFile(outputDir, "${base}_searchable", "pdf")
                     writeSearchablePdf(
                         sourceFile = sourceFile,
                         outputFile = pdfOutput,
@@ -215,7 +215,7 @@ class PdfOcrTool(
                 )
                 val base = outputName.ifBlank { "image_ocr_${System.currentTimeMillis()}" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                val textOutput = File(outputDir, "${base}.txt")
+                val textOutput = resolveNonConflictingFile(outputDir, base, "txt")
                 textOutput.writeText(extracted)
 
                 val searchablePdf = if (createSearchablePdf) {
