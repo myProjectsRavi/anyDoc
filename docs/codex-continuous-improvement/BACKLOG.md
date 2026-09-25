@@ -7,14 +7,14 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ## Active Cycle 001
 
 ### P0 — data loss / destructive output
-- [CI_PENDING] Eliminate overwrite-on-name-collision across confirmed audio, PDF, OCR, scanner bundle, extraction, split, stamp, ID-card, and text-to-PDF output paths.
-- [IN_PROGRESS] Complete repository-wide output-path audit for any remaining direct final-file construction that can overwrite existing user data.
+- [CI_PENDING] Eliminate overwrite-on-name-collision across confirmed audio, PDF, OCR, scanner bundle, extraction, split, stamp, ID-card, text-to-PDF, and business-card vCard output paths.
+- [CI_PENDING] Complete repository-wide output-path audit for any remaining direct final-file construction that can overwrite existing user data. Recursive current-branch source-tree sweep completed; missed business-card `.vcf` collision fixed.
 - [NOT_STARTED] Add explicit regression coverage for representative multi-output tools, not only the shared resolver.
 
 ### P1 — crash / lifecycle / corruption
 - [CI_PENDING] Make PDFBox initialization race-safe and retryable.
 - [CI_PENDING] Prevent memory-pressure cleanup from deleting active temporary files.
-- [NOT_STARTED] Audit cancellation/failure behavior for partial final outputs; stage risky outputs to temporary files and publish atomically where practical.
+- [IN_PROGRESS] Audit cancellation/failure behavior for partial final outputs; staged publishing now covers PDF compression, PDF merge, and searchable OCR PDFs; split/batch/audio paths remain under review.
 - [NOT_STARTED] Preserve incoming share-launch state across Activity/configuration recreation and process restoration where feasible.
 - [NOT_STARTED] Audit foreground-service restart semantics and queue recovery after process death.
 - [NOT_STARTED] Resolve release signing safety: production `release` must not silently use the debug signing key.
