@@ -4,16 +4,21 @@ on:
   push:
     branches:
       - codex/anydoc-continuous-improvement
+    paths-ignore:
+      - "docs/codex-continuous-improvement/**"
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - "docs/codex-continuous-improvement/**"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: anydoc-continuous-ci-${{ github.ref }}
+  # Push + draft-PR events for this branch share one validation lane.
+  group: anydoc-continuous-ci-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
