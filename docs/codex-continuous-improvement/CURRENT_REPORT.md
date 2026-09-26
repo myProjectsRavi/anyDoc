@@ -17,7 +17,7 @@
 | R001-P1-01 | P1 | Make PDFBox initialization race-safe and retryable | COMPLETE |
 | R001-P1-02 | P1 | Protect active temp files from memory-pressure cleanup | COMPLETE |
 | R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | COMPLETE / run #92 |
-| R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | IN_PROGRESS / `US-R001-P1-04A` |
+| R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | IN_PROGRESS / CI run #105 |
 | R001-P1-05 | P1 | Remove debug-signing default from production release | COMPLETE |
 | R001-P2-01 | P2 | Add representative large-input/disk/memory preflight | NOT_STARTED |
 | R001-P3-01 | Gate | Pass required CI/regression/diff/documentation gates | CI_PENDING |
@@ -44,7 +44,9 @@
 ## Current blockers / limitations
 
 - Local sandbox cannot resolve `github.com`, so local Gradle validation is unavailable in this run.
-- GitHub Actions run #92 passed the completed output-safety story; lifecycle regression evidence is the current remaining P1 gate.
+- GitHub Actions run #105 (API run ID `36261620135`) is validating the lifecycle regression story on candidate HEAD `657bbd6b62c21b22b222e48f91efae4b052a890f`; no pass is claimed yet.
+- The lifecycle story now has Robolectric regression tests for saved-state restoration and new-intent supersession/stale-consume protection.
+- CI was tightened to avoid duplicate push/PR validation lanes and docs-only build churn.
 - No physical device is available.
 
 ## User stories for active feature
@@ -54,12 +56,12 @@
 | US-R001-P1-03A | Stage single-output PDF compression/merge/OCR outputs | COMPLETE / validated by run #60 |
 | US-R001-P1-03B | Stage audio conversion and video-audio extraction outputs | COMPLETE / run #85 passed |
 | US-R001-P1-03C | Make multi-output split/batch publication atomic as a set | COMPLETE / run #92 passed |
-| US-R001-P1-04A | Add recreation/new-intent regression evidence for shared launch | CURRENT |
+| US-R001-P1-04A | Add recreation/new-intent regression evidence for shared launch | CURRENT / CI run #105 |
 
 ## Next exact action
 
-1. Work only on `US-R001-P1-04A`: inspect the saved-state share-launch path and add recreation/new-intent regression evidence.
-2. Validate no replay, double-consumption, or lost pending launch across the covered lifecycle cases.
-3. Run CI and fix failures before marking R001-P1-04 complete.
-4. Do not start large-input work until this bounded lifecycle story reaches a durable checkpoint.
+1. Inspect run #105 and its `App lifecycle unit tests` step.
+2. Fix any failure in the current lifecycle story before doing lower-priority work.
+3. If all required CI steps pass, mark R001-P1-04 complete with exact run/head evidence.
+4. Then and only then select `US-R001-P2-01A`.
 5. Do not create another report while Cycle 001 is incomplete.
