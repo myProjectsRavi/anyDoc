@@ -35,7 +35,7 @@ Required jobs/steps:
 - `:app:assembleRelease` (unsigned release/R8 compile gate)
 - `:app:lintDebug`
 
-Current observed state: **CI_PENDING**. Draft PR #1 exists only to expose pull-request CI without merging to `main`. The latest code HEAD before documentation-only checkpoint commits is `903c257b1370bb6666cfa94207ad2017cd0337f8`. Workflow run #60 was observed **in progress** on that exact code HEAD, with checkout, Java 17, Gradle setup, and wrapper setup successful; `:core:pdf:testDebugUnitTest` was still running. No unit-test/build/R8/lint pass is claimed yet.
+Validated baseline state: workflow run #60 (API run ID `36176743391`) completed **successfully** on code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`. The single Android job passed `:core:pdf:testDebugUnitTest`, `:app:assembleDebug`, unsigned `:app:assembleRelease` with R8, and `:app:lintDebug`. Documentation head `0633bfc1c7a873bb8380641752fa189b182e5274` subsequently passed run #66. Current audio-story code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f` is under workflow run #70, which was **in progress** at this checkpoint. No pass is claimed yet for the audio-story changes.
 
 ### Sandbox
 Attempted repository clone into the ChatGPT/Codex container.
