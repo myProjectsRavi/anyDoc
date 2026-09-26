@@ -104,7 +104,7 @@ fun resolveNonConflictingFile(directory: File, baseName: String, extension: Stri
 }
 
 
-internal data class StagedOutputResult<T>(
+data class StagedOutputResult<T>(
     val outputFile: File,
     val value: T
 )
@@ -116,7 +116,7 @@ internal data class StagedOutputResult<T>(
  * operation fails or is cancelled, the staging file is deleted and no partial final file is
  * published. Publishing uses a same-filesystem move and never replaces an existing output.
  */
-internal inline fun <T> withStagedOutputFile(
+inline fun <T> withStagedOutputFile(
     directory: File,
     baseName: String,
     extension: String,
