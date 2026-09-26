@@ -41,6 +41,9 @@ jobs:
       - name: Core PDF unit tests
         run: ./gradlew --no-daemon :core:pdf:testDebugUnitTest
 
+      - name: App lifecycle unit tests
+        run: ./gradlew --no-daemon :app:testDebugUnitTest
+
       - name: Assemble debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
 
