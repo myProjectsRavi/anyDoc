@@ -7,7 +7,7 @@
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
 **Epic:** `E001` — User-data safety and reliability  
 **Feature:** `F001` — Failure-safe, non-destructive output publishing  
-**Current User Story:** `US-R001-P1-03B` — Transactional audio conversion/extraction output publishing  
+**Current User Story:** `US-R001-P1-03C` — Atomic multi-output split/batch publishing  
 
 ## Mandatory items
 
@@ -16,7 +16,7 @@
 | R001-P0-01 | P0 | Eliminate destructive same-name final outputs and finish collision audit | COMPLETE |
 | R001-P1-01 | P1 | Make PDFBox initialization race-safe and retryable | COMPLETE |
 | R001-P1-02 | P1 | Protect active temp files from memory-pressure cleanup | COMPLETE |
-| R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | IN_PROGRESS / `US-R001-P1-03B` CI_PENDING |
+| R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | IN_PROGRESS / `US-R001-P1-03B` COMPLETE; `US-R001-P1-03C` NEXT |
 | R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | TEST_PENDING |
 | R001-P1-05 | P1 | Remove debug-signing default from production release | COMPLETE |
 | R001-P2-01 | P2 | Add representative large-input/disk/memory preflight | NOT_STARTED |
@@ -51,13 +51,13 @@
 | User Story | Scope | State |
 |---|---|---|
 | US-R001-P1-03A | Stage single-output PDF compression/merge/OCR outputs | COMPLETE / validated by run #60 |
-| US-R001-P1-03B | Stage audio conversion and video-audio extraction outputs | IMPLEMENTED / run #70 in progress |
-| US-R001-P1-03C | Make multi-output split/batch publication atomic as a set | NEXT |
+| US-R001-P1-03B | Stage audio conversion and video-audio extraction outputs | COMPLETE / run #85 passed |
+| US-R001-P1-03C | Make multi-output split/batch publication atomic as a set | CURRENT |
 | US-R001-P1-04A | Add recreation/new-intent regression evidence for shared launch | QUEUED |
 
 ## Next exact action
 
-1. Observe run #70 for head `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; fix any build/test/lint/R8 failure.
-2. If green, close `US-R001-P1-03B`.
-3. Pick only `US-R001-P1-03C` next; do not start multiple large changes in the same hourly run.
+1. Work only on `US-R001-P1-03C`: inspect split/batch multi-output publication and prevent partial visible sets on later failure/cancellation.
+2. Add focused regression evidence and run CI.
+3. Do not start lifecycle or large-input stories until this bounded story reaches a durable checkpoint.
 4. Do not create another report while Cycle 001 is incomplete.
