@@ -116,11 +116,11 @@ data class StagedOutputResult<T>(
  * operation fails or is cancelled, the staging file is deleted and no partial final file is
  * published. Publishing uses a same-filesystem move and never replaces an existing output.
  */
-fun <T> withStagedOutputFile(
+suspend fun <T> withStagedOutputFile(
     directory: File,
     baseName: String,
     extension: String,
-    block: (stagedFile: File) -> T
+    block: suspend (stagedFile: File) -> T
 ): StagedOutputResult<T> {
     require(directory.exists() || directory.mkdirs()) {
         "Unable to create output directory: ${directory.absolutePath}"
