@@ -363,7 +363,7 @@ class PdfSplitter(
         return imported
     }
 
-    private fun saveStagedPdf(
+    private suspend fun saveStagedPdf(
         document: PDDocument,
         outputDir: File,
         baseName: String
