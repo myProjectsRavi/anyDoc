@@ -8,7 +8,7 @@
 **Cycle:** 001  
 **Current Epic:** `E001` — User-data safety and reliability  
 **Current Feature:** `F001` — Failure-safe, non-destructive output publishing  
-**Current User Story:** `US-R001-P1-03B` — Transactional audio conversion/extraction output publishing  
+**Current User Story:** `US-R001-P1-03C` — Atomic multi-output split/batch publishing  
 **Hourly run counter:** 3  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -38,7 +38,7 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 1. **R001-P0-01 — Non-destructive output allocation:** COMPLETE / run #60 passed after recursive collision audit
 2. **R001-P1-01 — Race-safe retryable PDFBox initialization:** COMPLETE / targeted unit tests passed in run #60
 3. **R001-P1-02 — Active temp-file protection:** COMPLETE / registry unit coverage passed in run #60
-4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** IN_PROGRESS / current story `US-R001-P1-03B`, run #70 in progress
+4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** IN_PROGRESS / `US-R001-P1-03B` COMPLETE via run #85; current story `US-R001-P1-03C`
 5. **R001-P1-04 — Lifecycle-safe shared launch:** TEST_PENDING / build passes, recreation/new-intent regression evidence still required
 6. **R001-P1-05 — Release signing safety:** COMPLETE / unsigned release+R8 gate passed in run #60
 7. **R001-P2-01 — Representative large-input preflight:** NOT_STARTED
@@ -46,9 +46,19 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** finish Feature `F001` through short user stories. Current story `US-R001-P1-03B` makes audio conversion/extraction final outputs transactional under failure/cancellation.
+**Primary:** finish Feature `F001` through short user stories. `US-R001-P1-03B` is complete; current story `US-R001-P1-03C` covers atomic multi-output split/batch publication.
 
-**Current subtask:** observe GitHub Actions run #70 for code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; if it fails, inspect logs and fix root cause. If it passes, close `US-R001-P1-03B` and immediately start `US-R001-P1-03C` for atomic multi-output split/batch publishing.
+**Current subtask:** inspect and implement `US-R001-P1-03C` so split/batch multi-output operations do not expose a partial result set if a later item fails or cancellation occurs.
+
+## Work completed in run 004
+
+- Resumed exactly at `US-R001-P1-03B` CI recovery checkpoint.
+- Diagnosed runs #75/#76: Kotlin public-inline/private-helper visibility failure in `PdfIoUtils.kt`.
+- Removed `inline`, then correctly made `withStagedOutputFile` suspend-capable to preserve suspend/cancellation-aware writers.
+- Propagated suspend contracts through `PdfSplitter.saveStagedPdf` and audio conversion helpers; updated staged-output unit tests to run in coroutine context.
+- GitHub Actions push run #85 (API run ID `36223470957`) passed core PDF unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint on code HEAD `37c2fee82af4406bf969be9ae6f5eab74a0c9e7c`.
+- `US-R001-P1-03B` is COMPLETE. No emulator or physical-device result is claimed.
+- Durable documentation commits advance HEAD beyond the validated code SHA; next run must fetch actual branch HEAD.
 
 ## Work completed in run 003
 
@@ -261,12 +271,8 @@ Docs:
 
 ## Next exact action
 
-1. Read this file and `CURRENT_REPORT.md`; fetch actual branch HEAD because this documentation commit advances it.
-2. Inspect workflow run #70 for audio-story code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f` (or the synchronized latest run containing that tree).
-3. If CI fails, inspect the failed job logs and fix the root cause before any lower-priority work.
-4. If CI passes, mark `US-R001-P1-03B` COMPLETE.
-5. Pick exactly one next story: `US-R001-P1-03C` atomic multi-output split/batch publishing. Ensure failure/cancellation after one generated item cannot leave a partial user-visible set.
-6. After that, run the lifecycle regression story for R001-P1-04 before calling it COMPLETE.
-7. Then begin R001-P2-01 representative input-size/free-space preflight.
-8. Update STATE.md, CURRENT_REPORT.md, BACKLOG.md and VALIDATION.md before ending.
-9. Do **not** create Cycle 002 while Cycle 001 is incomplete.
+1. Fetch actual branch HEAD after durable-doc commits and confirm `main` remains untouched.
+2. Work only on `US-R001-P1-03C`: inspect split/batch multi-output publication and ensure a later failure/cancellation cannot leave a partial user-visible result set.
+3. Add focused regression coverage where feasible, then use GitHub Actions for authoritative validation.
+4. Update STATE.md, CURRENT_REPORT.md, BACKLOG.md and VALIDATION.md before ending the next run.
+5. Do **not** create Cycle 002 while Cycle 001 is incomplete.
