@@ -6,8 +6,8 @@
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
 **Epic:** `E001` — User-data safety and reliability  
-**Feature:** `F002` — Lifecycle-safe incoming share handling  
-**Current User Story:** `US-R001-P1-04A` — Recreation/new-intent regression evidence for shared launch  
+**Feature:** `F003` — Large-input safety  
+**Current User Story:** `US-R001-P2-01A` — Representative input-size/free-space preflight (NEXT / NOT_STARTED)  
 
 ## Mandatory items
 
@@ -17,12 +17,12 @@
 | R001-P1-01 | P1 | Make PDFBox initialization race-safe and retryable | COMPLETE |
 | R001-P1-02 | P1 | Protect active temp files from memory-pressure cleanup | COMPLETE |
 | R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | COMPLETE / run #92 |
-| R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | IN_PROGRESS / CI run #105 |
+| R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | COMPLETE / CI run #107 |
 | R001-P1-05 | P1 | Remove debug-signing default from production release | COMPLETE |
 | R001-P2-01 | P2 | Add representative large-input/disk/memory preflight | NOT_STARTED |
 | R001-P3-01 | Gate | Pass required CI/regression/diff/documentation gates | CI_PENDING |
 
-**Completion:** 5 / 8 mandatory items COMPLETE.
+**Completion:** 6 / 8 mandatory items COMPLETE.
 
 ## Work already implemented in this report
 
@@ -56,7 +56,7 @@
 | US-R001-P1-03A | Stage single-output PDF compression/merge/OCR outputs | COMPLETE / validated by run #60 |
 | US-R001-P1-03B | Stage audio conversion and video-audio extraction outputs | COMPLETE / run #85 passed |
 | US-R001-P1-03C | Make multi-output split/batch publication atomic as a set | COMPLETE / run #92 passed |
-| US-R001-P1-04A | Add recreation/new-intent regression evidence for shared launch | CURRENT / CI run #105 |
+| US-R001-P1-04A | Add recreation/new-intent regression evidence for shared launch | COMPLETE / CI run #107 |
 
 ## Next exact action
 
