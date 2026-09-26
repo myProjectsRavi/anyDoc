@@ -14,10 +14,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - [COMPLETE] `US-R001-P1-03C` — Make multi-output PDF split/batch publication atomic as a set so a later failure/cancellation does not leave a partial visible result set. CI run #92 passed on code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
 
 #### Feature F002 — Lifecycle-safe incoming share handling
-- [CURRENT / CI #105] `US-R001-P1-04A` — Recreation/new-intent regression tests are implemented; run #105 is validating saved-state restoration and stale-consume protection before R001-P1-04 can be marked complete.
+- [COMPLETE / CI #107] `US-R001-P1-04A` — Recreation/new-intent regression tests passed in run #107 on `da74754c3b3c8178e719f71ab8915948bc3adca0`, covering saved-state restoration and stale-consume protection.
 
 #### Feature F003 — Large-input safety
-- [QUEUED] `US-R001-P2-01A` — Add representative input-size/free-space preflight after mandatory P1 stories.
+- [NEXT] `US-R001-P2-01A` — Add representative input-size/free-space preflight now that mandatory P1 stories are complete.
 
 
 ### P0 — data loss / destructive output
@@ -29,7 +29,7 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - [COMPLETE] Make PDFBox initialization race-safe and retryable.
 - [COMPLETE] Prevent memory-pressure cleanup from deleting active temporary files.
 - [COMPLETE] Audit cancellation/failure behavior for scoped long-operation final outputs; staged publishing covers compression, merge, searchable OCR, audio conversion/extraction, split/extract/bookmarks, and batch stamping.
-- [CURRENT] Preserve incoming share-launch state across Activity/configuration recreation and process restoration where feasible.
+- [COMPLETE] Preserve incoming share-launch state across Activity/configuration recreation and process restoration where feasible; regression gate passed in run #107.
 - [NOT_STARTED] Audit foreground-service restart semantics and queue recovery after process death.
 - [COMPLETE] Resolve release signing safety: production `release` does not silently use the debug signing key; unsigned release/R8 CI gate passes.
 
