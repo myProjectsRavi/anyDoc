@@ -6,17 +6,22 @@
 **Current report:** `2026-09-25_1837_cycle-001`  
 **Report status:** ACTIVE / INCOMPLETE  
 **Cycle:** 001  
-**Hourly run counter:** 2  
+**Current Epic:** `E001` — User-data safety and reliability  
+**Current Feature:** `F001` — Failure-safe, non-destructive output publishing  
+**Current User Story:** `US-R001-P1-03B` — Transactional audio conversion/extraction output publishing  
+**Hourly run counter:** 3  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-25 UTC, run 002
+**State checkpoint timestamp:** 2026-09-26 UTC, run 003
 
 ## Git checkpoint
 
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Latest code HEAD validated/observed before documentation-only checkpoint commits: `903c257b1370bb6666cfa94207ad2017cd0337f8`
-- This STATE write itself advances the branch by one commit, so the next invocation MUST read actual branch HEAD rather than assuming the pre-checkpoint SHA above.
+- Previously validated code HEAD: `903c257b1370bb6666cfa94207ad2017cd0337f8` via workflow run #60 (success).
+- Previously validated documentation head: `0633bfc1c7a873bb8380641752fa189b182e5274` via workflow run #66 (success).
+- Current audio-story code HEAD before this documentation checkpoint: `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; workflow run #70 is in progress.
+- This STATE write itself advances the branch, so the next invocation MUST read actual branch HEAD.
 - Draft validation PR: #1, open, **do not merge while CURRENT_REPORT is incomplete**.
 - Uncommitted work: none represented by the connected GitHub mutation flow; writes in this run were committed atomically per file.
 - Feature branch comparison before durable-doc commits: ahead of main, behind by 0.
@@ -24,26 +29,46 @@
 
 ## Completion
 
-**0 / 8 mandatory Cycle 001 items COMPLETE**
+**4 / 8 mandatory Cycle 001 items COMPLETE**
 
-Implemented work is not counted as COMPLETE while required CI remains unobserved.
+Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
 ### Mandatory states
 
-1. **R001-P0-01 — Non-destructive output allocation:** CI_PENDING / recursive source collision audit complete
-2. **R001-P1-01 — Race-safe retryable PDFBox initialization:** CI_PENDING
-3. **R001-P1-02 — Active temp-file protection:** CI_PENDING
-4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** IN_PROGRESS / CI_PENDING
-5. **R001-P1-04 — Lifecycle-safe shared launch:** CI_PENDING
-6. **R001-P1-05 — Release signing safety:** CI_PENDING
+1. **R001-P0-01 — Non-destructive output allocation:** COMPLETE / run #60 passed after recursive collision audit
+2. **R001-P1-01 — Race-safe retryable PDFBox initialization:** COMPLETE / targeted unit tests passed in run #60
+3. **R001-P1-02 — Active temp-file protection:** COMPLETE / registry unit coverage passed in run #60
+4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** IN_PROGRESS / current story `US-R001-P1-03B`, run #70 in progress
+5. **R001-P1-04 — Lifecycle-safe shared launch:** TEST_PENDING / build passes, recreation/new-intent regression evidence still required
+6. **R001-P1-05 — Release signing safety:** COMPLETE / unsigned release+R8 gate passed in run #60
 7. **R001-P2-01 — Representative large-input preflight:** NOT_STARTED
 8. **R001-P3-01 — Final CI/regression/diff/docs gate:** CI_PENDING
 
 ## Current implementation task
 
-**Primary:** obtain CI evidence for the current changes, fix any compile/test/lint/R8 problem immediately, then continue R001-P1-03 staged output publishing for remaining high-risk long operations.
+**Primary:** finish Feature `F001` through short user stories. Current story `US-R001-P1-03B` makes audio conversion/extraction final outputs transactional under failure/cancellation.
 
-**Current subtask:** observe GitHub Actions run #60 for code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`; if it passes, apply evidence to pending items; if it fails, inspect logs and fix root cause.
+**Current subtask:** observe GitHub Actions run #70 for code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; if it fails, inspect logs and fix root cause. If it passes, close `US-R001-P1-03B` and immediately start `US-R001-P1-03C` for atomic multi-output split/batch publishing.
+
+## Work completed in run 003
+
+### Epic / Feature / User Story operating model
+- Durable state now names the active Epic, Feature, and User Story so every hourly invocation resumes one bounded unit instead of reopening a large report.
+- Current hierarchy: Epic `E001` -> Feature `F001` -> User Story `US-R001-P1-03B`.
+- Next queued story is `US-R001-P1-03C`: atomic multi-output split/batch publishing so later failure does not leave a partial set of user-visible outputs.
+
+### CI recovery
+- Resolved recorded workflow run #60 to API run ID `36176743391`.
+- Run #60 completed successfully: core PDF unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint all passed.
+- Documentation head `0633bfc1c7a873bb8380641752fa189b182e5274` also passed run #66.
+- Current audio-story head `4a707f61c957cca3c6b364cdb723c0e6fa00013f` started run #70; no pass is claimed yet.
+
+### Transactional audio publishing
+- Exposed the existing same-directory staged-output primitive to dependent feature modules.
+- AudioFormatConverter now stages AAC/M4A, WAV, MP3/FLAC passthrough, and encoded MP3/FLAC outputs before publication.
+- VideoAudioExtractor now stages M4A and MP3 extraction outputs before publication.
+- Codec failure, cancellation, or writer failure deletes the staging file instead of leaving a partial final file.
+- Existing collision-safe final naming remains in place; final publish still never intentionally replaces an existing output.
 
 ## Work completed in run 002
 
@@ -187,9 +212,9 @@ No Gradle/CI success is claimed yet.
 
 ## GitHub Actions status
 
-**CI_PENDING.**
+**PARTIALLY VALIDATED / CURRENT STORY CI_PENDING.**
 
-Draft PR workflow run #28 was observed in progress on an earlier checkpoint. The latest code/doc pushes require a fresh/synchronized run. Next invocation must query workflow runs associated with current PR/head, inspect jobs/logs for failures, fix root causes, and rerun/advance the branch. Never mark the first three mandatory fixes COMPLETE until relevant checks pass.
+Workflow run #60 passed on code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`, including core PDF unit tests, debug assembly, unsigned release/R8 assembly, and lint. Run #66 also passed on documentation head `0633bfc1c7a873bb8380641752fa189b182e5274`. The current audio-story head `4a707f61c957cca3c6b364cdb723c0e6fa00013f` is being validated by run #70 and must not be marked complete until terminal success is observed.
 
 ## Sandbox validation status
 
@@ -236,12 +261,12 @@ Docs:
 
 ## Next exact action
 
-1. Read this file and `CURRENT_REPORT.md`.
-2. Fetch actual current branch HEAD and draft PR #1 state.
-3. Inspect GitHub Actions run #60 (or the latest run for code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`).
-4. If CI failed, inspect logs and fix the root cause before lower-priority work.
-5. If CI passed, mark only the evidence-supported pending items COMPLETE; do not infer emulator/physical-device coverage.
-6. Continue R001-P1-03 with remaining high-risk direct-final writers, prioritizing PDF split/batch and audio conversion/extraction paths.
+1. Read this file and `CURRENT_REPORT.md`; fetch actual branch HEAD because this documentation commit advances it.
+2. Inspect workflow run #70 for audio-story code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f` (or the synchronized latest run containing that tree).
+3. If CI fails, inspect the failed job logs and fix the root cause before any lower-priority work.
+4. If CI passes, mark `US-R001-P1-03B` COMPLETE.
+5. Pick exactly one next story: `US-R001-P1-03C` atomic multi-output split/batch publishing. Ensure failure/cancellation after one generated item cannot leave a partial user-visible set.
+6. After that, run the lifecycle regression story for R001-P1-04 before calling it COMPLETE.
 7. Then begin R001-P2-01 representative input-size/free-space preflight.
-8. Update durable docs before ending.
+8. Update STATE.md, CURRENT_REPORT.md, BACKLOG.md and VALIDATION.md before ending.
 9. Do **not** create Cycle 002 while Cycle 001 is incomplete.
