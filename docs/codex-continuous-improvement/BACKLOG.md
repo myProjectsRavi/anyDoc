@@ -21,17 +21,17 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 
 
 ### P0 — data loss / destructive output
-- [CI_PENDING] Eliminate overwrite-on-name-collision across confirmed audio, PDF, OCR, scanner bundle, extraction, split, stamp, ID-card, text-to-PDF, and business-card vCard output paths.
-- [CI_PENDING] Complete repository-wide output-path audit for any remaining direct final-file construction that can overwrite existing user data. Recursive current-branch source-tree sweep completed; missed business-card `.vcf` collision fixed.
-- [NOT_STARTED] Add explicit regression coverage for representative multi-output tools, not only the shared resolver.
+- [COMPLETE] Eliminate overwrite-on-name-collision across confirmed audio, PDF, OCR, scanner bundle, extraction, split, stamp, ID-card, text-to-PDF, and business-card vCard output paths.
+- [COMPLETE] Complete repository-wide output-path audit for any remaining direct final-file construction that can overwrite existing user data. Recursive current-branch source-tree sweep completed; missed business-card `.vcf` collision fixed.
+- [COMPLETE] Add explicit regression coverage for representative multi-output publication semantics, including no early publish and later-writer failure cleanup.
 
 ### P1 — crash / lifecycle / corruption
-- [CI_PENDING] Make PDFBox initialization race-safe and retryable.
-- [CI_PENDING] Prevent memory-pressure cleanup from deleting active temporary files.
+- [COMPLETE] Make PDFBox initialization race-safe and retryable.
+- [COMPLETE] Prevent memory-pressure cleanup from deleting active temporary files.
 - [COMPLETE] Audit cancellation/failure behavior for scoped long-operation final outputs; staged publishing covers compression, merge, searchable OCR, audio conversion/extraction, split/extract/bookmarks, and batch stamping.
-- [NOT_STARTED] Preserve incoming share-launch state across Activity/configuration recreation and process restoration where feasible.
+- [CURRENT] Preserve incoming share-launch state across Activity/configuration recreation and process restoration where feasible.
 - [NOT_STARTED] Audit foreground-service restart semantics and queue recovery after process death.
-- [NOT_STARTED] Resolve release signing safety: production `release` must not silently use the debug signing key.
+- [COMPLETE] Resolve release signing safety: production `release` does not silently use the debug signing key; unsigned release/R8 CI gate passes.
 
 ### P2 — memory / ANR / large input
 - [NOT_STARTED] Add defensible input-size and free-space guards to large PDF/audio/video operations.

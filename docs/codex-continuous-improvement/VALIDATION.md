@@ -25,7 +25,11 @@
 - retry after failed one-time initialization;
 - one initialization across concurrent callers;
 - active temp-file registry register/unregister lifecycle;
-- non-conflicting naming preserves existing output.
+- non-conflicting naming preserves existing output;
+- single-output staged publish preserves an existing destination;
+- single-output writer failure removes the partial staging file;
+- multi-output publish exposes no final until every writer succeeds;
+- later multi-output writer failure leaves no partial final result set.
 
 ### GitHub Actions
 Workflow: `.github/workflows/anydoc-continuous-ci.yml`

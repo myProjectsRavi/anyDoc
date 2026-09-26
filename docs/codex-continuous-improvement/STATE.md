@@ -18,12 +18,13 @@
 ## Git checkpoint
 
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Exact validated code HEAD before this durable-documentation checkpoint: `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
+- Exact validated code HEAD: `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
+- Exact branch HEAD at the start of this consistency checkpoint: `a0174663fcc097f3241a0dfe8ea5e6ffdc2f7ffe`.
 - GitHub Actions push run #92 (API run ID `36228935470`) completed successfully on that exact code HEAD.
 - Draft validation PR: #1, open, **do not merge while CURRENT_REPORT is incomplete**.
 - Feature branch comparison before this checkpoint: ahead of main, behind by 0; merge-base remains the baseline main commit.
 - Main was not modified.
-- This STATE/documentation commit advances the branch beyond the validated code HEAD, so the next invocation MUST fetch the actual branch HEAD before writing.
+- This STATE consistency write itself advances the branch by one commit. A file cannot embed its own resulting Git commit SHA without changing that SHA, so the next invocation MUST fetch the actual branch HEAD before writing.
 
 ## Completion
 
@@ -194,7 +195,11 @@ Created:
 
 ## Completed report items
 
-None are marked COMPLETE yet because required remote validation is pending.
+- R001-P0-01 — non-destructive output allocation
+- R001-P1-01 — race-safe/retryable PDFBox initialization
+- R001-P1-02 — active temp-file protection
+- R001-P1-03 — failure/cancellation-safe staged outputs
+- R001-P1-05 — release signing safety
 
 ## Incomplete report items
 
@@ -216,14 +221,11 @@ The current ChatGPT/Codex sandbox cannot resolve `github.com`, so it cannot clon
 
 ## Latest successful validation
 
-Source-level:
-- GitHub comparison confirmed continuous branch is separate from main.
-- Content-SHA guarded updates succeeded.
-- Targeted output-allocation source audit completed for fetched primary PDF/converter classes.
-- Draft PR #1 created without modifying main.
-- Workflow run #28 became observable and reached the core PDF unit-test step; subsequent pushes superseded that checkpoint under branch concurrency, so it is not a final pass.
-
-No Gradle/CI success is claimed yet.
+- GitHub comparison confirms the continuous branch remains separate from main and behind by 0.
+- Draft PR #1 remains open, draft, and unmerged.
+- Push run #92 (API run ID `36228935470`) passed on exact code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
+- Passed gates on run #92: core PDF unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint.
+- No emulator or physical-device validation is claimed.
 
 ## Latest failed / unavailable validation
 
@@ -277,8 +279,8 @@ Docs:
 - No performance baseline yet.
 - OCR searchable layer still needs global Unicode strategy.
 - shared-launch lifecycle fix is implemented but still requires recreation/new-intent regression evidence.
-- release signing safety is implemented but still requires current-HEAD CI evidence.
-- final output writes are not yet uniformly transactional/atomic under failure/cancellation.
+- release signing safety has CI compile/R8 evidence through run #92, but no signed production artifact is claimed.
+- the scoped Cycle 001 long-operation output paths are transactionally staged; future audits may still discover additional non-mandatory output paths.
 
 ## Next exact action
 
