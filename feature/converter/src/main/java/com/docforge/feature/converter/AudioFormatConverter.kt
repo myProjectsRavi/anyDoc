@@ -96,7 +96,7 @@ class AudioFormatConverter(
         }
     }
 
-    private fun convertToAacM4a(
+    private suspend fun convertToAacM4a(
         inputUri: Uri,
         outputBaseName: String,
         checkCancelled: () -> Unit
@@ -136,7 +136,7 @@ class AudioFormatConverter(
         }
     }
 
-    private fun convertToWav(
+    private suspend fun convertToWav(
         inputUri: Uri,
         outputBaseName: String,
         checkCancelled: () -> Unit
@@ -172,7 +172,7 @@ class AudioFormatConverter(
         }
     }
 
-    private fun convertToCompressed(
+    private suspend fun convertToCompressed(
         inputUri: Uri,
         outputBaseName: String,
         outputFormat: AudioConvertOutputFormat,
