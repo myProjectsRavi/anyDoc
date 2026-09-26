@@ -6,6 +6,20 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 
 ## Active Cycle 001
 
+### Epic E001 — User-data safety and reliability
+
+#### Feature F001 — Failure-safe, non-destructive output publishing
+- [COMPLETE] `US-R001-P1-03A` — Stage single-output PDF compression, merge, and searchable-OCR publishing.
+- [CI_PENDING] `US-R001-P1-03B` — Stage audio conversion and video-audio extraction publishing. Implemented at code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; run #70 in progress.
+- [NEXT] `US-R001-P1-03C` — Make multi-output PDF split/batch publication atomic as a set so a later failure/cancellation does not leave a partial visible result set.
+
+#### Feature F002 — Lifecycle-safe incoming share handling
+- [QUEUED] `US-R001-P1-04A` — Add recreation/new-intent regression evidence for saved-state-backed share launch before marking R001-P1-04 complete.
+
+#### Feature F003 — Large-input safety
+- [QUEUED] `US-R001-P2-01A` — Add representative input-size/free-space preflight after mandatory P1 stories.
+
+
 ### P0 — data loss / destructive output
 - [CI_PENDING] Eliminate overwrite-on-name-collision across confirmed audio, PDF, OCR, scanner bundle, extraction, split, stamp, ID-card, text-to-PDF, and business-card vCard output paths.
 - [CI_PENDING] Complete repository-wide output-path audit for any remaining direct final-file construction that can overwrite existing user data. Recursive current-branch source-tree sweep completed; missed business-card `.vcf` collision fixed.
