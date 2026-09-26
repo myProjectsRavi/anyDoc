@@ -46,6 +46,7 @@ Workflow: `.github/workflows/anydoc-continuous-ci.yml`
 
 Required jobs/steps:
 - `:core:pdf:testDebugUnitTest`
+- `:app:testDebugUnitTest` (Robolectric shared-launch lifecycle regressions)
 - `:app:assembleDebug`
 - `:app:assembleRelease` (unsigned release/R8 compile gate)
 - `:app:lintDebug`
@@ -56,7 +57,7 @@ Audio transactional-output story validation: initial runs #75/#76 failed at `:co
 
 Multi-output transactional publishing validation: push run #92 (API run ID `36228935470`) completed **successfully** on exact code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`. Core PDF unit tests (including the new set-level staging tests), debug APK assembly, unsigned release/R8 assembly, and Android lint all passed. This closes `US-R001-P1-03C` and mandatory item R001-P1-03.
 
-Lifecycle-story validation in progress: GitHub Actions run #105 (API run ID `36261620135`) is executing on exact candidate HEAD `657bbd6b62c21b22b222e48f91efae4b052a890f`. Latest observed state: job allocated, setup/checkout/Java/Gradle steps passed, core PDF unit tests running, app lifecycle unit tests pending. No success is claimed until terminal evidence exists.
+Lifecycle-story validation: GitHub Actions PR run #107 (API run ID `36261736461`) completed **successfully** on exact branch HEAD `da74754c3b3c8178e719f71ab8915948bc3adca0`. Every required step passed: core PDF unit tests, app lifecycle unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint. The lifecycle tests cover saved-state restoration, consume-without-replay, newer-intent supersession, and stale-consume protection. This closes `US-R001-P1-04A` and mandatory item R001-P1-04. Earlier run #105 was cancelled by subsequent branch activity and is not used as completion evidence.
 
 CI efficiency correction: push and draft-PR events for the same feature branch now share one concurrency group, and docs-only changes under `docs/codex-continuous-improvement/**` are ignored by the Android validation workflow so durable checkpoints cannot repeatedly cancel useful builds.
 
@@ -70,4 +71,4 @@ No Gradle command from the feature branch has therefore been executed locally in
 No physical Android device was used or claimed.
 
 ## Completion gate
-Cycle 001 remains open. Output-safety item R001-P1-03 is validated complete; lifecycle item R001-P1-04 is the next mandatory P1 gate, followed by large-input preflight and the final CI/regression/documentation gate.
+Cycle 001 remains open. Output-safety item R001-P1-03 and lifecycle item R001-P1-04 are validated complete. The next mandatory story is `US-R001-P2-01A` for representative large-input/free-space preflight, followed by the final CI/regression/documentation gate.
