@@ -9,6 +9,7 @@ import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -57,11 +58,22 @@ class VideoAudioExtractor(
         outputFormat: AudioOutputFormat
     ): VideoAudioExtractionResult = withContext(Dispatchers.IO) {
         val checkCancelled = { coroutineContext.ensureActive() }
-        val outputFile = createOutputFile(outputBaseName, outputFormat)
-        when (outputFormat) {
-            AudioOutputFormat.M4A -> extractToM4a(inputUri, outputFile, checkCancelled)
-            AudioOutputFormat.MP3 -> extractToMp3Passthrough(inputUri, outputFile, checkCancelled)
+        val outputTarget = createOutputFile(outputBaseName, outputFormat)
+        val staged = withStagedOutputFile(
+            directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+            baseName = outputTarget.nameWithoutExtension,
+            extension = outputTarget.extension
+        ) { stagedFile ->
+            when (outputFormat) {
+                AudioOutputFormat.M4A -> extractToM4a(inputUri, stagedFile, checkCancelled)
+                AudioOutputFormat.MP3 -> extractToMp3Passthrough(inputUri, stagedFile, checkCancelled)
+            }
         }
+        val outputFile = staged.outputFile
+        staged.value.copy(
+            outputFile = outputFile,
+            outputSizeBytes = outputFile.length()
+        )
     }
 
     private fun extractToM4a(
