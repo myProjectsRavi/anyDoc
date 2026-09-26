@@ -4,22 +4,25 @@
 **Report:** `reports/2026-09-25_1837_cycle-001.md`  
 **Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
+**Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
+**Epic:** `E001` — User-data safety and reliability  
+**Feature:** `F001` — Failure-safe, non-destructive output publishing  
+**Current User Story:** `US-R001-P1-03B` — Transactional audio conversion/extraction output publishing  
 
 ## Mandatory items
 
 | ID | Priority | Task | State |
 |---|---|---|---|
-| R001-P0-01 | P0 | Eliminate destructive same-name final outputs and finish collision audit | CI_PENDING / AUDIT_COMPLETE |
-| R001-P1-01 | P1 | Make PDFBox initialization race-safe and retryable | CI_PENDING |
-| R001-P1-02 | P1 | Protect active temp files from memory-pressure cleanup | CI_PENDING |
-| R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | IN_PROGRESS / CI_PENDING |
-| R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | CI_PENDING |
-| R001-P1-05 | P1 | Remove debug-signing default from production release | CI_PENDING |
+| R001-P0-01 | P0 | Eliminate destructive same-name final outputs and finish collision audit | COMPLETE |
+| R001-P1-01 | P1 | Make PDFBox initialization race-safe and retryable | COMPLETE |
+| R001-P1-02 | P1 | Protect active temp files from memory-pressure cleanup | COMPLETE |
+| R001-P1-03 | P1 | Make long-operation final output failure/cancellation safe | IN_PROGRESS / `US-R001-P1-03B` CI_PENDING |
+| R001-P1-04 | P1 | Preserve incoming shared launch across lifecycle recreation without replay | TEST_PENDING |
+| R001-P1-05 | P1 | Remove debug-signing default from production release | COMPLETE |
 | R001-P2-01 | P2 | Add representative large-input/disk/memory preflight | NOT_STARTED |
 | R001-P3-01 | Gate | Pass required CI/regression/diff/documentation gates | CI_PENDING |
 
-**Completion:** 0 / 8 mandatory items COMPLETE.
+**Completion:** 4 / 8 mandatory items COMPLETE.
 
 ## Work already implemented in this report
 
@@ -43,9 +46,18 @@
 - GitHub Actions has not yet been observed passing for current feature-branch changes.
 - No physical device is available.
 
+## User stories for active feature
+
+| User Story | Scope | State |
+|---|---|---|
+| US-R001-P1-03A | Stage single-output PDF compression/merge/OCR outputs | COMPLETE / validated by run #60 |
+| US-R001-P1-03B | Stage audio conversion and video-audio extraction outputs | IMPLEMENTED / run #70 in progress |
+| US-R001-P1-03C | Make multi-output split/batch publication atomic as a set | NEXT |
+| US-R001-P1-04A | Add recreation/new-intent regression evidence for shared launch | QUEUED |
+
 ## Next exact action
 
-1. Observe GitHub Actions run #60 for code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`; fix any unit-test/build/R8/lint failure.
-2. Keep R001-P0-01 open until that code passes CI; the recursive current-branch collision audit is now complete for source output writers.
-3. Continue R001-P1-03 by reviewing remaining long-running direct-final writes, prioritizing split/batch/audio paths.
-4. Do not create another report.
+1. Observe run #70 for head `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; fix any build/test/lint/R8 failure.
+2. If green, close `US-R001-P1-03B`.
+3. Pick only `US-R001-P1-03C` next; do not start multiple large changes in the same hourly run.
+4. Do not create another report while Cycle 001 is incomplete.
