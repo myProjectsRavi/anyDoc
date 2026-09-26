@@ -7,9 +7,9 @@
 **Report status:** ACTIVE / INCOMPLETE  
 **Cycle:** 001  
 **Current Epic:** `E001` — User-data safety and reliability  
-**Current Feature:** `F002` — Lifecycle-safe incoming share handling  
-**Current User Story:** `US-R001-P1-04A` — Recreation/new-intent regression evidence for shared launch  
-**Hourly run counter:** 6  
+**Current Feature:** `F003` — Large-input safety  
+**Current User Story:** `US-R001-P2-01A` — Representative input-size/free-space preflight (NEXT / NOT_STARTED)  
+**Hourly run counter:** 7  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
@@ -28,7 +28,7 @@
 
 ## Completion
 
-**5 / 8 mandatory Cycle 001 items COMPLETE**
+**6 / 8 mandatory Cycle 001 items COMPLETE**
 
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
@@ -38,7 +38,7 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 2. **R001-P1-01 — Race-safe retryable PDFBox initialization:** COMPLETE / targeted unit tests passed in run #60
 3. **R001-P1-02 — Active temp-file protection:** COMPLETE / registry unit coverage passed in run #60
 4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** COMPLETE / `US-R001-P1-03C` validated by run #92
-5. **R001-P1-04 — Lifecycle-safe shared launch:** IN_PROGRESS / current story `US-R001-P1-04A`; recreation/new-intent regression evidence required
+5. **R001-P1-04 — Lifecycle-safe shared launch:** COMPLETE / run #107 passed on `da74754c3b3c8178e719f71ab8915948bc3adca0`
 6. **R001-P1-05 — Release signing safety:** COMPLETE / unsigned release+R8 gate passed in run #60
 7. **R001-P2-01 — Representative large-input preflight:** NOT_STARTED
 8. **R001-P3-01 — Final CI/regression/diff/docs gate:** CI_PENDING
@@ -247,7 +247,7 @@ The current ChatGPT/Codex sandbox cannot resolve `github.com`, so it cannot clon
 
 ## GitHub Actions status
 
-**LIFECYCLE STORY CI_IN_PROGRESS.**
+**LIFECYCLE STORY PASSED.**
 
 Workflow run #105 (API run ID `36261620135`) is validating exact candidate HEAD `657bbd6b62c21b22b222e48f91efae4b052a890f`. The workflow now includes focused app lifecycle JVM tests in addition to core PDF tests, debug assembly, unsigned release/R8 assembly, and lint. Do not mark `US-R001-P1-04A` or R001-P1-04 complete until this run (or a justified successor on the same code) passes.
 
