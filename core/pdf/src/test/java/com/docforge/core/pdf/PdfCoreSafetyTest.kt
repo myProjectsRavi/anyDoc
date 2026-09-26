@@ -11,6 +11,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
+import kotlinx.coroutines.runBlocking
 
 class PdfCoreSafetyTest {
 
@@ -108,7 +109,7 @@ class PdfCoreSafetyTest {
         }
     }
     @Test
-    fun stagedOutputPublishesOnlyAfterSuccessfulBlockAndPreservesExistingFile() {
+    fun stagedOutputPublishesOnlyAfterSuccessfulBlockAndPreservesExistingFile() = runBlocking {
         val directory = Files.createTempDirectory("anydoc-staged-output-test").toFile()
         try {
             val existing = directory.resolve("compressed.pdf")
@@ -134,7 +135,7 @@ class PdfCoreSafetyTest {
     }
 
     @Test
-    fun stagedOutputDeletesPartialFileWhenOperationFails() {
+    fun stagedOutputDeletesPartialFileWhenOperationFails() = runBlocking {
         val directory = Files.createTempDirectory("anydoc-staged-failure-test").toFile()
         try {
             try {
