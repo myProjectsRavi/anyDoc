@@ -42,7 +42,7 @@ class PdfIdCardTool(
             )
             val sanitized = outputName.ifBlank { "id_card_sheet_${System.currentTimeMillis()}" }
                 .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-            val output = File(outputDir, "$sanitized.pdf")
+            val output = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
             val dimensions = when (pageSize) {
                 PdfPageSize.LETTER -> 612 to 792

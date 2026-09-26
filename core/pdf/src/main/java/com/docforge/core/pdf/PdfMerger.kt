@@ -38,8 +38,6 @@ class PdfMerger(
 
         val sanitized = outputName.ifBlank { "merged_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
         val sourceBookmarks = mutableListOf<PdfSourceBookmark>()
 
         PDDocument().use { mergedDoc ->
@@ -95,7 +93,13 @@ class PdfMerger(
                 options = options,
                 sourceBookmarks = sourceBookmarks
             )
-            mergedDoc.save(outputFile)
+            val outputFile = withStagedOutputFile(
+                directory = outputDir,
+                baseName = sanitized,
+                extension = "pdf"
+            ) { stagedFile ->
+                mergedDoc.save(stagedFile)
+            }.outputFile
 
             PdfCreationResult(
                 outputFile = outputFile,

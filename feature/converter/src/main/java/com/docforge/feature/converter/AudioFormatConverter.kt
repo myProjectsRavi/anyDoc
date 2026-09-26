@@ -9,8 +9,11 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.net.Uri
+import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
+import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -93,7 +96,7 @@ class AudioFormatConverter(
         }
     }
 
-    private fun convertToAacM4a(
+    private suspend fun convertToAacM4a(
         inputUri: Uri,
         outputBaseName: String,
         checkCancelled: () -> Unit
@@ -102,18 +105,25 @@ class AudioFormatConverter(
             "AAC encoder not available on this device."
         }
 
-        val outputFile = createOutputFile(outputBaseName, AudioConvertOutputFormat.M4A_AAC)
+        val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.M4A_AAC)
         val pcmFile = createTempPcmFile()
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            encodePcmToAacM4a(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                encodePcmToAacM4a(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -122,27 +132,34 @@ class AudioFormatConverter(
                 durationMs = decoded.durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
-    private fun convertToWav(
+    private suspend fun convertToWav(
         inputUri: Uri,
         outputBaseName: String,
         checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
-        val outputFile = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
+        val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
         val pcmFile = createTempPcmFile()
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            writeWav(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                writeWav(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -151,18 +168,18 @@ class AudioFormatConverter(
                 durationMs = decoded.durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
-    private fun convertToCompressed(
+    private suspend fun convertToCompressed(
         inputUri: Uri,
         outputBaseName: String,
         outputFormat: AudioConvertOutputFormat,
         targetMime: String,
         checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
-        val outputFile = createOutputFile(outputBaseName, outputFormat)
+        val outputTarget = createOutputFile(outputBaseName, outputFormat)
         val sourceTrack = withAudioTrack(inputUri) { _, _, trackFormat ->
             Pair(
                 trackFormat.getString(MediaFormat.KEY_MIME).orEmpty(),
@@ -173,10 +190,17 @@ class AudioFormatConverter(
         val durationMs = sourceTrack.second
 
         if (normalizeMime(sourceMimeType) == normalizeMime(targetMime)) {
-            withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
-                extractor.selectTrack(trackIndex)
-                copyExtractorSamplesToFile(extractor, trackFormat, outputFile, checkCancelled)
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
+                    extractor.selectTrack(trackIndex)
+                    copyExtractorSamplesToFile(extractor, trackFormat, stagedFile, checkCancelled)
+                }
             }
+            val outputFile = staged.outputFile
             return AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -194,14 +218,21 @@ class AudioFormatConverter(
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            encodePcmToRawCodec(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                targetMime = targetMime,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                encodePcmToRawCodec(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    targetMime = targetMime,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -210,7 +241,7 @@ class AudioFormatConverter(
                 durationMs = durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
@@ -604,14 +635,19 @@ class AudioFormatConverter(
             AudioConvertOutputFormat.FLAC -> "flac"
         }
 
-        return File(outputDir, "$base.$extension").also { file ->
-            if (file.exists()) file.delete()
-        }
+        return resolveNonConflictingFile(outputDir, base, extension)
     }
 
     private fun createTempPcmFile(): File {
         val tempDir = context.cacheDir
-        return File.createTempFile("docforge_audio_", ".pcm", tempDir)
+        return File.createTempFile("docforge_audio_", ".pcm", tempDir).also {
+            ActiveTempFileRegistry.register(it)
+        }
+    }
+
+    private fun deleteTempPcmFile(file: File) {
+        ActiveTempFileRegistry.unregister(file)
+        file.delete()
     }
 
     private inline fun <T> withAudioTrack(

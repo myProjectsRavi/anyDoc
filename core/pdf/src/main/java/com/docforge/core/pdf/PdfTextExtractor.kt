@@ -47,7 +47,7 @@ class PdfTextExtractor(
 
                 val sanitized = outputName.ifBlank { "pdf_text_${System.currentTimeMillis()}" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                val output = File(outputDir, "$sanitized.txt")
+                val output = resolveNonConflictingFile(outputDir, sanitized, "txt")
 
                 FileOutputStream(output).use { stream ->
                     stream.write(extracted.toByteArray(Charsets.UTF_8))

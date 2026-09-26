@@ -6,6 +6,7 @@ import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import com.docforge.core.pdf.decodeBitmapConstrained
+import com.docforge.core.pdf.resolveNonConflictingFile
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -54,8 +55,11 @@ class BusinessCardParser(
         val bitmap = decodeBitmapConstrained(context, imageUri, maxLongEdge = 1200)
             ?: error("Failed to decode business card image.")
 
-        val rawText = recognizeText(bitmap)
-        bitmap.recycle()
+        val rawText = try {
+            recognizeText(bitmap)
+        } finally {
+            bitmap.recycle()
+        }
 
         require(rawText.isNotBlank()) { "No text detected on the business card." }
 
@@ -71,7 +75,7 @@ class BusinessCardParser(
                 ?: "contact_${System.currentTimeMillis()}"
         }.replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
-        val vcfFile = File(outputDir, "$sanitized.vcf")
+        val vcfFile = resolveNonConflictingFile(outputDir, sanitized, "vcf")
         FileOutputStream(vcfFile).use { stream ->
             stream.write(vcfContent.toByteArray(Charsets.UTF_8))
         }
@@ -86,14 +90,21 @@ class BusinessCardParser(
     private suspend fun recognizeText(bitmap: Bitmap): String {
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         val inputImage = InputImage.fromBitmap(bitmap, 0)
-        return suspendCancellableCoroutine { cont ->
-            recognizer.process(inputImage)
-                .addOnSuccessListener { result ->
-                    cont.resume(result.text)
-                }
-                .addOnFailureListener { e ->
-                    cont.resumeWithException(e)
-                }
+        return try {
+            suspendCancellableCoroutine { cont ->
+                recognizer.process(inputImage)
+                    .addOnSuccessListener { result ->
+                        if (cont.isActive) cont.resume(result.text)
+                    }
+                    .addOnFailureListener { e ->
+                        if (cont.isActive) cont.resumeWithException(e)
+                    }
+                    .addOnCanceledListener {
+                        cont.cancel()
+                    }
+            }
+        } finally {
+            recognizer.close()
         }
     }
 

@@ -72,7 +72,7 @@ class ScanImageExporter(
         }
 
         val zipFile = if (zipBundle) {
-            val zip = File(outputDir, "${base}_${format.name.lowercase()}_bundle.zip")
+            val zip = resolveNonConflictingFile(outputDir, "${base}_${format.name.lowercase()}_bundle", "zip")
             ZipOutputStream(FileOutputStream(zip)).use { zipOut ->
                 outputFiles.forEach { imageFile ->
                     checkCancelled()
