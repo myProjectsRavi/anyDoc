@@ -5,6 +5,8 @@ import android.net.Uri
 import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDDocument
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.channels.Channels
@@ -109,6 +111,18 @@ data class StagedOutputResult<T>(
     val value: T
 )
 
+class StagedOutputRequest<T>(
+    val baseName: String,
+    val extension: String,
+    val block: suspend (stagedFile: File) -> T
+)
+
+private data class PreparedStagedOutput<T>(
+    val stagedFile: File,
+    val request: StagedOutputRequest<T>,
+    val value: T
+)
+
 /**
  * Writes a final output through a same-directory staging file.
  *
@@ -122,24 +136,85 @@ suspend fun <T> withStagedOutputFile(
     extension: String,
     block: suspend (stagedFile: File) -> T
 ): StagedOutputResult<T> {
+    return withStagedOutputFiles(
+        directory = directory,
+        requests = listOf(
+            StagedOutputRequest(
+                baseName = baseName,
+                extension = extension,
+                block = block
+            )
+        )
+    ).single()
+}
+
+/**
+ * Stages a complete set of outputs before publishing any final file.
+ *
+ * Writer failure or cancellation removes every staged file without exposing a partial result
+ * set. Publication is performed only after all writers succeed. If publication itself fails,
+ * finals already created by this transaction are rolled back before the failure is rethrown.
+ */
+suspend fun <T> withStagedOutputFiles(
+    directory: File,
+    requests: List<StagedOutputRequest<T>>
+): List<StagedOutputResult<T>> {
     require(directory.exists() || directory.mkdirs()) {
         "Unable to create output directory: ${directory.absolutePath}"
     }
+    if (requests.isEmpty()) return emptyList()
 
-    val stagedFile = File.createTempFile(".anydoc_stage_", ".part", directory)
-    return try {
-        val value = block(stagedFile)
-        require(stagedFile.isFile) { "Staged output was not created." }
-        val outputFile = moveStagedFileWithoutOverwrite(
-            stagedFile = stagedFile,
-            directory = directory,
-            baseName = baseName,
-            extension = extension
-        )
-        StagedOutputResult(outputFile = outputFile, value = value)
+    val prepared = mutableListOf<PreparedStagedOutput<T>>()
+    try {
+        requests.forEach { request ->
+            currentCoroutineContext().ensureActive()
+            val stagedFile = File.createTempFile(".anydoc_stage_", ".part", directory)
+            try {
+                currentCoroutineContext().ensureActive()
+                val value = request.block(stagedFile)
+                require(stagedFile.isFile) { "Staged output was not created." }
+                prepared += PreparedStagedOutput(
+                    stagedFile = stagedFile,
+                    request = request,
+                    value = value
+                )
+            } catch (t: Throwable) {
+                if (stagedFile.exists()) {
+                    stagedFile.delete()
+                }
+                throw t
+            }
+        }
+
+        currentCoroutineContext().ensureActive()
+        val published = mutableListOf<File>()
+        try {
+            val results = prepared.map { item ->
+                currentCoroutineContext().ensureActive()
+                val outputFile = moveStagedFileWithoutOverwrite(
+                    stagedFile = item.stagedFile,
+                    directory = directory,
+                    baseName = item.request.baseName,
+                    extension = item.request.extension
+                )
+                published += outputFile
+                StagedOutputResult(outputFile = outputFile, value = item.value)
+            }
+            currentCoroutineContext().ensureActive()
+            return results
+        } catch (t: Throwable) {
+            published.asReversed().forEach { outputFile ->
+                runCatching {
+                    Files.deleteIfExists(outputFile.toPath())
+                }.exceptionOrNull()?.let(t::addSuppressed)
+            }
+            throw t
+        }
     } finally {
-        if (stagedFile.exists()) {
-            stagedFile.delete()
+        prepared.forEach { item ->
+            if (item.stagedFile.exists()) {
+                item.stagedFile.delete()
+            }
         }
     }
 }

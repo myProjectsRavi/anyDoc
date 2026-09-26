@@ -159,4 +159,81 @@ class PdfCoreSafetyTest {
         }
     }
 
+    @Test
+    fun stagedOutputSetPublishesNothingUntilEveryWriterSucceeds() = runBlocking {
+        val directory = Files.createTempDirectory("anydoc-staged-set-test").toFile()
+        try {
+            val existing = directory.resolve("page_1.pdf")
+            existing.writeText("existing")
+
+            val results = withStagedOutputFiles(
+                directory = directory,
+                requests = listOf(
+                    StagedOutputRequest(
+                        baseName = "page_1",
+                        extension = "pdf"
+                    ) { staged ->
+                        staged.writeText("one")
+                        1
+                    },
+                    StagedOutputRequest(
+                        baseName = "page_2",
+                        extension = "pdf"
+                    ) { staged ->
+                        assertFalse(directory.resolve("page_1_1.pdf").exists())
+                        staged.writeText("two")
+                        2
+                    }
+                )
+            )
+
+            assertEquals(listOf("page_1_1.pdf", "page_2.pdf"), results.map { it.outputFile.name })
+            assertEquals(listOf(1, 2), results.map { it.value })
+            assertEquals("existing", existing.readText())
+            assertEquals("one", results[0].outputFile.readText())
+            assertEquals("two", results[1].outputFile.readText())
+            assertTrue(directory.listFiles().orEmpty().none { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun stagedOutputSetDeletesEveryPartialWhenLaterWriterFails() = runBlocking {
+        val directory = Files.createTempDirectory("anydoc-staged-set-failure-test").toFile()
+        try {
+            try {
+                withStagedOutputFiles(
+                    directory = directory,
+                    requests = listOf(
+                        StagedOutputRequest(
+                            baseName = "part_1",
+                            extension = "pdf"
+                        ) { staged ->
+                            staged.writeText("complete-first")
+                            Unit
+                        },
+                        StagedOutputRequest(
+                            baseName = "part_2",
+                            extension = "pdf"
+                        ) { staged ->
+                            assertFalse(directory.resolve("part_1.pdf").exists())
+                            staged.writeText("partial-second")
+                            error("synthetic later-writer failure")
+                        }
+                    )
+                )
+                fail("Expected later writer failure to propagate")
+            } catch (_: IllegalStateException) {
+                // Expected.
+            }
+
+            assertFalse(directory.resolve("part_1.pdf").exists())
+            assertFalse(directory.resolve("part_2.pdf").exists())
+            assertTrue(directory.listFiles().orEmpty().none { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
 }

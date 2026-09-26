@@ -45,6 +45,13 @@ data class PdfBatchStampResult(
     val totalOutputSizeBytes: Long
 )
 
+private data class PdfBatchStampStagedValue(
+    val inputUri: Uri,
+    val pageCount: Int,
+    val batesRangeStart: Int?,
+    val batesRangeEnd: Int?
+)
+
 class PdfBatchStampTool(
     private val context: Context
 ) {
@@ -63,70 +70,77 @@ class PdfBatchStampTool(
             context = context,
             bucket = DocForgeOutputBucket.DOCUMENTS
         )
-
-        val outputs = mutableListOf<PdfBatchStampFileResult>()
+        val base = outputBaseName.ifBlank { "batch_stamped_${System.currentTimeMillis()}" }
+            .replace(Regex("[^a-zA-Z0-9_-]"), "_")
         var batesCounter = options.batesStart.coerceAtLeast(1)
 
-        inputUris.forEachIndexed { inputIndex, inputUri ->
-            checkCancelled()
-            context.withUriCopiedToCacheFile(
-                inputUri,
-                prefix = "docforge_batch_stamp_src_",
-                suffix = ".pdf"
-            ) { sourceFile ->
-                loadPdfDocument(sourceFile).use { sourceDoc ->
-                    require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages: $inputUri" }
+        val stagedOutputs = withStagedOutputFiles(
+            directory = outputDir,
+            requests = inputUris.mapIndexed { inputIndex, inputUri ->
+                StagedOutputRequest(
+                    baseName = "${base}_${inputIndex + 1}",
+                    extension = "pdf"
+                ) { stagedFile ->
+                    checkCancelled()
+                    context.withUriCopiedToCacheFile(
+                        inputUri,
+                        prefix = "docforge_batch_stamp_src_",
+                        suffix = ".pdf"
+                    ) { sourceFile ->
+                        loadPdfDocument(sourceFile).use { sourceDoc ->
+                            require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages: $inputUri" }
 
-                    PDDocument().use { outDoc ->
-                        var batesStartForFile: Int? = null
-                        var batesEndForFile: Int? = null
+                            var batesStartForFile: Int? = null
+                            var batesEndForFile: Int? = null
+                            PDDocument().use { outDoc ->
+                                repeat(sourceDoc.numberOfPages) { pageIndex ->
+                                    checkCancelled()
+                                    val sourcePage = sourceDoc.getPage(pageIndex)
+                                    val importedPage = importPage(outDoc, sourcePage)
 
-                        repeat(sourceDoc.numberOfPages) { pageIndex ->
-                            checkCancelled()
-                            val sourcePage = sourceDoc.getPage(pageIndex)
-                            val importedPage = importPage(outDoc, sourcePage)
+                                    PDPageContentStream(
+                                        outDoc,
+                                        importedPage,
+                                        PDPageContentStream.AppendMode.APPEND,
+                                        true,
+                                        true
+                                    ).use { stream ->
+                                        if (options.watermarkEnabled && options.watermarkText.isNotBlank()) {
+                                            drawWatermark(stream, importedPage, options)
+                                        }
 
-                            PDPageContentStream(
-                                outDoc,
-                                importedPage,
-                                PDPageContentStream.AppendMode.APPEND,
-                                true,
-                                true
-                            ).use { stream ->
-                                if (options.watermarkEnabled && options.watermarkText.isNotBlank()) {
-                                    drawWatermark(stream, importedPage, options)
+                                        if (options.batesEnabled) {
+                                            val current = batesCounter++
+                                            if (batesStartForFile == null) batesStartForFile = current
+                                            batesEndForFile = current
+                                            drawBatesLabel(stream, importedPage, options, current)
+                                        }
+                                    }
                                 }
-
-                                if (options.batesEnabled) {
-                                    val current = batesCounter++
-                                    if (batesStartForFile == null) batesStartForFile = current
-                                    batesEndForFile = current
-                                    drawBatesLabel(stream, importedPage, options, current)
-                                }
+                                outDoc.save(stagedFile)
                             }
+
+                            PdfBatchStampStagedValue(
+                                inputUri = inputUri,
+                                pageCount = sourceDoc.numberOfPages,
+                                batesRangeStart = batesStartForFile,
+                                batesRangeEnd = batesEndForFile
+                            )
                         }
-
-                        val base = outputBaseName.ifBlank { "batch_stamped_${System.currentTimeMillis()}" }
-                            .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                        val outputFile = withStagedOutputFile(
-                            directory = outputDir,
-                            baseName = "${base}_${inputIndex + 1}",
-                            extension = "pdf"
-                        ) { stagedFile ->
-                            outDoc.save(stagedFile)
-                        }.outputFile
-
-                        outputs += PdfBatchStampFileResult(
-                            inputUri = inputUri,
-                            outputFile = outputFile,
-                            pageCount = sourceDoc.numberOfPages,
-                            batesRangeStart = batesStartForFile,
-                            batesRangeEnd = batesEndForFile,
-                            outputSizeBytes = outputFile.length()
-                        )
                     }
                 }
             }
+        )
+
+        val outputs = stagedOutputs.map { staged ->
+            PdfBatchStampFileResult(
+                inputUri = staged.value.inputUri,
+                outputFile = staged.outputFile,
+                pageCount = staged.value.pageCount,
+                batesRangeStart = staged.value.batesRangeStart,
+                batesRangeEnd = staged.value.batesRangeEnd,
+                outputSizeBytes = staged.outputFile.length()
+            )
         }
 
         PdfBatchStampResult(
