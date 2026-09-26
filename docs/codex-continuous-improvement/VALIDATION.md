@@ -35,7 +35,9 @@ Required jobs/steps:
 - `:app:assembleRelease` (unsigned release/R8 compile gate)
 - `:app:lintDebug`
 
-Validated baseline state: workflow run #60 (API run ID `36176743391`) completed **successfully** on code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`. The single Android job passed `:core:pdf:testDebugUnitTest`, `:app:assembleDebug`, unsigned `:app:assembleRelease` with R8, and `:app:lintDebug`. Documentation head `0633bfc1c7a873bb8380641752fa189b182e5274` subsequently passed run #66. Current audio-story code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f` is under workflow run #70, which was **in progress** at this checkpoint. No pass is claimed yet for the audio-story changes.
+Validated baseline state: workflow run #60 (API run ID `36176743391`) completed **successfully** on code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`. Documentation head `0633bfc1c7a873bb8380641752fa189b182e5274` subsequently passed run #66.
+
+Audio transactional-output story validation: initial runs #75/#76 failed at `:core:pdf:compileDebugKotlin` because a public inline staging helper referenced a private helper. Follow-up CI exposed required suspend propagation through existing suspend writers and tests. After those root causes were fixed, push run #85 (API run ID `36223470957`) completed **successfully** on code HEAD `37c2fee82af4406bf969be9ae6f5eab74a0c9e7c`: core PDF unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint all passed. This closes `US-R001-P1-03B`.
 
 ### Sandbox
 Attempted repository clone into the ChatGPT/Codex container.
