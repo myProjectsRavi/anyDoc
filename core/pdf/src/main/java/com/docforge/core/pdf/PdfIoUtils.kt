@@ -116,7 +116,7 @@ data class StagedOutputResult<T>(
  * operation fails or is cancelled, the staging file is deleted and no partial final file is
  * published. Publishing uses a same-filesystem move and never replaces an existing output.
  */
-inline fun <T> withStagedOutputFile(
+fun <T> withStagedOutputFile(
     directory: File,
     baseName: String,
     extension: String,
