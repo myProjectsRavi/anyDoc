@@ -14,7 +14,7 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - [COMPLETE] `US-R001-P1-03C` — Make multi-output PDF split/batch publication atomic as a set so a later failure/cancellation does not leave a partial visible result set. CI run #92 passed on code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
 
 #### Feature F002 — Lifecycle-safe incoming share handling
-- [CURRENT] `US-R001-P1-04A` — Add recreation/new-intent regression evidence for saved-state-backed share launch before marking R001-P1-04 complete.
+- [CURRENT / CI #105] `US-R001-P1-04A` — Recreation/new-intent regression tests are implemented; run #105 is validating saved-state restoration and stale-consume protection before R001-P1-04 can be marked complete.
 
 #### Feature F003 — Large-input safety
 - [QUEUED] `US-R001-P2-01A` — Add representative input-size/free-space preflight after mandatory P1 stories.
