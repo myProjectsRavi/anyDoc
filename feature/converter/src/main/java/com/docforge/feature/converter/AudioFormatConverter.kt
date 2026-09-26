@@ -13,6 +13,7 @@ import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -104,18 +105,25 @@ class AudioFormatConverter(
             "AAC encoder not available on this device."
         }
 
-        val outputFile = createOutputFile(outputBaseName, AudioConvertOutputFormat.M4A_AAC)
+        val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.M4A_AAC)
         val pcmFile = createTempPcmFile()
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            encodePcmToAacM4a(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                encodePcmToAacM4a(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -133,18 +141,25 @@ class AudioFormatConverter(
         outputBaseName: String,
         checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
-        val outputFile = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
+        val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
         val pcmFile = createTempPcmFile()
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            writeWav(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                writeWav(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -164,7 +179,7 @@ class AudioFormatConverter(
         targetMime: String,
         checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
-        val outputFile = createOutputFile(outputBaseName, outputFormat)
+        val outputTarget = createOutputFile(outputBaseName, outputFormat)
         val sourceTrack = withAudioTrack(inputUri) { _, _, trackFormat ->
             Pair(
                 trackFormat.getString(MediaFormat.KEY_MIME).orEmpty(),
@@ -175,10 +190,17 @@ class AudioFormatConverter(
         val durationMs = sourceTrack.second
 
         if (normalizeMime(sourceMimeType) == normalizeMime(targetMime)) {
-            withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
-                extractor.selectTrack(trackIndex)
-                copyExtractorSamplesToFile(extractor, trackFormat, outputFile, checkCancelled)
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
+                    extractor.selectTrack(trackIndex)
+                    copyExtractorSamplesToFile(extractor, trackFormat, stagedFile, checkCancelled)
+                }
             }
+            val outputFile = staged.outputFile
             return AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -196,14 +218,21 @@ class AudioFormatConverter(
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            encodePcmToRawCodec(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                targetMime = targetMime,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                encodePcmToRawCodec(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    targetMime = targetMime,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
