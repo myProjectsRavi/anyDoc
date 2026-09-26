@@ -10,8 +10,8 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 
 #### Feature F001 — Failure-safe, non-destructive output publishing
 - [COMPLETE] `US-R001-P1-03A` — Stage single-output PDF compression, merge, and searchable-OCR publishing.
-- [CI_PENDING] `US-R001-P1-03B` — Stage audio conversion and video-audio extraction publishing. Implemented at code HEAD `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; run #70 in progress.
-- [NEXT] `US-R001-P1-03C` — Make multi-output PDF split/batch publication atomic as a set so a later failure/cancellation does not leave a partial visible result set.
+- [COMPLETE] `US-R001-P1-03B` — Stage audio conversion and video-audio extraction publishing. CI run #85 passed on code HEAD `37c2fee82af4406bf969be9ae6f5eab74a0c9e7c`.
+- [CURRENT] `US-R001-P1-03C` — Make multi-output PDF split/batch publication atomic as a set so a later failure/cancellation does not leave a partial visible result set.
 
 #### Feature F002 — Lifecycle-safe incoming share handling
 - [QUEUED] `US-R001-P1-04A` — Add recreation/new-intent regression evidence for saved-state-backed share launch before marking R001-P1-04 complete.
