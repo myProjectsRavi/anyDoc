@@ -9,18 +9,18 @@
 **Current Epic:** `E001` — User-data safety and reliability  
 **Current Feature:** `F002` — Lifecycle-safe incoming share handling  
 **Current User Story:** `US-R001-P1-04A` — Recreation/new-intent regression evidence for shared launch  
-**Hourly run counter:** 5  
+**Hourly run counter:** 6  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-26 UTC, run 005
+**State checkpoint timestamp:** 2026-09-26 UTC, run 006
 
 ## Git checkpoint
 
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Exact validated code HEAD: `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
-- Exact branch HEAD at the start of this consistency checkpoint: `a0174663fcc097f3241a0dfe8ea5e6ffdc2f7ffe`.
-- GitHub Actions push run #92 (API run ID `36228935470`) completed successfully on that exact code HEAD.
+- Last fully validated code HEAD: `dc4c92f165dd22ee556abbbaa686c1ccc38594ad` (run #92).
+- Exact branch/code candidate HEAD before this documentation checkpoint: `657bbd6b62c21b22b222e48f91efae4b052a890f`.
+- GitHub Actions PR run #105 (API run ID `36261620135`) is currently validating that exact candidate HEAD; no pass is claimed yet.
 - Draft validation PR: #1, open, **do not merge while CURRENT_REPORT is incomplete**.
 - Feature branch comparison before this checkpoint: ahead of main, behind by 0; merge-base remains the baseline main commit.
 - Main was not modified.
@@ -48,6 +48,18 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 **Primary:** finish mandatory lifecycle evidence under Feature `F002`. The failure-safe output feature `F001` is now complete for Cycle 001 scope.
 
 **Current subtask:** inspect the saved-state-backed shared-launch flow and add recreation/new-intent regression evidence before marking R001-P1-04 complete.
+
+## Work completed in run 006
+
+- Selected exactly one story: `US-R001-P1-04A`.
+- Added Robolectric/JUnit app test support without adding runtime/APK dependencies.
+- Added `ShareLaunchViewModelTest` regression coverage for saved-state restoration until explicit consumption.
+- Added regression coverage proving a new incoming share supersedes the old pending request and a stale destination callback cannot clear the newer request.
+- Added `:app:testDebugUnitTest` as a mandatory GitHub Actions step.
+- Reduced CI idle/churn: push and PR events for the same feature branch now share one concurrency lane, and documentation-only continuous-improvement checkpoint commits are ignored by the Android workflow.
+- GitHub Actions run #105 (API run ID `36261620135`) is executing on exact candidate HEAD `657bbd6b62c21b22b222e48f91efae4b052a890f`. At the latest observation, runner setup succeeded and core PDF unit tests were executing; app lifecycle tests were still pending.
+- No lifecycle CI pass, emulator result, or physical-device result is claimed yet.
+- External automation repair: the prior hourly task had disabled itself after its last run; a fresh hourly AnyDoc runner was created with explicit no-idle watchdog semantics. Scheduler maximum frequency remains hourly.
 
 ## Work completed in run 005
 
@@ -235,9 +247,9 @@ The current ChatGPT/Codex sandbox cannot resolve `github.com`, so it cannot clon
 
 ## GitHub Actions status
 
-**PARTIALLY VALIDATED / NEXT STORY TEST_PENDING.**
+**LIFECYCLE STORY CI_IN_PROGRESS.**
 
-Workflow run #92 passed on exact code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`, including core PDF unit tests, debug assembly, unsigned release/R8 assembly, and lint. This closes `US-R001-P1-03C` and R001-P1-03. The next mandatory lifecycle story `US-R001-P1-04A` still requires focused recreation/new-intent regression evidence.
+Workflow run #105 (API run ID `36261620135`) is validating exact candidate HEAD `657bbd6b62c21b22b222e48f91efae4b052a890f`. The workflow now includes focused app lifecycle JVM tests in addition to core PDF tests, debug assembly, unsigned release/R8 assembly, and lint. Do not mark `US-R001-P1-04A` or R001-P1-04 complete until this run (or a justified successor on the same code) passes.
 
 ## Sandbox validation status
 
@@ -284,9 +296,9 @@ Docs:
 
 ## Next exact action
 
-1. Fetch actual branch HEAD because this durable-documentation checkpoint advances it.
-2. Work only on `US-R001-P1-04A`: inspect `ShareLaunchViewModel`, `MainActivity`, and `DocForgeNavHost` lifecycle/new-intent behavior.
-3. Add focused regression tests for recreation and new SEND intent handling without replay/double-consumption.
-4. Run GitHub Actions and fix any failure before marking R001-P1-04 complete.
-5. Update STATE.md, CURRENT_REPORT.md, BACKLOG.md and VALIDATION.md before ending.
-6. Do **not** start R001-P2-01 or Cycle 002 until the lifecycle story reaches its durable completion gate.
+1. Fetch actual branch HEAD because this documentation checkpoint advances it.
+2. Resume only `US-R001-P1-04A` by inspecting GitHub Actions run #105 / API run ID `36261620135`.
+3. If the app lifecycle test or any downstream gate fails, inspect the failing job/logs, fix the root cause, and rerun before advancing.
+4. If run #105 (or a justified successor on the same code) passes all required steps, record the evidence and mark R001-P1-04 complete.
+5. Only then select the next mandatory story `US-R001-P2-01A` for large-input/free-space preflight.
+6. Keep `main` untouched and keep draft PR #1 unmerged while Cycle 001 remains incomplete.
