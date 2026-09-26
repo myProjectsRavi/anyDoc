@@ -18,6 +18,7 @@
 - Recursive tree audit found and fixed an additional business-card `.vcf` same-name overwrite path outside the PDF/converter modules.
 - Verified encrypted-vault filenames are generated independently of user-selected output names; saved-signature slot replacement is intentional application state rather than an output-collision path.
 - Added staged-output regression tests covering successful publish with an existing destination and failure cleanup without exposing a final file.
+- Added set-level staged-output regression tests proving later-writer failure leaves no partial final set and finals remain unpublished until every writer has succeeded.
 
 ### Tests added
 `core/pdf/src/test/java/com/docforge/core/pdf/PdfCoreSafetyTest.kt`
@@ -39,9 +40,11 @@ Validated baseline state: workflow run #60 (API run ID `36176743391`) completed 
 
 Audio transactional-output story validation: initial runs #75/#76 failed at `:core:pdf:compileDebugKotlin` because a public inline staging helper referenced a private helper. Follow-up CI exposed required suspend propagation through existing suspend writers and tests. After those root causes were fixed, push run #85 (API run ID `36223470957`) completed **successfully** on code HEAD `37c2fee82af4406bf969be9ae6f5eab74a0c9e7c`: core PDF unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint all passed. This closes `US-R001-P1-03B`.
 
+Multi-output transactional publishing validation: push run #92 (API run ID `36228935470`) completed **successfully** on exact code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`. Core PDF unit tests (including the new set-level staging tests), debug APK assembly, unsigned release/R8 assembly, and Android lint all passed. This closes `US-R001-P1-03C` and mandatory item R001-P1-03.
+
 ### Sandbox
 Attempted repository clone into the ChatGPT/Codex container.
-Result: **BLOCKED BY ENVIRONMENT NETWORK** — repeated check in run 002 still returns `Could not resolve host: github.com`.
+Result: **BLOCKED BY ENVIRONMENT NETWORK** — rechecked in run 005 and `git ls-remote https://github.com/myProjectsRavi/anyDoc.git HEAD` still returns `Could not resolve host: github.com`.
 
 No Gradle command from the feature branch has therefore been executed locally in this run. This limitation is explicit and must not be converted into a pass.
 
@@ -49,4 +52,4 @@ No Gradle command from the feature branch has therefore been executed locally in
 No physical Android device was used or claimed.
 
 ## Completion gate
-Cycle 001 remains open until relevant CI is observed passing and remaining mandatory P0/P1 items are resolved.
+Cycle 001 remains open. Output-safety item R001-P1-03 is validated complete; lifecycle item R001-P1-04 is the next mandatory P1 gate, followed by large-input preflight and the final CI/regression/documentation gate.

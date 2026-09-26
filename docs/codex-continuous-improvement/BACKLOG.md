@@ -11,10 +11,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 #### Feature F001 — Failure-safe, non-destructive output publishing
 - [COMPLETE] `US-R001-P1-03A` — Stage single-output PDF compression, merge, and searchable-OCR publishing.
 - [COMPLETE] `US-R001-P1-03B` — Stage audio conversion and video-audio extraction publishing. CI run #85 passed on code HEAD `37c2fee82af4406bf969be9ae6f5eab74a0c9e7c`.
-- [CURRENT] `US-R001-P1-03C` — Make multi-output PDF split/batch publication atomic as a set so a later failure/cancellation does not leave a partial visible result set.
+- [COMPLETE] `US-R001-P1-03C` — Make multi-output PDF split/batch publication atomic as a set so a later failure/cancellation does not leave a partial visible result set. CI run #92 passed on code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
 
 #### Feature F002 — Lifecycle-safe incoming share handling
-- [QUEUED] `US-R001-P1-04A` — Add recreation/new-intent regression evidence for saved-state-backed share launch before marking R001-P1-04 complete.
+- [CURRENT] `US-R001-P1-04A` — Add recreation/new-intent regression evidence for saved-state-backed share launch before marking R001-P1-04 complete.
 
 #### Feature F003 — Large-input safety
 - [QUEUED] `US-R001-P2-01A` — Add representative input-size/free-space preflight after mandatory P1 stories.
@@ -28,7 +28,7 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### P1 — crash / lifecycle / corruption
 - [CI_PENDING] Make PDFBox initialization race-safe and retryable.
 - [CI_PENDING] Prevent memory-pressure cleanup from deleting active temporary files.
-- [IN_PROGRESS] Audit cancellation/failure behavior for partial final outputs; staged publishing now covers PDF compression, PDF merge, and searchable OCR PDFs; split/batch/audio paths remain under review.
+- [COMPLETE] Audit cancellation/failure behavior for scoped long-operation final outputs; staged publishing covers compression, merge, searchable OCR, audio conversion/extraction, split/extract/bookmarks, and batch stamping.
 - [NOT_STARTED] Preserve incoming share-launch state across Activity/configuration recreation and process restoration where feasible.
 - [NOT_STARTED] Audit foreground-service restart semantics and queue recovery after process death.
 - [NOT_STARTED] Resolve release signing safety: production `release` must not silently use the debug signing key.

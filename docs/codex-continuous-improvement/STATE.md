@@ -7,29 +7,27 @@
 **Report status:** ACTIVE / INCOMPLETE  
 **Cycle:** 001  
 **Current Epic:** `E001` — User-data safety and reliability  
-**Current Feature:** `F001` — Failure-safe, non-destructive output publishing  
-**Current User Story:** `US-R001-P1-03C` — Atomic multi-output split/batch publishing  
-**Hourly run counter:** 3  
+**Current Feature:** `F002` — Lifecycle-safe incoming share handling  
+**Current User Story:** `US-R001-P1-04A` — Recreation/new-intent regression evidence for shared launch  
+**Hourly run counter:** 5  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-26 UTC, run 003
+**State checkpoint timestamp:** 2026-09-26 UTC, run 005
 
 ## Git checkpoint
 
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Previously validated code HEAD: `903c257b1370bb6666cfa94207ad2017cd0337f8` via workflow run #60 (success).
-- Previously validated documentation head: `0633bfc1c7a873bb8380641752fa189b182e5274` via workflow run #66 (success).
-- Current audio-story code HEAD before this documentation checkpoint: `4a707f61c957cca3c6b364cdb723c0e6fa00013f`; workflow run #70 is in progress.
-- This STATE write itself advances the branch, so the next invocation MUST read actual branch HEAD.
+- Exact validated code HEAD before this durable-documentation checkpoint: `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`.
+- GitHub Actions push run #92 (API run ID `36228935470`) completed successfully on that exact code HEAD.
 - Draft validation PR: #1, open, **do not merge while CURRENT_REPORT is incomplete**.
-- Uncommitted work: none represented by the connected GitHub mutation flow; writes in this run were committed atomically per file.
-- Feature branch comparison before durable-doc commits: ahead of main, behind by 0.
+- Feature branch comparison before this checkpoint: ahead of main, behind by 0; merge-base remains the baseline main commit.
 - Main was not modified.
+- This STATE/documentation commit advances the branch beyond the validated code HEAD, so the next invocation MUST fetch the actual branch HEAD before writing.
 
 ## Completion
 
-**4 / 8 mandatory Cycle 001 items COMPLETE**
+**5 / 8 mandatory Cycle 001 items COMPLETE**
 
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
@@ -38,17 +36,30 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 1. **R001-P0-01 — Non-destructive output allocation:** COMPLETE / run #60 passed after recursive collision audit
 2. **R001-P1-01 — Race-safe retryable PDFBox initialization:** COMPLETE / targeted unit tests passed in run #60
 3. **R001-P1-02 — Active temp-file protection:** COMPLETE / registry unit coverage passed in run #60
-4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** IN_PROGRESS / `US-R001-P1-03B` COMPLETE via run #85; current story `US-R001-P1-03C`
-5. **R001-P1-04 — Lifecycle-safe shared launch:** TEST_PENDING / build passes, recreation/new-intent regression evidence still required
+4. **R001-P1-03 — Failure/cancellation-safe staged outputs:** COMPLETE / `US-R001-P1-03C` validated by run #92
+5. **R001-P1-04 — Lifecycle-safe shared launch:** IN_PROGRESS / current story `US-R001-P1-04A`; recreation/new-intent regression evidence required
 6. **R001-P1-05 — Release signing safety:** COMPLETE / unsigned release+R8 gate passed in run #60
 7. **R001-P2-01 — Representative large-input preflight:** NOT_STARTED
 8. **R001-P3-01 — Final CI/regression/diff/docs gate:** CI_PENDING
 
 ## Current implementation task
 
-**Primary:** finish Feature `F001` through short user stories. `US-R001-P1-03B` is complete; current story `US-R001-P1-03C` covers atomic multi-output split/batch publication.
+**Primary:** finish mandatory lifecycle evidence under Feature `F002`. The failure-safe output feature `F001` is now complete for Cycle 001 scope.
 
-**Current subtask:** inspect and implement `US-R001-P1-03C` so split/batch multi-output operations do not expose a partial result set if a later item fails or cancellation occurs.
+**Current subtask:** inspect the saved-state-backed shared-launch flow and add recreation/new-intent regression evidence before marking R001-P1-04 complete.
+
+## Work completed in run 005
+
+- Selected exactly one story: `US-R001-P1-03C`.
+- Added set-level transactional staging via `withStagedOutputFiles`: every output is written to same-directory staging files before any final file is published.
+- Added rollback of finals created by the current transaction if publication fails after one or more moves.
+- Preserved non-overwriting collision handling for every final filename.
+- Migrated `PdfSplitter.extractPages`, `splitEveryNPages`, `splitByBookmarks`, and `PdfBatchStampTool.stampBatch` to set-level staged publication.
+- Added JVM regression tests proving no first final is visible while later writers are still running and no partial final set remains after a later writer fails.
+- GitHub Actions push run #92 (API run ID `36228935470`) passed on exact code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`: core PDF unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint all succeeded.
+- Sandbox network check still fails with `Could not resolve host: github.com`; no local Gradle execution is claimed.
+- No emulator or physical-device result is claimed.
+- `US-R001-P1-03C` and mandatory item R001-P1-03 are COMPLETE.
 
 ## Work completed in run 004
 
@@ -222,9 +233,9 @@ No Gradle/CI success is claimed yet.
 
 ## GitHub Actions status
 
-**PARTIALLY VALIDATED / CURRENT STORY CI_PENDING.**
+**PARTIALLY VALIDATED / NEXT STORY TEST_PENDING.**
 
-Workflow run #60 passed on code HEAD `903c257b1370bb6666cfa94207ad2017cd0337f8`, including core PDF unit tests, debug assembly, unsigned release/R8 assembly, and lint. Run #66 also passed on documentation head `0633bfc1c7a873bb8380641752fa189b182e5274`. The current audio-story head `4a707f61c957cca3c6b364cdb723c0e6fa00013f` is being validated by run #70 and must not be marked complete until terminal success is observed.
+Workflow run #92 passed on exact code HEAD `dc4c92f165dd22ee556abbbaa686c1ccc38594ad`, including core PDF unit tests, debug assembly, unsigned release/R8 assembly, and lint. This closes `US-R001-P1-03C` and R001-P1-03. The next mandatory lifecycle story `US-R001-P1-04A` still requires focused recreation/new-intent regression evidence.
 
 ## Sandbox validation status
 
@@ -271,8 +282,9 @@ Docs:
 
 ## Next exact action
 
-1. Fetch actual branch HEAD after durable-doc commits and confirm `main` remains untouched.
-2. Work only on `US-R001-P1-03C`: inspect split/batch multi-output publication and ensure a later failure/cancellation cannot leave a partial user-visible result set.
-3. Add focused regression coverage where feasible, then use GitHub Actions for authoritative validation.
-4. Update STATE.md, CURRENT_REPORT.md, BACKLOG.md and VALIDATION.md before ending the next run.
-5. Do **not** create Cycle 002 while Cycle 001 is incomplete.
+1. Fetch actual branch HEAD because this durable-documentation checkpoint advances it.
+2. Work only on `US-R001-P1-04A`: inspect `ShareLaunchViewModel`, `MainActivity`, and `DocForgeNavHost` lifecycle/new-intent behavior.
+3. Add focused regression tests for recreation and new SEND intent handling without replay/double-consumption.
+4. Run GitHub Actions and fix any failure before marking R001-P1-04 complete.
+5. Update STATE.md, CURRENT_REPORT.md, BACKLOG.md and VALIDATION.md before ending.
+6. Do **not** start R001-P2-01 or Cycle 002 until the lifecycle story reaches its durable completion gate.
