@@ -43,6 +43,13 @@ class BatchQueuePersistenceMapperTest {
     }
 
     @Test
+    fun nextTaskIdAfterRestore_advancesPastRecoveredIds_withoutMovingBackward() {
+        assertEquals(43L, nextTaskIdAfterRestore(currentNextId = 5L, restoredMaxId = 42L))
+        assertEquals(100L, nextTaskIdAfterRestore(currentNextId = 100L, restoredMaxId = 42L))
+        assertEquals(Long.MAX_VALUE, nextTaskIdAfterRestore(currentNextId = 7L, restoredMaxId = Long.MAX_VALUE))
+    }
+
+    @Test
     fun restore_rejectsMalformedTypeStatusUriAndInputCount() {
         val malformed = listOf(
             entity(id = 1L, taskType = "UNKNOWN"),
