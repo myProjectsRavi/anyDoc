@@ -64,7 +64,7 @@ class BatchQueueForegroundService : Service() {
 
             BatchQueueServiceContract.ACTION_RUN_QUEUE -> {
                 if (processingJob?.isActive == true) {
-                    return START_STICKY
+                    return batchQueueRestartMode()
                 }
 
                 val taskIds = intent.getLongArrayExtra(BatchQueueServiceContract.EXTRA_TASK_IDS)
@@ -90,7 +90,7 @@ class BatchQueueForegroundService : Service() {
                     stopSelf(startId)
                 }
 
-                return START_STICKY
+                return batchQueueRestartMode()
             }
 
             else -> {
@@ -374,3 +374,10 @@ private data class BatchExecutionOutcome(
     val outputPath: String,
     val outputSizeBytes: Long
 )
+
+/**
+ * The executable batch queue currently lives in process-local memory.
+ * Until durable queue recovery is wired, Android must not recreate this service after process death
+ * without the original task-id intent because that could present a foreground service with no queue.
+ */
+internal fun batchQueueRestartMode(): Int = Service.START_NOT_STICKY
