@@ -7,7 +7,7 @@
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
 **Epic:** `E002` — Background execution reliability  
 **Feature:** `F004` — Fail-safe batch foreground-service lifecycle  
-**Current User Story:** `US-R002-P1-01A` — Prevent unsafe sticky service restart before durable queue recovery
+**Current User Story:** `US-R002-P1-01B` — Add durable persisted queue recovery after process death
 
 ## Cycle 001 prerequisite
 
@@ -17,8 +17,8 @@ Cycle 001 is closed at 8/8 mandatory items. Exact feature candidate `d85d80ffece
 
 | User Story | Priority | Scope | State |
 |---|---|---|---|
-| US-R002-P1-01A | P1 | Prevent Android from sticky-restarting an in-memory-only batch execution | CI_PENDING |
-| US-R002-P1-01B | P1 | Add durable persisted queue recovery after process death | QUEUED |
+| US-R002-P1-01A | P1 | Prevent Android from sticky-restarting an in-memory-only batch execution | COMPLETE |
+| US-R002-P1-01B | P1 | Add durable persisted queue recovery after process death | IN_PROGRESS |
 
 ## Current implementation
 
@@ -37,3 +37,8 @@ The story becomes COMPLETE only after the exact code/test candidate passes requi
 ## Next exact action
 
 Inspect run #120. Fix failures within the same story. If green, close `US-R002-P1-01A`, synchronize durable docs, then begin `US-R002-P1-01B`.
+
+
+## Run 009 checkpoint
+
+Run #122 validates 01A. SAF picker commit `52132492aab22ec3328b9fb701084e28bf7ff2e0` passed run #124. Durable read-grant retention is now at code HEAD `60a493934ecfa50a48a4f824ad906ca991774aed`; CI is pending. Next: transactional Room snapshot/recovery after CI.
