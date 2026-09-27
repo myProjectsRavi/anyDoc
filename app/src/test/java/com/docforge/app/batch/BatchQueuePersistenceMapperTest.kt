@@ -59,7 +59,9 @@ class BatchQueuePersistenceMapperTest {
                 id = 4L,
                 taskType = BatchTaskType.PDF_MERGE.name,
                 inputUrisJson = "[\"content://provider/only-one.pdf\"]"
-            )
+            ),
+            entity(id = Long.MAX_VALUE),
+            entity(id = 6L, outputBaseName = "../unsafe")
         )
 
         assertTrue(BatchQueuePersistenceMapper.fromEntities(malformed).isEmpty())
@@ -70,7 +72,7 @@ class BatchQueuePersistenceMapperTest {
         type = BatchTaskType.PDF_COMPRESS,
         inputUris = listOf(Uri.parse("content://provider/$id.pdf")),
         inputSummary = "input-$id.pdf",
-        outputBaseName = "output_$id",
+        outputBaseName = outputBaseName,
         status = status
     )
 
@@ -78,7 +80,8 @@ class BatchQueuePersistenceMapperTest {
         id: Long,
         taskType: String = BatchTaskType.PDF_COMPRESS.name,
         status: String = "QUEUED",
-        inputUrisJson: String = "[\"content://provider/input.pdf\"]"
+        inputUrisJson: String = "[\"content://provider/input.pdf\"]",
+        outputBaseName: String = "output_$id"
     ) = BatchQueueTaskEntity(
         id = id,
         taskType = taskType,
