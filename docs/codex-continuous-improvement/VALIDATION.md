@@ -108,3 +108,13 @@ Cycle 001 remains open. Output-safety item R001-P1-03 and lifecycle item R001-P1
 - Exact code/test HEAD: `cf2a249ffc77eb91efa0d5a0c0857fac1b38bb9e`.
 - PR CI #153 / API `36359225826` is in progress; no pass is claimed yet.
 - No emulator or physical-device evidence is claimed.
+
+## Cycle 002 run 014 validation
+
+- Run #155 / API `36359277310`: **FAILED** after core PDF tests passed; `:app:compileDebugUnitTestKotlin` failed because `BatchQueuePersistenceMapperTest.task()` referenced undefined `outputBaseName`.
+- Repair commit: `6d7eb138de94355e54537babd08cd65cb5e7fc7c`.
+- Run #157 / API `36359528419`: **FAILED** after compilation succeeded; `BatchQueuePersistenceMapperTest.restore_rejectsMalformedTypeStatusUriAndInputCount` failed because its entity fixture ignored the supplied unsafe output base name.
+- Repair commit: `367c3785a8bae18fd2324ae673464706f316e7da`.
+- Exact code HEAD before documentation writes: `367c3785a8bae18fd2324ae673464706f316e7da`.
+- Runs #158 / API `36359747983` and #159 / API `36359750553` are the current successor validation attempts. No pass is claimed until a terminal successful run covers the exact code candidate (or a documentation-only descendant containing the same code tree).
+- No emulator, benchmark, or physical-device evidence is claimed.
