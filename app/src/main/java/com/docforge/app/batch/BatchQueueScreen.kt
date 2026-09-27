@@ -90,9 +90,7 @@ fun BatchQueueRoute(
                         inputLabels = listOf(readSourceLabel(context, uri))
                     )
                 }
-                .onFailure {
-                    viewModel.clearError()
-                }
+                .onFailure(viewModel::onInputAccessRetentionFailed)
         }
         pendingTaskType = null
     }
