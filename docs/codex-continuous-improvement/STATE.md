@@ -3,12 +3,12 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-25_1837_cycle-001`  
-**Report status:** COMPLETE  
-**Cycle:** 001  
-**Current Epic:** `E001` — User-data safety and reliability  
-**Current Feature:** Cycle 001 final gate  
-**Current User Story:** `US-R001-P3-01A` — Final CI/regression/diff/docs reconciliation (COMPLETE)  
+**Current report:** `2026-09-27_cycle-002`  
+**Report status:** ACTIVE / INCOMPLETE  
+**Cycle:** 002  
+**Current Epic:** `E002` — Background execution reliability  
+**Current Feature:** `F004` — Fail-safe batch foreground-service lifecycle  
+**Current User Story:** `US-R002-P1-01A` — Prevent unsafe sticky service restart before durable queue recovery  
 **Hourly run counter:** 7  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -28,7 +28,9 @@
 
 ## Completion
 
-**8 / 8 mandatory Cycle 001 items COMPLETE**
+**Cycle 001: 8 / 8 mandatory items COMPLETE**
+
+**Cycle 002: 0 / 2 scoped mandatory items COMPLETE**
 
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
@@ -45,9 +47,22 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** finish mandatory lifecycle evidence under Feature `F002`. The failure-safe output feature `F001` is now complete for Cycle 001 scope.
+**Primary:** make batch foreground execution fail-safe across process death before attempting durable recovery.
 
-**Current subtask:** inspect the saved-state-backed shared-launch flow and add recreation/new-intent regression evidence before marking R001-P1-04 complete.
+**Current subtask:** validate `US-R002-P1-01A`: the foreground service must use `START_NOT_STICKY` while queue execution state remains process-local. Durable Room-backed recovery is a separate follow-up story.
+
+
+## Cycle 002 run 001
+
+- Cycle 001 closure was verified before starting new work.
+- Selected exactly one bounded story: `US-R002-P1-01A`.
+- Confirmed `BatchQueueForegroundService` returned `START_STICKY` while executable queue state lives only in process-local `BatchQueueRuntimeStore`.
+- Changed active/running queue restart policy to `START_NOT_STICKY` until durable recovery exists.
+- Added `BatchQueueForegroundServicePolicyTest` to lock the non-sticky restart contract.
+- Exact code/test HEAD before durable documentation writes: `59cce5de17c6665734dbad00b02062afc187a53d`.
+- GitHub Actions PR run #120 (API `36308903917`) was queued for that exact HEAD at latest observation; no CI pass is claimed yet.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+- Next action: inspect run #120, fix any failure, and only then mark `US-R002-P1-01A` complete. After that, begin `US-R002-P1-01B` for true durable queue recovery using persisted task state.
 
 ## Work completed in run 006
 
@@ -296,8 +311,8 @@ Docs:
 
 ## Next exact action
 
-1. Cycle 001 is COMPLETE at 8/8 mandatory items.
-2. Exact feature code candidate `d85d80ffece62b49c3870763335938f5cc0ee0ca` passed run #114 (API `36281691456`).
-3. Documentation head `0e0051367e696f578f4e6afed962b8e135c339c2` passed run #115 (API `36293457559`).
-4. On the next engineering run, create Cycle 002 under the sequencing rules and select the highest-priority remaining risk.
+1. Inspect GitHub Actions run #120 (API `36308903917`) for exact HEAD `59cce5de17c6665734dbad00b02062afc187a53d`.
+2. If any required gate fails, diagnose and fix it within `US-R002-P1-01A`.
+3. If all gates pass, mark `US-R002-P1-01A` COMPLETE and synchronize STATE/CURRENT_REPORT/BACKLOG/VALIDATION.
+4. Then advance to `US-R002-P1-01B`: durable queue persistence/recovery after process death.
 5. Keep `main` untouched and draft PR #1 unmerged.
