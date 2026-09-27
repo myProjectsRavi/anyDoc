@@ -2,6 +2,8 @@ package com.docforge.core.pdf
 
 import android.content.Context
 import android.net.Uri
+import android.os.StatFs
+import android.provider.OpenableColumns
 import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDDocument
@@ -14,6 +16,8 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 
 private const val FILE_CHANNEL_COPY_CHUNK_BYTES = 8L * 1024L * 1024L
+internal const val CACHE_COPY_FREE_SPACE_RESERVE_BYTES = 32L * 1024L * 1024L
+internal const val CACHE_COPY_SPACE_MULTIPLIER = 2L
 private val SAFE_EXTENSION_REGEX = Regex("[a-z0-9]{1,8}")
 
 internal fun Context.copyUriToCacheFile(
@@ -22,6 +26,7 @@ internal fun Context.copyUriToCacheFile(
     suffix: String = guessTempSuffix(uri, defaultSuffix = ".bin"),
     keepRegistered: Boolean = false
 ): File {
+    preflightCacheCopy(uri)
     val tempFile = File.createTempFile(prefix, suffix, cacheDir)
     ActiveTempFileRegistry.register(tempFile)
     return try {
@@ -72,6 +77,40 @@ internal inline fun <T> Context.withUriCopiedToCacheFile(
         ActiveTempFileRegistry.unregister(tempFile)
         tempFile.delete()
     }
+}
+
+internal fun requiredCacheBytesForKnownInput(inputSizeBytes: Long): Long {
+    if (inputSizeBytes <= 0L) return CACHE_COPY_FREE_SPACE_RESERVE_BYTES
+    return if (inputSizeBytes > (Long.MAX_VALUE - CACHE_COPY_FREE_SPACE_RESERVE_BYTES) / CACHE_COPY_SPACE_MULTIPLIER) {
+        Long.MAX_VALUE
+    } else {
+        inputSizeBytes * CACHE_COPY_SPACE_MULTIPLIER + CACHE_COPY_FREE_SPACE_RESERVE_BYTES
+    }
+}
+
+private fun Context.preflightCacheCopy(uri: Uri) {
+    val inputSizeBytes = queryKnownInputSize(uri) ?: return
+    val availableBytes = StatFs(cacheDir.absolutePath).availableBytes
+    val requiredBytes = requiredCacheBytesForKnownInput(inputSizeBytes)
+    require(availableBytes >= requiredBytes) {
+        "Not enough temporary storage for this file. Required ${requiredBytes / (1024L * 1024L)} MiB, available ${availableBytes / (1024L * 1024L)} MiB."
+    }
+}
+
+private fun Context.queryKnownInputSize(uri: Uri): Long? {
+    val cursorSize = runCatching {
+        contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+            val index = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (index >= 0 && cursor.moveToFirst() && !cursor.isNull(index)) cursor.getLong(index) else null
+        }
+    }.getOrNull()
+    if (cursorSize != null && cursorSize >= 0L) return cursorSize
+
+    return runCatching {
+        contentResolver.openAssetFileDescriptor(uri, "r")?.use { descriptor ->
+            descriptor.length.takeIf { it >= 0L }
+        }
+    }.getOrNull()
 }
 
 internal fun guessTempSuffix(uri: Uri, defaultSuffix: String): String {
