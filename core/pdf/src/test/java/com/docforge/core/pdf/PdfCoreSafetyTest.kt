@@ -236,4 +236,17 @@ class PdfCoreSafetyTest {
         }
     }
 
+    @Test
+    fun largeInputCachePreflightRequiresWorkingSpaceAndReserve() {
+        val inputBytes = 600L * 1024L * 1024L
+        val expected = (2L * inputBytes) + (32L * 1024L * 1024L)
+
+        assertEquals(expected, requiredCacheBytesForKnownInput(inputBytes))
+    }
+
+    @Test
+    fun largeInputCachePreflightSaturatesInsteadOfOverflowing() {
+        assertEquals(Long.MAX_VALUE, requiredCacheBytesForKnownInput(Long.MAX_VALUE))
+    }
+
 }
