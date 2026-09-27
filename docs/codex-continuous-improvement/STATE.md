@@ -9,11 +9,11 @@
 **Current Epic:** `E002` — Background execution reliability  
 **Current Feature:** `F004` — Fail-safe batch foreground-service lifecycle  
 **Current User Story:** `US-R002-P1-01B` — Add durable persisted queue recovery after process death  
-**Hourly run counter:** 7  
+**Hourly run counter:** 14  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-26 UTC, run 006
+**State checkpoint timestamp:** 2026-09-27 UTC, Cycle 002 run 014
 
 ## Git checkpoint
 
@@ -65,6 +65,20 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 - Next action: inspect run #120, fix any failure, and only then mark `US-R002-P1-01A` complete. After that, begin `US-R002-P1-01B` for true durable queue recovery using persisted task state.
 
 
+
+
+## Cycle 002 run 014
+
+- Resumed exactly at `US-R002-P1-01B` from the run-013 runtime-recovery validation checkpoint.
+- Authoritative successor run #155 (API `36359277310`) failed in `:app:compileDebugUnitTestKotlin`: `BatchQueuePersistenceMapperTest.task()` referenced an undefined `outputBaseName` fixture variable. Production compilation had succeeded up to the test compile step; core PDF unit tests passed.
+- Fixed the test fixture in commit `6d7eb138de94355e54537babd08cd65cb5e7fc7c`.
+- Successor run #157 (API `36359528419`) then compiled and executed app tests, exposing a second fixture defect: the malformed-output-name case passed `../unsafe`, but the entity helper ignored the parameter and hardcoded a safe value.
+- Fixed that malformed-row fixture in commit `367c3785a8bae18fd2324ae673464706f316e7da`.
+- Exact branch/code HEAD before this documentation checkpoint: `367c3785a8bae18fd2324ae673464706f316e7da`.
+- Validation on that exact code HEAD is in progress: push run #158 (API `36359747983`) and queued PR successor #159 (API `36359750553`). No green pass is claimed yet.
+- Additional same-story review found the next bounded persistence gap: the foreground service can outlive the ViewModel, so service-side RUNNING/terminal transitions must be durably checkpointed. Terminal states should remain in the Room snapshot as completion evidence while restoration continues to admit only QUEUED/RUNNING records.
+- No service-side persistence mutation was started while the current recovery candidate remained red/pending.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 002 run 013
 
@@ -350,9 +364,8 @@ Docs:
 
 ## Next exact action
 
-1. Inspect GitHub Actions run #153 (API `36359225826`) or its docs-only successor for code/test HEAD `cf2a249ffc77eb91efa0d5a0c0857fac1b38bb9e`.
-2. Repair any compile/test/build/lint failure inside `US-R002-P1-01B`.
-3. If green, wire the foreground service to persist RUNNING before execution and persist terminal/removal transitions so recovery remains valid even if the ViewModel is gone.
-4. Add regression evidence for service-transition persistence and no automatic execution after restore.
-5. Only after those gates pass may `US-R002-P1-01B` and Cycle 002 be marked COMPLETE.
-6. Keep draft PR #1 unmerged and `main` untouched.
+1. Inspect the authoritative successor CI for exact code HEAD `367c3785a8bae18fd2324ae673464706f316e7da` (run #158/#159 or a justified successor).
+2. If app tests still fail, diagnose and fix the exact failure inside `US-R002-P1-01B`; do not advance scope.
+3. Once the full required CI gate is green, implement the next bounded slice: persist foreground-service RUNNING and terminal transitions, retaining terminal Room rows as durable completion evidence while restoring only QUEUED/RUNNING work.
+4. Add regression coverage for terminal snapshot persistence and terminal-row non-restoration.
+5. Keep `main` untouched and draft PR #1 unmerged.
