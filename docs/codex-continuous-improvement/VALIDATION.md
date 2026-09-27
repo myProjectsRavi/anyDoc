@@ -83,3 +83,15 @@ Cycle 001 remains open. Output-safety item R001-P1-03 and lifecycle item R001-P1
 - Exact code/test HEAD before durable documentation writes: `59cce5de17c6665734dbad00b02062afc187a53d`.
 - GitHub Actions run #120 (API `36308903917`) is queued at latest observation. No pass is claimed yet.
 - No emulator or physical-device evidence is claimed.
+
+
+### US-R002-P1-01B persistence primitives
+
+- Transactional `BatchQueueTaskDao.replaceAll()` added so a durable snapshot is replaced atomically.
+- `BatchQueuePersistenceMapper` persists only recoverable `QUEUED`/`RUNNING` tasks.
+- Persisted `RUNNING` entries restore as `QUEUED` with an explicit recovery warning and are never auto-executed by the mapper.
+- Malformed task type/status, non-content URI, invalid input count, invalid ID, and blank output name are rejected.
+- Robolectric/JUnit mapper tests were added.
+- Exact code/test HEAD: `cd2b45d683ce04efb0ecf84b58a11a5a38029568`.
+- GitHub Actions run #140 / API `36358926601` is queued; no pass is claimed yet.
+- No emulator or physical-device result is claimed.
