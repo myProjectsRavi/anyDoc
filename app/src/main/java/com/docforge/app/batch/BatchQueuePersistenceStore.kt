@@ -26,6 +26,7 @@ internal class BatchQueuePersistenceStore(
 }
 
 internal object BatchQueuePersistenceMapper {
+    private val SAFE_OUTPUT_BASE = Regex("[a-zA-Z0-9_-]+")
     private const val RECOVERED_RUNNING_MESSAGE =
         "Recovered after app restart. Review this task before running it again."
 
@@ -58,7 +59,12 @@ internal object BatchQueuePersistenceMapper {
     }
 
     private fun fromEntity(entity: BatchQueueTaskEntity): BatchQueueTask? {
-        if (entity.id <= 0L || entity.outputBaseName.isBlank()) return null
+        if (
+            entity.id <= 0L ||
+            entity.id == Long.MAX_VALUE ||
+            entity.outputBaseName.isBlank() ||
+            !SAFE_OUTPUT_BASE.matches(entity.outputBaseName)
+        ) return null
 
         val type = BatchTaskType.entries.firstOrNull { it.name == entity.taskType } ?: return null
         val persistedStatus = BatchTaskStatus.entries.firstOrNull { it.name == entity.status } ?: return null
@@ -76,7 +82,7 @@ internal object BatchQueuePersistenceMapper {
                     if (uri.scheme != "content") return@runCatching emptyList<Uri>()
                     add(uri)
                 }
-            }
+            }.distinct()
         }.getOrNull() ?: return null
 
         if (uris.isEmpty() || type.validateInputCount(uris.size) != null) return null
