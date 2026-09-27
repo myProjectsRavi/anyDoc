@@ -72,7 +72,7 @@ class BatchQueuePersistenceMapperTest {
         type = BatchTaskType.PDF_COMPRESS,
         inputUris = listOf(Uri.parse("content://provider/$id.pdf")),
         inputSummary = "input-$id.pdf",
-        outputBaseName = outputBaseName,
+        outputBaseName = "output_$id",
         status = status
     )
 
