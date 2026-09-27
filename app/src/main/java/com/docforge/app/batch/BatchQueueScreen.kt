@@ -77,7 +77,7 @@ fun BatchQueueRoute(
     var presetName by remember { mutableStateOf(defaultPresetName()) }
 
     val singlePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         val type = pendingTaskType ?: return@rememberLauncherForActivityResult
         if (uri != null) {
@@ -91,7 +91,7 @@ fun BatchQueueRoute(
     }
 
     val multiPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
+        contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris ->
         val type = pendingTaskType ?: return@rememberLauncherForActivityResult
         if (uris.isNotEmpty()) {
@@ -121,9 +121,9 @@ fun BatchQueueRoute(
         onPickInputsForTask = { taskType ->
             pendingTaskType = taskType
             if (taskType.allowsMultipleInputs) {
-                multiPicker.launch(taskType.mimeFilter)
+                multiPicker.launch(arrayOf(taskType.mimeFilter))
             } else {
-                singlePicker.launch(taskType.mimeFilter)
+                singlePicker.launch(arrayOf(taskType.mimeFilter))
             }
         },
         onRunQueue = {
