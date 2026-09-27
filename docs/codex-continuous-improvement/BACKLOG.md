@@ -83,3 +83,7 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 
 ### Cycle 002 run 011
 - [IN_PROGRESS] `US-R002-P1-01B`: malformed retained-access callback syntax repaired; CI run #135 pending. Durable Room snapshot/recovery work remains gated on green CI.
+
+
+### Cycle 002 run 012
+- [IN_PROGRESS] `US-R002-P1-01B`: atomic Room snapshot replacement plus durable recovery mapper/tests committed at `cd2b45d683ce04efb0ecf84b58a11a5a38029568`; CI run #140 pending. Next slice wires restore/persist state transitions and task-ID advancement.
