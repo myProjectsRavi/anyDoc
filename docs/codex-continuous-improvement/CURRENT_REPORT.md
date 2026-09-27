@@ -53,3 +53,15 @@ Run #122 validates 01A. SAF picker commit `52132492aab22ec3328b9fb701084e28bf7ff
 - Exact code/test HEAD: `cd2b45d683ce04efb0ecf84b58a11a5a38029568`.
 - Run #140 / API `36358926601` is queued; no pass is claimed yet.
 - Next: CI repair if needed, then wire restoration/persistence into runtime/ViewModel/service without automatic execution.
+
+
+## Run 013 checkpoint
+
+- `US-R002-P1-01B` remains IN_PROGRESS.
+- Runtime restoration now occurs only into an empty/non-processing queue and advances task IDs above restored work.
+- ViewModel startup restores durable recoverable tasks before continuously snapshotting runtime queue state.
+- Both SAF picker paths surface retained-access failures consistently.
+- Recovery validation now rejects unsafe names/pathological IDs and deduplicates URIs before input-count validation.
+- Exact code/test HEAD: `cf2a249ffc77eb91efa0d5a0c0857fac1b38bb9e`.
+- PR CI #153 / API `36359225826` is in progress; no pass is claimed yet.
+- Next bounded slice after green CI: persist foreground-service RUNNING and terminal transitions, then validate no automatic rerun after process recovery.
