@@ -66,6 +66,19 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 
+## Cycle 002 run 012
+
+- Resumed `US-R002-P1-01B` after authoritative run #136 passed on branch head `14ccb5da0eb104d1c9ded61500d8fb8dbcf80c60`.
+- Added transactional Room `BatchQueueTaskDao.replaceAll()` so durable queue snapshots cannot expose a delete/insert gap.
+- Added `BatchQueuePersistenceStore` and deterministic mapping for recoverable queue state.
+- Durable snapshots keep only `QUEUED` and `RUNNING` work; persisted `RUNNING` restores conservatively as `QUEUED` with a review-before-rerun message.
+- Recovery mapping rejects malformed task type/status, non-content URIs, invalid input counts, nonpositive IDs, and blank output names instead of inventing runnable work.
+- Added Robolectric/JUnit coverage for recoverable-only snapshots, queue ordering, `RUNNING -> QUEUED` recovery, and malformed-row rejection.
+- Exact code/test HEAD before documentation writes: `cd2b45d683ce04efb0ecf84b58a11a5a38029568`.
+- GitHub Actions run #140 (API `36358926601`) is queued on that exact HEAD; no pass is claimed yet.
+- Next executable action: inspect #140 and fix any failure. If green, wire restore/snapshot persistence into `BatchQueueRuntimeStore`, `BatchQueueViewModel`, and the foreground service without auto-executing recovered tasks.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+
 ## Cycle 002 run 009
 
 - `US-R002-P1-01A` is technically COMPLETE: successor CI run #122 (API `36308968653`) passed required gates on documentation head containing code/test candidate `59cce5de17c6665734dbad00b02062afc187a53d`.
@@ -324,8 +337,8 @@ Docs:
 
 ## Next exact action
 
-1. Inspect run #127 (API `36325082770`) or its PR successor for exact code HEAD `60a493934ecfa50a48a4f824ad906ca991774aed`.
-2. Fix failures within `US-R002-P1-01B`; do not start a lower-priority story.
-3. Add explicit user-visible durable-input-grant failure feedback when connector mutation permits.
-4. Add transactional Room queue snapshot replacement and conservative restoration, including persisted `RUNNING -> QUEUED`.
-5. Add regression tests, validate with authoritative CI, and keep draft PR #1 unmerged and `main` untouched.
+1. Inspect GitHub Actions run #140 (API `36358926601`) for exact code/test HEAD `cd2b45d683ce04efb0ecf84b58a11a5a38029568`.
+2. Diagnose and repair any failing compile/test/build/lint gate within `US-R002-P1-01B`.
+3. When green, wire persisted recovery into runtime/ViewModel/service state transitions; restored work must remain user-triggered and must never auto-execute.
+4. Add task-ID counter advancement and persistence-transition regression coverage.
+5. Keep draft PR #1 unmerged and `main` untouched.
