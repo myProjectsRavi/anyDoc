@@ -87,7 +87,7 @@ class BatchQueuePersistenceMapperTest {
         taskType = taskType,
         inputUrisJson = inputUrisJson,
         inputSummary = "input.pdf",
-        outputBaseName = "output_$id",
+        outputBaseName = outputBaseName,
         status = status,
         createdAtMillis = id
     )
