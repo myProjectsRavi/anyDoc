@@ -42,3 +42,14 @@ Inspect run #120. Fix failures within the same story. If green, close `US-R002-P
 ## Run 009 checkpoint
 
 Run #122 validates 01A. SAF picker commit `52132492aab22ec3328b9fb701084e28bf7ff2e0` passed run #124. Durable read-grant retention is now at code HEAD `60a493934ecfa50a48a4f824ad906ca991774aed`; CI is pending. Next: transactional Room snapshot/recovery after CI.
+
+
+## Run 012 checkpoint
+
+- `US-R002-P1-01B` remains IN_PROGRESS.
+- Transactional Room queue snapshot replacement added.
+- Durable recovery mapper/store added with conservative `RUNNING -> QUEUED` semantics and malformed-row rejection.
+- Regression tests added for recoverable filtering, ordering, running-task recovery, and malformed persisted rows.
+- Exact code/test HEAD: `cd2b45d683ce04efb0ecf84b58a11a5a38029568`.
+- Run #140 / API `36358926601` is queued; no pass is claimed yet.
+- Next: CI repair if needed, then wire restoration/persistence into runtime/ViewModel/service without automatic execution.
