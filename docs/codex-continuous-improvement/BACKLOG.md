@@ -64,3 +64,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - No item becomes COMPLETE solely because code exists.
 - Required Cycle 001 work must pass relevant CI before the report can close.
 - Do not create Cycle 002 while Cycle 001 remains incomplete.
+
+
+## Cycle 001 closure — 2026-09-27
+
+- `R001-P2-01`: COMPLETE; large-input/free-space preflight validated by CI run #114 on `d85d80ffece62b49c3870763335938f5cc0ee0ca`.
+- `R001-P3-01`: COMPLETE; final CI/regression/diff/documentation gate reconciled.
+- Mandatory Cycle 001 backlog: 8/8 COMPLETE. Do not reopen these stories without new contradictory evidence.
