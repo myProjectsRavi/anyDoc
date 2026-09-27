@@ -15,9 +15,9 @@ import kotlinx.coroutines.launch
 class BatchQueueViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-    private val presetStore = BatchQueuePresetStore(
-        com.docforge.core.storage.db.DocForgeDatabase.get(application.applicationContext).batchPresetDao()
-    )
+    private val database = com.docforge.core.storage.db.DocForgeDatabase.get(application.applicationContext)
+    private val presetStore = BatchQueuePresetStore(database.batchPresetDao())
+    private val persistenceStore = BatchQueuePersistenceStore(database.batchQueueTaskDao())
 
     private val _uiState = MutableStateFlow(BatchQueueUiState())
     val uiState: StateFlow<BatchQueueUiState> = _uiState.asStateFlow()
@@ -29,8 +29,21 @@ class BatchQueueViewModel(
             _presets.value = presetStore.readPresets()
         }
         viewModelScope.launch {
+            runCatching { persistenceStore.readRecoverableTasks() }
+                .onSuccess(BatchQueueRuntimeStore::restoreRecoverableTasksIfEmpty)
+                .onFailure { error ->
+                    setError(error.message ?: "Unable to restore the saved batch queue.")
+                }
+
             BatchQueueRuntimeStore.state.collect { runtimeState ->
                 _uiState.value = runtimeState
+                runCatching {
+                    persistenceStore.replaceSnapshot(runtimeState.tasks)
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(errorMessage = error.message ?: "Unable to save the batch queue.")
+                    }
+                }
             }
         }
     }
