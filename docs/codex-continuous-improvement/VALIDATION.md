@@ -72,3 +72,14 @@ No physical Android device was used or claimed.
 
 ## Completion gate
 Cycle 001 remains open. Output-safety item R001-P1-03 and lifecycle item R001-P1-04 are validated complete. The next mandatory story is `US-R001-P2-01A` for representative large-input/free-space preflight, followed by the final CI/regression/documentation gate.
+
+
+## Cycle 002 current evidence
+
+### US-R002-P1-01A — non-sticky batch restart policy
+- Confirmed current execution state is held in process-local `BatchQueueRuntimeStore`.
+- Updated `BatchQueueForegroundService` so active/running queue starts return `START_NOT_STICKY` through a single restart-policy helper until durable recovery exists.
+- Added `BatchQueueForegroundServicePolicyTest` asserting the non-sticky contract.
+- Exact code/test HEAD before durable documentation writes: `59cce5de17c6665734dbad00b02062afc187a53d`.
+- GitHub Actions run #120 (API `36308903917`) is queued at latest observation. No pass is claimed yet.
+- No emulator or physical-device evidence is claimed.
