@@ -79,3 +79,7 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - `R001-P2-01`: COMPLETE; large-input/free-space preflight validated by CI run #114 on `d85d80ffece62b49c3870763335938f5cc0ee0ca`.
 - `R001-P3-01`: COMPLETE; final CI/regression/diff/documentation gate reconciled.
 - Mandatory Cycle 001 backlog: 8/8 COMPLETE. Do not reopen these stories without new contradictory evidence.
+
+
+### Cycle 002 run 011
+- [IN_PROGRESS] `US-R002-P1-01B`: malformed retained-access callback syntax repaired; CI run #135 pending. Durable Room snapshot/recovery work remains gated on green CI.
