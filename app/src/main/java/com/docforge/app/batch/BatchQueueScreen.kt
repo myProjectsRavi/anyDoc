@@ -2,6 +2,7 @@ package com.docforge.app.batch
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -81,11 +82,15 @@ fun BatchQueueRoute(
     ) { uri ->
         val type = pendingTaskType ?: return@rememberLauncherForActivityResult
         if (uri != null) {
-            viewModel.addTask(
-                type = type,
-                inputUris = listOf(uri),
-                inputLabels = listOf(readSourceLabel(context, uri))
-            )
+            retainBatchInputAccess(context, listOf(uri))
+                .onSuccess {
+                    viewModel.addTask(
+                        type = type,
+                        inputUris = listOf(uri),
+                        inputLabels = listOf(readSourceLabel(context, uri))
+                    )
+                }
+                .onFailure(viewModel::onInputAccessRetentionFailed)
         }
         pendingTaskType = null
     }
@@ -95,11 +100,15 @@ fun BatchQueueRoute(
     ) { uris ->
         val type = pendingTaskType ?: return@rememberLauncherForActivityResult
         if (uris.isNotEmpty()) {
-            viewModel.addTask(
-                type = type,
-                inputUris = uris,
-                inputLabels = uris.map { uri -> readSourceLabel(context, uri) }
-            )
+            retainBatchInputAccess(context, uris)
+                .onSuccess {
+                    viewModel.addTask(
+                        type = type,
+                        inputUris = uris,
+                        inputLabels = uris.map { uri -> readSourceLabel(context, uri) }
+                    )
+                }
+                .onFailure(viewModel::onInputAccessRetentionFailed)
         }
         pendingTaskType = null
     }
@@ -498,6 +507,15 @@ private fun TaskCard(
                 }
             }
         }
+    }
+}
+
+private fun retainBatchInputAccess(context: Context, uris: List<Uri>): Result<Unit> = runCatching {
+    uris.forEach { uri ->
+        context.contentResolver.takePersistableUriPermission(
+            uri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION
+        )
     }
 }
 
