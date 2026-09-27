@@ -30,7 +30,9 @@ class BatchQueueViewModel(
         }
         viewModelScope.launch {
             runCatching { persistenceStore.readRecoverableTasks() }
-                .onSuccess(BatchQueueRuntimeStore::restoreRecoverableTasksIfEmpty)
+                .onSuccess { recovered ->
+                    BatchQueueRuntimeStore.restoreRecoverableTasksIfEmpty(recovered)
+                }
                 .onFailure { error ->
                     setError(error.message ?: "Unable to restore the saved batch queue.")
                 }
