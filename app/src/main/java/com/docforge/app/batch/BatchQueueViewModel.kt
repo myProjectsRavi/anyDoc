@@ -156,7 +156,11 @@ class BatchQueueViewModel(
         setError("Notification permission is required to show batch progress on Android 13+.")
     }
 
-    fun onInputAccessRetentionFailed(error: Throwable) {\n        setError(error.message ?: "Unable to retain access to the selected file.")\n    }\n\n    private fun setError(message: String) {
+    fun onInputAccessRetentionFailed(error: Throwable) {
+        setError(error.message ?: "Unable to retain access to the selected file.")
+    }
+
+    private fun setError(message: String) {
         _uiState.update { it.copy(errorMessage = message) }
     }
 }
