@@ -65,3 +65,12 @@ Run #122 validates 01A. SAF picker commit `52132492aab22ec3328b9fb701084e28bf7ff
 - Exact code/test HEAD: `cf2a249ffc77eb91efa0d5a0c0857fac1b38bb9e`.
 - PR CI #153 / API `36359225826` is in progress; no pass is claimed yet.
 - Next bounded slice after green CI: persist foreground-service RUNNING and terminal transitions, then validate no automatic rerun after process recovery.
+
+## Run 014 — CI recovery
+
+- Active story remains `US-R002-P1-01B`.
+- Run #155 failed during app test compilation because the new persistence mapper test fixture referenced an undefined `outputBaseName`; fixed by `6d7eb138de94355e54537babd08cd65cb5e7fc7c`.
+- Run #157 then reached test execution and failed because the malformed output-name fixture helper ignored its supplied unsafe name; fixed by `367c3785a8bae18fd2324ae673464706f316e7da`.
+- Exact code HEAD under validation before documentation writes: `367c3785a8bae18fd2324ae673464706f316e7da`.
+- Runs #158/#159 are validating that candidate; no completion claim yet.
+- Next implementation slice remains service-owned persistence of RUNNING/completion transitions after this candidate is green.
