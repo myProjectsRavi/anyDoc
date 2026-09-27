@@ -4,7 +4,15 @@ Canonical branch: `codex/anydoc-continuous-improvement`
 
 This backlog is ordered by user-data safety, correctness, reliability, performance, UX, then optional capability. Items may move only when evidence changes priority.
 
-## Active Cycle 001
+## Active Cycle 002
+
+### Epic E002 — Background execution reliability
+
+#### Feature F004 — Fail-safe batch foreground-service lifecycle
+- [CURRENT / CI_PENDING] `US-R002-P1-01A` — Prevent unsafe sticky foreground-service restart while executable batch queue state is process-local. Code/test HEAD: `59cce5de17c6665734dbad00b02062afc187a53d`; run #120 pending.
+- [QUEUED] `US-R002-P1-01B` — Wire persisted batch-task state into true process-death recovery before any future sticky restart semantics are considered.
+
+## Closed Cycle 001
 
 ### Epic E001 — User-data safety and reliability
 
