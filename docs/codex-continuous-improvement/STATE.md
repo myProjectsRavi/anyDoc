@@ -66,6 +66,19 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 
+## Cycle 002 run 013
+
+- Continued `US-R002-P1-01B` immediately from the run-012 persistence checkpoint.
+- Wired `BatchQueueRuntimeStore.restoreRecoverableTasksIfEmpty()`: restored work is accepted only when runtime state is empty and not processing, only QUEUED tasks are admitted, duplicate IDs are collapsed, and the next task ID is advanced above restored IDs.
+- Wired `BatchQueueViewModel` to read persisted recoverable tasks before collecting runtime state and to replace the durable snapshot as runtime state changes.
+- Single-file and multi-file SAF retention failures now both surface through `onInputAccessRetentionFailed` instead of silently clearing the error.
+- Hardened persisted-row validation: reject pathological `Long.MAX_VALUE` IDs, unsafe output base names, malformed statuses/types/URIs, and invalid input counts; URI lists are deduplicated before validation.
+- Added task-ID advancement and malformed-boundary regression coverage.
+- Exact code/test HEAD before this documentation write: `cf2a249ffc77eb91efa0d5a0c0857fac1b38bb9e`.
+- GitHub Actions PR run #153 (API `36359225826`) is in progress on that exact code HEAD. No pass is claimed yet.
+- Service-side persistence of RUNNING/completion transitions is intentionally not yet added; that is the next bounded slice after this candidate is green.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+
 ## Cycle 002 run 012
 
 - Resumed `US-R002-P1-01B` after authoritative run #136 passed on branch head `14ccb5da0eb104d1c9ded61500d8fb8dbcf80c60`.
@@ -337,8 +350,9 @@ Docs:
 
 ## Next exact action
 
-1. Inspect GitHub Actions run #140 (API `36358926601`) for exact code/test HEAD `cd2b45d683ce04efb0ecf84b58a11a5a38029568`.
-2. Diagnose and repair any failing compile/test/build/lint gate within `US-R002-P1-01B`.
-3. When green, wire persisted recovery into runtime/ViewModel/service state transitions; restored work must remain user-triggered and must never auto-execute.
-4. Add task-ID counter advancement and persistence-transition regression coverage.
-5. Keep draft PR #1 unmerged and `main` untouched.
+1. Inspect GitHub Actions run #153 (API `36359225826`) or its docs-only successor for code/test HEAD `cf2a249ffc77eb91efa0d5a0c0857fac1b38bb9e`.
+2. Repair any compile/test/build/lint failure inside `US-R002-P1-01B`.
+3. If green, wire the foreground service to persist RUNNING before execution and persist terminal/removal transitions so recovery remains valid even if the ViewModel is gone.
+4. Add regression evidence for service-transition persistence and no automatic execution after restore.
+5. Only after those gates pass may `US-R002-P1-01B` and Cycle 002 be marked COMPLETE.
+6. Keep draft PR #1 unmerged and `main` untouched.
