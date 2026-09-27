@@ -95,3 +95,16 @@ Cycle 001 remains open. Output-safety item R001-P1-03 and lifecycle item R001-P1
 - Exact code/test HEAD: `cd2b45d683ce04efb0ecf84b58a11a5a38029568`.
 - GitHub Actions run #140 / API `36358926601` is queued; no pass is claimed yet.
 - No emulator or physical-device result is claimed.
+
+
+### US-R002-P1-01B runtime recovery wiring
+
+- Runtime restores persisted work only when the current in-memory queue is empty and not processing.
+- Only restored QUEUED work is admitted; persisted RUNNING entries are already mapped to QUEUED by the persistence mapper and are never auto-started.
+- Runtime task IDs advance above restored IDs.
+- ViewModel startup restores persisted tasks before collecting and snapshotting runtime state.
+- Single/multiple SAF picker paths both surface persistable-grant retention failures.
+- Recovery validation rejects malformed type/status/URI/input-count, nonpositive or `Long.MAX_VALUE` IDs, and unsafe output base names; duplicate URIs are collapsed before validation.
+- Exact code/test HEAD: `cf2a249ffc77eb91efa0d5a0c0857fac1b38bb9e`.
+- PR CI #153 / API `36359225826` is in progress; no pass is claimed yet.
+- No emulator or physical-device evidence is claimed.
