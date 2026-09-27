@@ -8,7 +8,7 @@
 **Cycle:** 002  
 **Current Epic:** `E002` — Background execution reliability  
 **Current Feature:** `F004` — Fail-safe batch foreground-service lifecycle  
-**Current User Story:** `US-R002-P1-01A` — Prevent unsafe sticky service restart before durable queue recovery  
+**Current User Story:** `US-R002-P1-01B` — Add durable persisted queue recovery after process death  
 **Hourly run counter:** 7  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -30,7 +30,7 @@
 
 **Cycle 001: 8 / 8 mandatory items COMPLETE**
 
-**Cycle 002: 0 / 2 scoped mandatory items COMPLETE**
+**Cycle 002: 1 / 2 scoped mandatory items COMPLETE**
 
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
@@ -49,7 +49,7 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 **Primary:** make batch foreground execution fail-safe across process death before attempting durable recovery.
 
-**Current subtask:** validate `US-R002-P1-01A`: the foreground service must use `START_NOT_STICKY` while queue execution state remains process-local. Durable Room-backed recovery is a separate follow-up story.
+**Current subtask:** retain durable read access for SAF-selected batch inputs, then wire transactional Room queue snapshots and conservative process-death restoration.
 
 
 ## Cycle 002 run 001
@@ -63,6 +63,19 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 - GitHub Actions PR run #120 (API `36308903917`) was queued for that exact HEAD at latest observation; no CI pass is claimed yet.
 - Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 - Next action: inspect run #120, fix any failure, and only then mark `US-R002-P1-01A` complete. After that, begin `US-R002-P1-01B` for true durable queue recovery using persisted task state.
+
+
+
+## Cycle 002 run 009
+
+- `US-R002-P1-01A` is technically COMPLETE: successor CI run #122 (API `36308968653`) passed required gates on documentation head containing code/test candidate `59cce5de17c6665734dbad00b02062afc187a53d`.
+- Continued `US-R002-P1-01B`.
+- Prior SAF contract change `52132492aab22ec3328b9fb701084e28bf7ff2e0` passed authoritative PR run #124 (API `36322209314`).
+- Added explicit `takePersistableUriPermission(... FLAG_GRANT_READ_URI_PERMISSION)` before admitting OpenDocument/OpenMultipleDocuments selections to the batch queue.
+- Exact code HEAD before this documentation write: `60a493934ecfa50a48a4f824ad906ca991774aed`.
+- Run #127 (API `36325082770`) is pending and run #126 is still validating the immediately preceding commit; no pass is claimed for the new grant-retention code yet.
+- Attempt to add dedicated ViewModel error surfacing was blocked by connector safety checks twice; the buildable fallback currently rejects the task on grant failure without adding it to the queue. A clearer user-visible failure message remains part of this same story.
+- Next action: inspect #127/successor CI, fix any failure, then add transactional Room snapshot replacement and recovery mapping with persisted RUNNING -> QUEUED semantics.
 
 ## Work completed in run 006
 
@@ -311,8 +324,8 @@ Docs:
 
 ## Next exact action
 
-1. Inspect GitHub Actions run #120 (API `36308903917`) for exact HEAD `59cce5de17c6665734dbad00b02062afc187a53d`.
-2. If any required gate fails, diagnose and fix it within `US-R002-P1-01A`.
-3. If all gates pass, mark `US-R002-P1-01A` COMPLETE and synchronize STATE/CURRENT_REPORT/BACKLOG/VALIDATION.
-4. Then advance to `US-R002-P1-01B`: durable queue persistence/recovery after process death.
-5. Keep `main` untouched and draft PR #1 unmerged.
+1. Inspect run #127 (API `36325082770`) or its PR successor for exact code HEAD `60a493934ecfa50a48a4f824ad906ca991774aed`.
+2. Fix failures within `US-R002-P1-01B`; do not start a lower-priority story.
+3. Add explicit user-visible durable-input-grant failure feedback when connector mutation permits.
+4. Add transactional Room queue snapshot replacement and conservative restoration, including persisted `RUNNING -> QUEUED`.
+5. Add regression tests, validate with authoritative CI, and keep draft PR #1 unmerged and `main` untouched.
