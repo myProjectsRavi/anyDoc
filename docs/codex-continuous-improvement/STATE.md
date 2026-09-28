@@ -3,17 +3,17 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-28_cycle-004`  
-**Report status:** COMPLETE  
-**Cycle:** 004  
-**Current Epic:** `E004` — Heap-safe PDF rasterization  
-**Current Feature:** `F006` — PDF compressor raster memory budget  
-**Current User Story:** `US-R004-P2-01A` — Bound PDF compressor page bitmap allocation (COMPLETE)  
-**Hourly run counter:** 16  
+**Current report:** `2026-09-28_cycle-005`  
+**Report status:** ACTIVE / INCOMPLETE  
+**Cycle:** 005  
+**Current Epic:** `E005` — Heap-safe PDF page-image export  
+**Current Feature:** `F007` — Page-image raster memory budget  
+**Current User Story:** `US-R005-P2-01A` — Bound PdfPageImageExporter page bitmap allocation  
+**Hourly run counter:** 17  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 004 run 001
+**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 005 run 001
 
 ## Git checkpoint
 
@@ -79,6 +79,16 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 
+
+
+## Cycle 005 run 001
+
+- Cycle 004 closure was verified before opening Cycle 005.
+- Selected exactly one bounded P2 allocation story: `US-R005-P2-01A`.
+- The prior primary-run attempt made partial production progress but failed to advance canonical state: commit `0004c118cbdbcab88c71333a6cc697b5e8bac5a2` moved page-image bitmap recycling into `finally`; CI run #186 / API `36382246055` passed that partial candidate.
+- Remaining confirmed defect: `PdfPageImageExporter` still calculates ARGB_8888 raster dimensions directly from PDF page size × caller scale factor with no byte/heap cap.
+- This cycle will bound page-image raster allocation before `Bitmap.createBitmap`, preserve normal requested dimensions when they fit, and add focused JVM regression coverage.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 004 run 001
 
@@ -402,8 +412,8 @@ Docs:
 
 ## Next exact action
 
-1. On the next invocation, re-read actual branch HEAD, PR #1, CI state, and sequencing docs.
-2. Because Cycle 004 is COMPLETE, create Cycle 005 only if sequencing still permits.
-3. Continue the P2 allocation audit with the highest-priority confirmed bounded defect; current evidence points to `PdfPageImageExporter` unbounded page-size × scale-factor raster allocation and failure-path bitmap cleanup.
-4. Do not reopen completed cycles without contradictory evidence.
+1. Bound `PdfPageImageExporter` ARGB_8888 page rasters with a heap-aware byte ceiling while preserving normal requested output dimensions.
+2. Add focused JVM tests for normal sizing, oversized proportional downscale, pathological dimensions/scale, and budget arithmetic.
+3. Validate the exact candidate through core PDF tests, converter tests, app tests, debug assembly, unsigned release/R8, and lint.
+4. If green, close `US-R005-P2-01A` and Cycle 005 and synchronize STATE/CURRENT_REPORT/BACKLOG/VALIDATION/report.
 5. Keep `main` untouched and draft PR #1 unmerged.
