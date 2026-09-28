@@ -4,7 +4,14 @@ Canonical branch: `codex/anydoc-continuous-improvement`
 
 This backlog is ordered by user-data safety, correctness, reliability, performance, UX, then optional capability. Items may move only when evidence changes priority.
 
-## Active Cycle 002
+## Active Cycle 003
+
+### Epic E003 — Large-input and resource safety
+
+#### Feature F005 — Media temporary-space preflight
+- [CURRENT / IN_PROGRESS] `US-R003-P2-01A` — Estimate decoded 16-bit PCM cache demand before audio transcoding; reject known-insufficient cache space before decode; add converter-module unit tests and CI coverage.
+
+## Closed Cycle 002
 
 ### Epic E002 — Background execution reliability
 
