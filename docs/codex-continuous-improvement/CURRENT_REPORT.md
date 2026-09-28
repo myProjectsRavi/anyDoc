@@ -2,7 +2,7 @@
 
 **ID:** `2026-09-27_cycle-002`  
 **Report:** `reports/2026-09-27_cycle-002.md`  
-**Status:** ACTIVE / INCOMPLETE  
+**Status:** COMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
 **Epic:** `E002` — Background execution reliability  
@@ -18,7 +18,7 @@ Cycle 001 is closed at 8/8 mandatory items. Exact feature candidate `d85d80ffece
 | User Story | Priority | Scope | State |
 |---|---|---|---|
 | US-R002-P1-01A | P1 | Prevent Android from sticky-restarting an in-memory-only batch execution | COMPLETE |
-| US-R002-P1-01B | P1 | Add durable persisted queue recovery after process death | IN_PROGRESS |
+| US-R002-P1-01B | P1 | Add durable persisted queue recovery after process death | COMPLETE |
 
 ## Current implementation
 
@@ -74,3 +74,8 @@ Run #122 validates 01A. SAF picker commit `52132492aab22ec3328b9fb701084e28bf7ff
 - Exact code HEAD under validation before documentation writes: `367c3785a8bae18fd2324ae673464706f316e7da`.
 - Runs #158/#159 are validating that candidate; no completion claim yet.
 - Next implementation slice remains service-owned persistence of RUNNING/completion transitions after this candidate is green.
+
+
+## Cycle 002 closure
+
+`US-R002-P1-01B` is COMPLETE. Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions run #163 / API `36360973174`, including core PDF unit tests, app unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint. Cycle 002 is 2/2 complete. No emulator, benchmark, or physical-device result is claimed. Draft PR #1 remains open/draft/unmerged and `main` remains untouched.
