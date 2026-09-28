@@ -46,6 +46,9 @@ jobs:
       - name: Core PDF unit tests
         run: ./gradlew --no-daemon :core:pdf:testDebugUnitTest
 
+      - name: Converter unit tests
+        run: ./gradlew --no-daemon :feature:converter:testDebugUnitTest
+
       - name: App lifecycle unit tests
         run: ./gradlew --no-daemon :app:testDebugUnitTest
 
