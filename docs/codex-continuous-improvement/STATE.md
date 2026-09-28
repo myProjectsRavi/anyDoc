@@ -3,17 +3,17 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-28_cycle-005`  
-**Report status:** COMPLETE  
-**Cycle:** 005  
-**Current Epic:** `E005` — Heap-safe PDF page-image export  
-**Current Feature:** `F007` — Page-image raster memory budget  
-**Current User Story:** `US-R005-P2-01A` — Bound PdfPageImageExporter page bitmap allocation (COMPLETE)  
-**Hourly run counter:** 17  
+**Current report:** `2026-09-28_cycle-006`  
+**Report status:** ACTIVE / INCOMPLETE  
+**Cycle:** 006  
+**Current Epic:** `E006` — Failure-safe PDF page-image publication  
+**Current Feature:** `F008` — Transactional page-image and ZIP outputs  
+**Current User Story:** `US-R006-P1-01A` — Stage PdfPageImageExporter page-image and ZIP publication  
+**Hourly run counter:** 18  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 005 run 001
+**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 006 run 001
 
 ## Git checkpoint
 
@@ -82,6 +82,16 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 
+
+
+## Cycle 006 run 001
+
+- Opened only after Cycle 005 was confirmed COMPLETE and documentation head `e844a8ee7c4fa38e4ca90643024b513ed2c8b655` passed PR CI run #202 / API `36386433229`.
+- Selected the newly confirmed P1 output-safety defect before returning to lower-priority P2 audit work.
+- `PdfPageImageExporter` currently creates final page-image files directly and writes ZIP output directly to its final path. Encoding failure, cancellation, or ZIP failure can therefore expose partial user-visible output.
+- Existing `withStagedOutputFile(s)` primitives already provide same-directory staging, no-overwrite publication, set-level all-or-nothing behavior, cancellation checks, and rollback on publication failure.
+- Scope: wire non-ZIP page images through set-level staging; generate ZIP content into one staged ZIP without publishing intermediate page images; preserve collision-safe names and existing result semantics.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 005 run 001
 
@@ -432,8 +442,9 @@ Docs:
 
 ## Next exact action
 
-1. Re-read actual branch HEAD, PR #1, CI and sequencing docs.
-2. Because Cycle 005 is COMPLETE, create Cycle 006 only if sequencing still permits.
-3. Highest-priority confirmed next defect: make `PdfPageImageExporter` final image/ZIP publication failure-safe so encoding, cancellation, or ZIP failure cannot leave partial user-visible output files.
-4. Preserve the new no-CI-churn invariant: activate Cycle 006 before code; keep the code/test candidate stable while CI runs; finalize docs only after terminal CI.
-5. Keep `main` untouched and draft PR #1 unmerged.
+1. Refactor `PdfPageImageExporter` non-ZIP exports to `withStagedOutputFiles` so no page final is visible until every page encodes successfully.
+2. Refactor ZIP export to `withStagedOutputFile`, streaming rendered page images directly into the staged ZIP so intermediate page finals are never published.
+3. Add focused regression evidence for staged page-set and staged-ZIP failure cleanup.
+4. Validate exact code/test candidate through core PDF, converter, app tests, debug, release/R8, and lint.
+5. On terminal green CI, close Cycle 006 and synchronize all durable docs; otherwise fix the same story.
+6. Keep `main` untouched and PR #1 draft/unmerged.
