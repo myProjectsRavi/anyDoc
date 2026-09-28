@@ -2,7 +2,7 @@
 
 **ID:** `2026-09-28_cycle-003`  
 **Report:** `reports/2026-09-28_cycle-003.md`  
-**Status:** ACTIVE / INCOMPLETE  
+**Status:** COMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
 **Epic:** `E003` — Large-input and resource safety  
@@ -24,3 +24,19 @@ Require core PDF tests, converter tests, app tests, debug assembly, unsigned rel
 ## Next exact action
 
 Implement and test the PCM cache-space preflight, then validate it in GitHub Actions.
+
+## Completion
+
+`US-R003-P2-01A` is COMPLETE.
+
+- Production guard commit: `41a65dc859ac2afd04db4a1120ee5338adf42430`.
+- Exact test-inclusive candidate: `9b48f14915f14ba99f68282910fdabfaa95c15a1`.
+- GitHub Actions run #175 / API `36371211681`: SUCCESS.
+- Core PDF tests: passed.
+- Converter unit tests: passed.
+- App unit tests: passed.
+- Debug APK assembly: passed.
+- Unsigned release/R8 assembly: passed.
+- Android lint: passed.
+- No emulator, benchmark, or physical-device evidence is claimed.
+- Draft PR #1 remains open/draft/unmerged; `main` remains untouched.
