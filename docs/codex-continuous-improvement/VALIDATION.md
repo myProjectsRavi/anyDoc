@@ -176,3 +176,11 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Source inspection confirms page-image raster width/height still come directly from PDF page dimensions × caller `scaleFactor` with no allocation ceiling.
 - No completion claim for Cycle 005 yet.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+### Cycle 005 exact candidate under validation
+
+- Raster-cap production commit: `0e2e234d9f40e2c2dda00e83252c9d12c878dfc1`.
+- Test-inclusive candidate: `1da09b8e9f7a016e29c6b74eb47e9db94a626c73`.
+- Added tests for normal default-scale sizing, oversized proportional downscale, heap-budget clamping, pathological dimensions, and invalid scale-factor rejection.
+- PR run #191 / API `36384766508` is queued/in progress. No success is claimed yet.
