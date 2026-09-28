@@ -1,5 +1,13 @@
 # AnyDoc Continuous Improvement Backlog
 
+## Closed Cycle 007
+
+### Epic E007 — Failure-safe scan-image publication
+
+#### Feature F009 — Transactional scan-image and ZIP outputs
+- [COMPLETE / CI #218] `US-R007-P1-01A` — Stage non-ZIP scan page outputs as an all-or-nothing set and stage ZIP output without publishing intermediate page images. Exact candidate `e71273f59968bb218a8571a5065598db184c2c72` passed run #218 / API `36409673936`.
+- [NEXT] Return to the P2 memory/large-input audit; choose the next bounded defect from current source evidence.
+
 ## Closed Cycle 006
 
 ### Epic E006 — Failure-safe PDF page-image publication
