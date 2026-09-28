@@ -20,7 +20,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.coroutineContext
-import kotlin.math.roundToInt
+import kotlin.math.round
+import kotlin.math.sqrt
 
 enum class PdfCompressionLevel(
     /** DPI to render source pages at for rasterization-based compression */
@@ -106,7 +107,7 @@ class PdfCompressor(
         onProgress: ((completed: Int, total: Int) -> Unit)? = null
     ): Int = withContext(Dispatchers.IO) {
         val checkCancelled = { coroutineContext.ensureActive() }
-        val scale = renderDpi / 72f  // PDF native unit = 1/72 inch
+        val bitmapBudgetBytes = pdfCompressionBitmapBudgetBytes(Runtime.getRuntime().maxMemory())
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         var pageCount = 0
 
@@ -119,8 +120,14 @@ class PdfCompressor(
                     for (i in 0 until renderer.pageCount) {
                         checkCancelled()
                         renderer.openPage(i).use { page ->
-                            val bitmapWidth = (page.width * scale).roundToInt().coerceAtLeast(1)
-                            val bitmapHeight = (page.height * scale).roundToInt().coerceAtLeast(1)
+                            val rasterSize = boundedPdfRasterSize(
+                                pageWidthPoints = page.width,
+                                pageHeightPoints = page.height,
+                                renderDpi = renderDpi,
+                                maxBitmapBytes = bitmapBudgetBytes
+                            )
+                            val bitmapWidth = rasterSize.width
+                            val bitmapHeight = rasterSize.height
 
                             // PdfBox-Android JPEGFactory.createFromImage REQUIRES Bitmap.Config.ARGB_8888.
                             // Using RGB_565 throws "unsupported pixel format". We pre-fill the canvas
@@ -167,3 +174,62 @@ class PdfCompressor(
     }
 }
 
+
+
+internal data class PdfRasterSize(
+    val width: Int,
+    val height: Int
+)
+
+private const val PDF_COMPRESS_BYTES_PER_PIXEL = 4L
+private const val PDF_COMPRESS_MIN_BITMAP_BUDGET_BYTES = 8L * 1024L * 1024L
+private const val PDF_COMPRESS_MAX_BITMAP_BUDGET_BYTES = 32L * 1024L * 1024L
+
+internal fun pdfCompressionBitmapBudgetBytes(maxHeapBytes: Long): Long {
+    val heapAwareBudget = (maxHeapBytes / 8L).coerceAtLeast(1L)
+    return heapAwareBudget.coerceIn(
+        PDF_COMPRESS_MIN_BITMAP_BUDGET_BYTES,
+        PDF_COMPRESS_MAX_BITMAP_BUDGET_BYTES
+    )
+}
+
+internal fun boundedPdfRasterSize(
+    pageWidthPoints: Int,
+    pageHeightPoints: Int,
+    renderDpi: Int,
+    maxBitmapBytes: Long
+): PdfRasterSize {
+    require(pageWidthPoints > 0 && pageHeightPoints > 0) { "PDF page dimensions must be positive." }
+    require(renderDpi > 0) { "Render DPI must be positive." }
+    require(maxBitmapBytes >= PDF_COMPRESS_BYTES_PER_PIXEL) { "Bitmap budget is too small." }
+
+    val scale = renderDpi.toDouble() / 72.0
+    val desiredWidth = round(pageWidthPoints.toDouble() * scale)
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+    val desiredHeight = round(pageHeightPoints.toDouble() * scale)
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+
+    val maxPixels = (maxBitmapBytes / PDF_COMPRESS_BYTES_PER_PIXEL).coerceAtLeast(1L)
+    val desiredPixels = desiredWidth.toDouble() * desiredHeight.toDouble()
+    if (desiredPixels <= maxPixels.toDouble()) {
+        return PdfRasterSize(desiredWidth, desiredHeight)
+    }
+
+    val downscale = sqrt(maxPixels.toDouble() / desiredPixels)
+    var width = (desiredWidth.toDouble() * downscale).toInt().coerceAtLeast(1)
+    var height = (desiredHeight.toDouble() * downscale).toInt().coerceAtLeast(1)
+
+    while (width.toLong() * height.toLong() > maxPixels) {
+        if (width >= height && width > 1) {
+            width -= 1
+        } else if (height > 1) {
+            height -= 1
+        } else {
+            break
+        }
+    }
+
+    return PdfRasterSize(width, height)
+}
