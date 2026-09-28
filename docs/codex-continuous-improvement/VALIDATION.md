@@ -123,3 +123,13 @@ Cycle 001 remains open. Output-safety item R001-P1-03 and lifecycle item R001-P1
 ## Cycle 002 final validation
 
 Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions run #163 / API `36360973174`. Core PDF unit tests, app unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint passed. This closes `US-R002-P1-01B` and Cycle 002 at 2/2 scoped stories complete. No emulator, benchmark, or physical-device result is claimed.
+
+## Cycle 003 run 001 — pre-implementation evidence
+
+- Cycle 002 closure independently rechecked: run #163 / API `36360973174` SUCCESS on exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619`.
+- Selected `US-R003-P2-01A`.
+- Source inspection confirms `AudioFormatConverter` creates `docforge_audio_*.pcm` in `context.cacheDir`, registers it as active, writes complete decoder output to it, then re-reads it for encoding.
+- Decoder explicitly requires `AudioFormat.ENCODING_PCM_16BIT`, so expected decoded bytes can be estimated from duration × sample rate × channels × 2 bytes when duration metadata is known.
+- No decoded-size/free-space preflight exists before `createTempPcmFile()`.
+- No converter-module unit-test step exists in current CI before this story.
+- No emulator, benchmark, or physical-device evidence is claimed.
