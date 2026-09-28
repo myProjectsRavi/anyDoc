@@ -133,3 +133,16 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - No decoded-size/free-space preflight exists before `createTempPcmFile()`.
 - No converter-module unit-test step exists in current CI before this story.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 003 completion evidence
+
+- Exact candidate HEAD: `9b48f14915f14ba99f68282910fdabfaa95c15a1`.
+- GitHub Actions run #175 / API `36371211681`: **SUCCESS**.
+- Core PDF unit tests: SUCCESS.
+- Converter unit tests (new authoritative lane): SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- PCM guard coverage includes a representative 60-second 44.1 kHz stereo estimate, conservative defaults for missing rate/channels, unknown/invalid duration behavior, and saturation for pathological metadata.
+- No emulator, benchmark, or physical-device evidence is claimed.
