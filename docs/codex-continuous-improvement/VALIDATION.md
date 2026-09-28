@@ -184,3 +184,18 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Test-inclusive candidate: `1da09b8e9f7a016e29c6b74eb47e9db94a626c73`.
 - Added tests for normal default-scale sizing, oversized proportional downscale, heap-budget clamping, pathological dimensions, and invalid scale-factor rejection.
 - PR run #191 / API `36384766508` is queued/in progress. No success is claimed yet.
+
+
+## Cycle 005 completion evidence
+
+- Exact validated code/test HEAD: `aca6223a10cb73862f8dbed226e1292e1ca863e8`.
+- GitHub Actions PR run #199 / API `36385089020`: **SUCCESS**.
+- Core PDF unit tests: SUCCESS, including page-image raster budget and extreme-aspect regression tests plus compressor extreme-aspect regression.
+- Converter unit tests: SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- `PdfPageImageExporter` now recycles each bitmap in `finally`, bounds ARGB_8888 allocation with a heap-aware 8–32 MiB ceiling, rejects invalid scale factors before allocation, and uses constant-time correction for extreme aspect ratios.
+- The compressor raster helper was also hardened against the same extreme-aspect iterative correction discovered during this story.
+- No emulator, benchmark, or physical-device evidence is claimed.
