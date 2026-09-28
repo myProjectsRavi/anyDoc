@@ -12,8 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.OutputStream
 import kotlin.coroutines.coroutineContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -58,72 +58,118 @@ class PdfPageImageExporter(
                     val base = outputBaseName.ifBlank { "pdf_pages_${System.currentTimeMillis()}" }
                         .replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
-                    val files = mutableListOf<File>()
-                    var totalBytes = 0L
                     val bitmapBudgetBytes = pdfPageImageBitmapBudgetBytes(Runtime.getRuntime().maxMemory())
+                    val ext = when (format) {
+                        PdfPageImageFormat.JPG -> "jpg"
+                        PdfPageImageFormat.PNG -> "png"
+                        PdfPageImageFormat.WEBP -> "webp"
+                    }
 
-                    repeat(renderer.pageCount) { pageIndex ->
-                        checkCancelled()
-                        renderer.openPage(pageIndex).use { page ->
-                            val rasterSize = boundedPdfPageImageRasterSize(
-                                pageWidthPoints = page.width,
-                                pageHeightPoints = page.height,
-                                scaleFactor = scaleFactor,
-                                maxBitmapBytes = bitmapBudgetBytes
-                            )
-                            val bitmap = Bitmap.createBitmap(
-                                rasterSize.width,
-                                rasterSize.height,
-                                Bitmap.Config.ARGB_8888
-                            )
-                            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
-
-                            val ext = when (format) {
-                                PdfPageImageFormat.JPG -> "jpg"
-                                PdfPageImageFormat.PNG -> "png"
-                                PdfPageImageFormat.WEBP -> "webp"
-                            }
-                            val file = resolveNonConflictingFile(outputDir, "${base}_p${pageIndex + 1}", ext)
-
-                            try {
-                                FileOutputStream(file).use { stream ->
-                                    val ok = bitmap.compress(format.toBitmapCompressFormat(), jpegQuality.coerceIn(10, 100), stream)
-                                    require(ok) { "Failed to encode page ${pageIndex + 1}." }
+                    if (zipBundle) {
+                        val stagedZip = withStagedOutputFile(
+                            directory = outputDir,
+                            baseName = "${base}_${format.name.lowercase()}_bundle",
+                            extension = "zip"
+                        ) { stagedFile ->
+                            ZipOutputStream(FileOutputStream(stagedFile)).use { zipOut ->
+                                repeat(renderer.pageCount) { pageIndex ->
+                                    checkCancelled()
+                                    zipOut.putNextEntry(ZipEntry("${base}_p${pageIndex + 1}.$ext"))
+                                    try {
+                                        renderPageImage(
+                                            renderer = renderer,
+                                            pageIndex = pageIndex,
+                                            format = format,
+                                            jpegQuality = jpegQuality,
+                                            scaleFactor = scaleFactor,
+                                            bitmapBudgetBytes = bitmapBudgetBytes,
+                                            output = zipOut
+                                        )
+                                    } finally {
+                                        zipOut.closeEntry()
+                                    }
                                 }
-                                files += file
-                                totalBytes += file.length()
-                            } finally {
-                                bitmap.recycle()
                             }
+                            Unit
+                        }
+
+                        return@withUriCopiedToCacheFile PdfPageImageExportResult(
+                            outputFiles = emptyList(),
+                            outputSizeBytes = stagedZip.outputFile.length(),
+                            pageCount = renderer.pageCount,
+                            bundleZipFile = stagedZip.outputFile
+                        )
+                    }
+
+                    val pageRequests = (0 until renderer.pageCount).map { pageIndex ->
+                        StagedOutputRequest(
+                            baseName = "${base}_p${pageIndex + 1}",
+                            extension = ext
+                        ) { stagedFile ->
+                            checkCancelled()
+                            FileOutputStream(stagedFile).use { stream ->
+                                renderPageImage(
+                                    renderer = renderer,
+                                    pageIndex = pageIndex,
+                                    format = format,
+                                    jpegQuality = jpegQuality,
+                                    scaleFactor = scaleFactor,
+                                    bitmapBudgetBytes = bitmapBudgetBytes,
+                                    output = stream
+                                )
+                            }
+                            Unit
                         }
                     }
 
-                    val zipFile = if (zipBundle) {
-                        val zip = resolveNonConflictingFile(outputDir, "${base}_${format.name.lowercase()}_bundle", "zip")
-                        ZipOutputStream(FileOutputStream(zip)).use { zipOut ->
-                            files.forEach { imageFile ->
-                                checkCancelled()
-                                FileInputStream(imageFile).use { input ->
-                                    zipOut.putNextEntry(ZipEntry(imageFile.name))
-                                    input.copyTo(zipOut, bufferSize = 8 * 1024)
-                                    zipOut.closeEntry()
-                                }
-                            }
-                        }
-                        // Delete individual files — ZIP contains them all
-                        files.forEach { it.delete() }
-                        zip
-                    } else {
-                        null
-                    }
+                    val stagedPages = withStagedOutputFiles(
+                        directory = outputDir,
+                        requests = pageRequests
+                    )
+                    val files = stagedPages.map { it.outputFile }
 
                     PdfPageImageExportResult(
-                        outputFiles = if (zipFile != null) emptyList() else files,
-                        outputSizeBytes = zipFile?.length() ?: totalBytes,
+                        outputFiles = files,
+                        outputSizeBytes = files.sumOf(File::length),
                         pageCount = renderer.pageCount,
-                        bundleZipFile = zipFile
+                        bundleZipFile = null
                     )
                 }
+            }
+        }
+    }
+
+    private fun renderPageImage(
+        renderer: PdfRenderer,
+        pageIndex: Int,
+        format: PdfPageImageFormat,
+        jpegQuality: Int,
+        scaleFactor: Float,
+        bitmapBudgetBytes: Long,
+        output: OutputStream
+    ) {
+        renderer.openPage(pageIndex).use { page ->
+            val rasterSize = boundedPdfPageImageRasterSize(
+                pageWidthPoints = page.width,
+                pageHeightPoints = page.height,
+                scaleFactor = scaleFactor,
+                maxBitmapBytes = bitmapBudgetBytes
+            )
+            val bitmap = Bitmap.createBitmap(
+                rasterSize.width,
+                rasterSize.height,
+                Bitmap.Config.ARGB_8888
+            )
+            try {
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                val ok = bitmap.compress(
+                    format.toBitmapCompressFormat(),
+                    jpegQuality.coerceIn(10, 100),
+                    output
+                )
+                require(ok) { "Failed to encode page ${pageIndex + 1}." }
+            } finally {
+                bitmap.recycle()
             }
         }
     }
