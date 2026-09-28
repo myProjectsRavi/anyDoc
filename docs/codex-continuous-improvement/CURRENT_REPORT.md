@@ -2,29 +2,42 @@
 
 **ID:** `2026-09-28_cycle-007`  
 **Report:** `reports/2026-09-28_cycle-007.md`  
-**Status:** ACTIVE / INCOMPLETE  
+**Status:** COMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
 **Epic:** `E007` — Failure-safe scan-image publication  
 **Feature:** `F009` — Transactional scan-image and ZIP outputs  
 **Current User Story:** `US-R007-P1-01A` — Stage ScanImageExporter page-image and ZIP publication
 
-## Confirmed defect
+## Implementation
 
-`ScanImageExporter` still writes scan page images and optional ZIP bundles directly to final user-visible paths. Encoding, cancellation, or ZIP failure can therefore expose partial output.
+- Production refactor: `c47880d484c8436dab60bd185e09a737c6302eb5`.
+- Exact test-inclusive candidate: `e71273f59968bb218a8571a5065598db184c2c72`.
+- Non-ZIP scan page outputs use set-level staging and publish only after every page succeeds.
+- ZIP mode writes directly into one staged ZIP and publishes only the completed bundle.
+- Added focused scan publication failure-cleanup regression tests.
 
-## Scope
+## Validation
 
-Reuse the existing staged-output primitives. Preserve collision-safe naming and result semantics. Add focused regression coverage for failure/cancellation cleanup. Do not broaden this story into unrelated scan UX or image-processing changes.
+GitHub Actions run #218 / API `36409673936`: **SUCCESS** on exact candidate `e71273f59968bb218a8571a5065598db184c2c72`.
 
-## Validation gate
+Passed:
+- core PDF unit tests
+- converter unit tests
+- app lifecycle/unit tests
+- debug APK assembly
+- unsigned release/R8 assembly
+- Android lint
 
-The exact code/test candidate must pass the repository GitHub Actions gates before completion is claimed. No emulator, benchmark, or physical-device result is assumed.
+No emulator, benchmark, or physical-device result is claimed.
 
-## Safety
+## Completion
 
-Work only on `codex/anydoc-continuous-improvement`. Keep PR #1 draft/unmerged and never modify or merge `main`.
+`US-R007-P1-01A`: COMPLETE.  
+Cycle 007: **1/1 COMPLETE**.
+
+Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Next exact action
 
-Inspect `ScanImageExporter` and the existing staged-output helpers, implement the smallest safe transactional-publication change, add focused tests, and validate the exact candidate in GitHub Actions.
+Create Cycle 008 durably before code, then select the highest-priority confirmed bounded P2 memory/large-input safety defect from fresh source inspection.
