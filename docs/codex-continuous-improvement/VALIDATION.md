@@ -224,3 +224,19 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Unsigned release/R8 assembly: SUCCESS.
 - Android lint: SUCCESS.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 007 completion evidence
+
+- Story: `US-R007-P1-01A` — transactional scan image/ZIP publication.
+- Production refactor commit: `c47880d484c8436dab60bd185e09a737c6302eb5`.
+- Exact code/test candidate: `e71273f59968bb218a8571a5065598db184c2c72`.
+- `ScanImagePublicationSafetyTest` verifies later scan-page failure leaves no earlier final page and ZIP entry failure leaves no final bundle/staging residue.
+- GitHub Actions PR run #218 / API `36409673936`: **SUCCESS**.
+- Core PDF tests: SUCCESS.
+- Converter tests: SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
