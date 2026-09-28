@@ -4,11 +4,11 @@
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
 **Current report:** `2026-09-28_cycle-006`  
-**Report status:** ACTIVE / INCOMPLETE  
+**Report status:** COMPLETE  
 **Cycle:** 006  
 **Current Epic:** `E006` — Failure-safe PDF page-image publication  
 **Current Feature:** `F008` — Transactional page-image and ZIP outputs  
-**Current User Story:** `US-R006-P1-01A` — Stage PdfPageImageExporter page-image and ZIP publication  
+**Current User Story:** `US-R006-P1-01A` — Stage PdfPageImageExporter page-image and ZIP publication (COMPLETE)  
 **Hourly run counter:** 18  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -38,6 +38,8 @@
 
 **Cycle 005: 1 / 1 scoped mandatory items COMPLETE**
 
+**Cycle 006: 1 / 1 scoped mandatory items COMPLETE**
+
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
 ### Mandatory states
@@ -53,11 +55,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 005 is complete; continue with the highest-priority newly confirmed safety defect only in the next sequenced cycle.
+**Primary:** Cycle 006 is complete; continue with the highest-priority confirmed safety defect only in the next sequenced cycle.
 
-**Completed current subtask:** `US-R005-P2-01A` bounds PDF page-image ARGB_8888 raster allocations and guarantees bitmap recycling across export failure.
+**Completed current subtask:** `US-R006-P1-01A` makes PDF page-image and ZIP publication transactional and failure-safe.
 
-**Next candidate for a future cycle:** page-image export still writes image and ZIP bytes directly to final filenames; audit/stage those outputs so encoding/ZIP failure or cancellation cannot leave partial user-visible files.
+**Next candidate for a future cycle:** audit `ScanImageExporter`, which still writes scan page images and optional ZIP bundles directly to final paths and can leave partial user-visible files on encoding/cancellation/ZIP failure.
 
 
 ## Cycle 002 run 001
@@ -83,6 +85,21 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 
+
+
+### Cycle 006 completion evidence
+
+- Production refactor commit: `c40b0cd48f814089ae31d749e431eafd7f19495b`.
+- Exact code/test candidate: `eb355e7c4b7ce2039c02ee96153eef62a2391511`.
+- Non-ZIP page exports now use `withStagedOutputFiles`: every page is encoded to staging first and no final page is visible until the full set succeeds.
+- ZIP mode uses one `withStagedOutputFile` and streams rendered page images directly into the staged ZIP; intermediate page finals are never created.
+- Existing non-overwrite naming and result semantics are preserved.
+- Added `PdfPageImagePublicationSafetyTest` covering later-page failure and ZIP-entry failure cleanup.
+- GitHub Actions PR run #209 / API `36393317583`: SUCCESS on exact candidate.
+- Passed gates: core PDF unit tests, converter tests, app lifecycle/unit tests, debug APK, unsigned release/R8, Android lint.
+- No emulator, benchmark, or physical-device evidence is claimed.
+- Autopilot control-plane repair: a new cycle must be durably activated before production mutation; orphaned production/test commits or stale COMPLETE state are recovery failures; active exact-head CI must not be cancelled by docs-only checkpoint churn.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 006 run 001
 
@@ -442,9 +459,8 @@ Docs:
 
 ## Next exact action
 
-1. Refactor `PdfPageImageExporter` non-ZIP exports to `withStagedOutputFiles` so no page final is visible until every page encodes successfully.
-2. Refactor ZIP export to `withStagedOutputFile`, streaming rendered page images directly into the staged ZIP so intermediate page finals are never published.
-3. Add focused regression evidence for staged page-set and staged-ZIP failure cleanup.
-4. Validate exact code/test candidate through core PDF, converter, app tests, debug, release/R8, and lint.
-5. On terminal green CI, close Cycle 006 and synchronize all durable docs; otherwise fix the same story.
-6. Keep `main` untouched and PR #1 draft/unmerged.
+1. Re-read actual branch HEAD, PR #1, CI and sequencing docs.
+2. Because Cycle 006 is COMPLETE, create Cycle 007 durably before any production mutation.
+3. Highest-priority confirmed next P1 candidate: make `ScanImageExporter` page-image and ZIP final publication transactional/failure-safe.
+4. Do not reopen completed cycles without contradictory evidence.
+5. Keep `main` untouched and draft PR #1 unmerged.
