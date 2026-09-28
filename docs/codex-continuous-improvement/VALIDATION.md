@@ -199,3 +199,12 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - `PdfPageImageExporter` now recycles each bitmap in `finally`, bounds ARGB_8888 allocation with a heap-aware 8–32 MiB ceiling, rejects invalid scale factors before allocation, and uses constant-time correction for extreme aspect ratios.
 - The compressor raster helper was also hardened against the same extreme-aspect iterative correction discovered during this story.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 006 run 001 — pre-implementation evidence
+
+- Cycle 005 exact candidate `aca6223a10cb73862f8dbed226e1292e1ca863e8` passed run #199; docs head `e844a8ee7c4fa38e4ca90643024b513ed2c8b655` passed run #202.
+- Source inspection confirms `PdfPageImageExporter` writes individual page images directly to final paths and writes ZIP bytes directly to a final ZIP path.
+- Existing `withStagedOutputFiles` regression coverage proves set-level no-early-publish and cleanup after later-writer failure; `withStagedOutputFile` covers single-output failure cleanup.
+- Cycle 006 will wire the exporter to those primitives and add page-export-specific staging regression evidence.
+- No emulator, benchmark, or physical-device evidence is claimed.
