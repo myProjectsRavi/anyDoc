@@ -4,11 +4,11 @@
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
 **Current report:** `2026-09-28_cycle-007`  
-**Report status:** ACTIVE / INCOMPLETE  
+**Report status:** COMPLETE  
 **Cycle:** 007  
 **Current Epic:** `E007` — Failure-safe scan-image publication  
 **Current Feature:** `F009` — Transactional scan-image and ZIP outputs  
-**Current User Story:** `US-R007-P1-01A` — Stage ScanImageExporter page-image and ZIP publication (ACTIVE / INCOMPLETE)  
+**Current User Story:** `US-R007-P1-01A` — Stage ScanImageExporter page-image and ZIP publication (COMPLETE)  
 **Hourly run counter:** 18  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -40,6 +40,8 @@
 
 **Cycle 006: 1 / 1 scoped mandatory items COMPLETE**
 
+**Cycle 007: 1 / 1 scoped mandatory items COMPLETE**
+
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
 ### Mandatory states
@@ -55,11 +57,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 007 is active. Make ScanImageExporter page-image and ZIP publication transactional and failure-safe.
+**Primary:** Cycle 007 is complete; continue with the next highest-priority confirmed safety defect only in the next sequenced cycle.
 
-**Current subtask:** `US-R007-P1-01A` stages scan page images as an all-or-nothing set and publishes ZIP output only after complete construction.
+**Completed current subtask:** `US-R007-P1-01A` stages scan page images as an all-or-nothing set and publishes ZIP output only after complete construction.
 
-**Next action:** inspect `ScanImageExporter` and existing staged-output primitives, implement the smallest safe transactional-publication change, add focused failure/cancellation regression tests, then validate the exact code/test SHA in GitHub Actions.
+**Next candidate for a future cycle:** resume the P2 allocation/large-input audit and choose the highest-priority confirmed bounded defect from current source evidence; do not reopen completed P1 publication stories without contradictory evidence.
 
 
 ## Cycle 002 run 001
@@ -99,6 +101,19 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 - Passed gates: core PDF unit tests, converter tests, app lifecycle/unit tests, debug APK, unsigned release/R8, Android lint.
 - No emulator, benchmark, or physical-device evidence is claimed.
 - Autopilot control-plane repair: a new cycle must be durably activated before production mutation; orphaned production/test commits or stale COMPLETE state are recovery failures; active exact-head CI must not be cancelled by docs-only checkpoint churn.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+
+
+### Cycle 007 completion evidence
+
+- Production refactor commit: `c47880d484c8436dab60bd185e09a737c6302eb5`.
+- Exact code/test candidate: `e71273f59968bb218a8571a5065598db184c2c72`.
+- Non-ZIP scan images now use `withStagedOutputFiles`, so no page final is visible until the complete page set encodes successfully.
+- ZIP mode uses one `withStagedOutputFile` and writes scan pages directly into the staged bundle; no intermediate final page images are published.
+- Added `ScanImagePublicationSafetyTest` covering later-page failure and ZIP-entry failure cleanup.
+- GitHub Actions PR run #218 / API `36409673936`: SUCCESS on exact candidate.
+- Passed gates: core PDF unit tests, converter tests, app lifecycle/unit tests, debug APK assembly, unsigned release/R8 assembly, Android lint.
+- No emulator, benchmark, or physical-device evidence is claimed.
 - Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 006 run 001
@@ -460,7 +475,7 @@ Docs:
 ## Next exact action
 
 1. Re-read actual branch HEAD, PR #1, CI and sequencing docs.
-2. Because Cycle 006 is COMPLETE, create Cycle 007 durably before any production mutation.
-3. Highest-priority confirmed next P1 candidate: make `ScanImageExporter` page-image and ZIP final publication transactional/failure-safe.
-4. Do not reopen completed cycles without contradictory evidence.
+2. Because Cycle 007 is COMPLETE, create Cycle 008 durably before any production mutation.
+3. Resume the highest-priority confirmed bounded P2 memory/large-input safety defect from fresh source inspection.
+4. Do not reopen completed P1 publication stories without contradictory evidence.
 5. Keep `main` untouched and draft PR #1 unmerged.
