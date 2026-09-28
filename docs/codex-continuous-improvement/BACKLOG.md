@@ -1,5 +1,14 @@
 # AnyDoc Continuous Improvement Backlog
 
+## Closed Cycle 004
+
+### Epic E004 — Heap-safe PDF rasterization
+
+#### Feature F006 — PDF compressor raster memory budget
+- [COMPLETE / CI #182] `US-R004-P2-01A` — Bound PDF-compressor ARGB_8888 page rasters with a heap-aware allocation budget and proportional downscale. Exact candidate `f38abd2cead70d106411ed474e9e375605d96b65` passed run #182 / API `36378666554`.
+- [NEXT CANDIDATE] Continue P2 allocation audit with `PdfPageImageExporter`: bound page-size × scale-factor raster allocation and guarantee bitmap cleanup on encoding/render failure.
+
+
 Canonical branch: `codex/anydoc-continuous-improvement`
 
 This backlog is ordered by user-data safety, correctness, reliability, performance, UX, then optional capability. Items may move only when evidence changes priority.
