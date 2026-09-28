@@ -1,5 +1,13 @@
 # AnyDoc Continuous Improvement Backlog
 
+## Active Cycle 005
+
+### Epic E005 — Heap-safe PDF page-image export
+
+#### Feature F007 — Page-image raster memory budget
+- [IN_PROGRESS] `US-R005-P2-01A` — Bound `PdfPageImageExporter` ARGB_8888 rasters by a heap-aware byte budget. Partial cleanup commit `0004c118cbdbcab88c71333a6cc697b5e8bac5a2` passed CI #186; allocation cap/tests remain.
+- [FOLLOW-UP CANDIDATE] Audit direct final-file publication/ZIP failure cleanup in page-image export after the allocation story is green; do not widen the active story before its completion gate.
+
 ## Closed Cycle 004
 
 ### Epic E004 — Heap-safe PDF rasterization
