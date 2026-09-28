@@ -221,15 +221,17 @@ internal fun boundedPdfRasterSize(
     var width = (desiredWidth.toDouble() * downscale).toInt().coerceAtLeast(1)
     var height = (desiredHeight.toDouble() * downscale).toInt().coerceAtLeast(1)
 
-    while (width.toLong() * height.toLong() > maxPixels) {
-        if (width >= height && width > 1) {
-            width -= 1
-        } else if (height > 1) {
-            height -= 1
+    if (width.toLong() * height.toLong() > maxPixels) {
+        if (width >= height) {
+            width = minOf(width.toLong(), (maxPixels / height.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
         } else {
-            break
+            height = minOf(height.toLong(), (maxPixels / width.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
         }
     }
 
-    return PdfRasterSize(width, height)
+    return PdfRasterSize(width.coerceAtLeast(1), height.coerceAtLeast(1))
 }
