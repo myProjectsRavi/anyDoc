@@ -1,43 +1,30 @@
 # Current Report
 
-**ID:** `2026-09-28_cycle-006`  
-**Report:** `reports/2026-09-28_cycle-006.md`  
-**Status:** COMPLETE  
+**ID:** `2026-09-28_cycle-007`  
+**Report:** `reports/2026-09-28_cycle-007.md`  
+**Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
-**Epic:** `E006` — Failure-safe PDF page-image publication  
-**Feature:** `F008` — Transactional page-image and ZIP outputs  
-**Current User Story:** `US-R006-P1-01A` — Stage PdfPageImageExporter page-image and ZIP publication
+**Epic:** `E007` — Failure-safe scan-image publication  
+**Feature:** `F009` — Transactional scan-image and ZIP outputs  
+**Current User Story:** `US-R007-P1-01A` — Stage ScanImageExporter page-image and ZIP publication
 
-## Implementation
+## Confirmed defect
 
-- Production refactor: `c40b0cd48f814089ae31d749e431eafd7f19495b`.
-- Exact test-inclusive candidate: `eb355e7c4b7ce2039c02ee96153eef62a2391511`.
-- Non-ZIP page exports use set-level staged publication, so later encoding/cancellation failure exposes no earlier final page.
-- ZIP mode renders pages directly into one staged ZIP and publishes only the completed bundle; it never publishes intermediate page images.
-- Added exporter-specific failure-cleanup regression tests.
+`ScanImageExporter` still writes scan page images and optional ZIP bundles directly to final user-visible paths. Encoding, cancellation, or ZIP failure can therefore expose partial output.
 
-## Validation
+## Scope
 
-GitHub Actions run #209 / API `36393317583`: **SUCCESS** on exact candidate `eb355e7c4b7ce2039c02ee96153eef62a2391511`.
+Reuse the existing staged-output primitives. Preserve collision-safe naming and result semantics. Add focused regression coverage for failure/cancellation cleanup. Do not broaden this story into unrelated scan UX or image-processing changes.
 
-Passed:
-- core PDF unit tests
-- converter unit tests
-- app lifecycle/unit tests
-- debug APK assembly
-- unsigned release/R8 assembly
-- Android lint
+## Validation gate
 
-No emulator, benchmark, or physical-device result is claimed.
+The exact code/test candidate must pass the repository GitHub Actions gates before completion is claimed. No emulator, benchmark, or physical-device result is assumed.
 
-## Completion
+## Safety
 
-`US-R006-P1-01A`: COMPLETE.  
-Cycle 006: **1/1 COMPLETE**.
-
-Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+Work only on `codex/anydoc-continuous-improvement`. Keep PR #1 draft/unmerged and never modify or merge `main`.
 
 ## Next exact action
 
-Create Cycle 007 durably before code. Highest-priority confirmed P1 follow-up: `ScanImageExporter` direct page-image/ZIP publication failure safety.
+Inspect `ScanImageExporter` and the existing staged-output helpers, implement the smallest safe transactional-publication change, add focused tests, and validate the exact candidate in GitHub Actions.
