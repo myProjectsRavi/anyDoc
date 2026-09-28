@@ -72,39 +72,51 @@ class PdfCompareTool(
                                 )
                                 val sanitized = outputName.ifBlank { "compare_${System.currentTimeMillis()}" }
                                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                                val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
+                                val stagedResult = withStagedOutputFile(
+                                    directory = outputDir,
+                                    baseName = sanitized,
+                                    extension = "pdf"
+                                ) { stagedFile ->
+                                    val diffPcts = mutableListOf<Float>()
+                                    android.graphics.pdf.PdfDocument().use { pdfDoc ->
+                                        for (pageIndex in 0 until pageCount) {
+                                            checkCancelled()
+                                            var leftBmp: Bitmap? = null
+                                            var rightBmp: Bitmap? = null
+                                            var diffBmp: Bitmap? = null
+                                            try {
+                                                leftBmp = renderPage(leftRenderer, pageIndex, scale)
+                                                rightBmp = renderPage(rightRenderer, pageIndex, scale)
 
-                                val pdfDoc = android.graphics.pdf.PdfDocument()
-                                val diffPcts = mutableListOf<Float>()
+                                                val diff = diffBitmaps(leftBmp, rightBmp, threshold)
+                                                diffBmp = diff.first
+                                                diffPcts += diff.second
 
-                                for (pageIndex in 0 until pageCount) {
-                                    checkCancelled()
-                                    val leftBmp = renderPage(leftRenderer, pageIndex, scale)
-                                    val rightBmp = renderPage(rightRenderer, pageIndex, scale)
+                                                val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(
+                                                    diffBmp.width,
+                                                    diffBmp.height,
+                                                    pageIndex + 1
+                                                ).create()
+                                                val page = pdfDoc.startPage(pageInfo)
+                                                page.canvas.drawBitmap(diffBmp, 0f, 0f, null)
+                                                pdfDoc.finishPage(page)
+                                            } finally {
+                                                leftBmp?.recycle()
+                                                rightBmp?.recycle()
+                                                diffBmp?.recycle()
+                                            }
+                                        }
 
-                                    val (diffBmp, pct) = diffBitmaps(leftBmp, rightBmp, threshold)
-                                    diffPcts += pct
-
-                                    val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(
-                                        diffBmp.width, diffBmp.height, pageIndex + 1
-                                    ).create()
-                                    val page = pdfDoc.startPage(pageInfo)
-                                    page.canvas.drawBitmap(diffBmp, 0f, 0f, null)
-                                    pdfDoc.finishPage(page)
-
-                                    leftBmp?.recycle()
-                                    rightBmp?.recycle()
-                                    diffBmp.recycle()
+                                        FileOutputStream(stagedFile).use { pdfDoc.writeTo(it) }
+                                    }
+                                    diffPcts.toList()
                                 }
 
-                                FileOutputStream(outputFile).use { pdfDoc.writeTo(it) }
-                                pdfDoc.close()
-
                                 PdfCompareResult(
-                                    outputFile = outputFile,
-                                    outputSizeBytes = outputFile.length(),
+                                    outputFile = stagedResult.outputFile,
+                                    outputSizeBytes = stagedResult.outputFile.length(),
                                     pageCount = pageCount,
-                                    diffPercentages = diffPcts
+                                    diffPercentages = stagedResult.value
                                 )
                             }
                         }
@@ -116,14 +128,19 @@ class PdfCompareTool(
 
     private fun renderPage(renderer: PdfRenderer, pageIndex: Int, scale: Float): Bitmap? {
         if (pageIndex >= renderer.pageCount) return null
-        val page = renderer.openPage(pageIndex)
-        val w = (page.width * scale).toInt().coerceAtLeast(1)
-        val h = (page.height * scale).toInt().coerceAtLeast(1)
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        bitmap.eraseColor(Color.WHITE)
-        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        page.close()
-        return bitmap
+        renderer.openPage(pageIndex).use { page ->
+            val w = (page.width * scale).toInt().coerceAtLeast(1)
+            val h = (page.height * scale).toInt().coerceAtLeast(1)
+            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            return try {
+                bitmap.eraseColor(Color.WHITE)
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                bitmap
+            } catch (t: Throwable) {
+                bitmap.recycle()
+                throw t
+            }
+        }
     }
 
     /**
