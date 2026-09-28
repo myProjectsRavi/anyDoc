@@ -23,6 +23,13 @@ A prior partial run committed `0004c118cbdbcab88c71333a6cc697b5e8bac5a2`, guaran
 
 Require core PDF tests, converter tests, app tests, debug assembly, unsigned release/R8 assembly, and lint on the exact candidate or a documentation-only descendant with the same code tree.
 
+## Implementation checkpoint
+
+- Partial cleanup commit: `0004c118cbdbcab88c71333a6cc697b5e8bac5a2`.
+- Raster-cap production commit: `0e2e234d9f40e2c2dda00e83252c9d12c878dfc1`.
+- Exact test-inclusive candidate: `1da09b8e9f7a016e29c6b74eb47e9db94a626c73`.
+- GitHub Actions PR run #191 / API `36384766508`: queued/in progress; no pass claimed yet.
+
 ## Next exact action
 
-Add a heap-aware raster byte ceiling and focused sizing tests, then validate in GitHub Actions.
+Inspect run #191. Fix any failure within `US-R005-P2-01A`. If every required gate passes, close Cycle 005 durably.
