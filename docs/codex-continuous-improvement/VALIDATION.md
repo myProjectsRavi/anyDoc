@@ -250,3 +250,20 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Existing staged-output primitives provide no-partial-final publication and collision-safe move semantics.
 - Cycle 008 completion is not claimed yet.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 008 completion evidence
+
+- Story: `US-R008-P1-01A` — transactional PDF compare publication and failure-safe resource cleanup.
+- Initial production refactor: `5bd0edea9d17ad835a1554d64c0cb5e11006885d`.
+- Regression tests: `a4746aac8a7523b9afd77803631e6677dc5460f2`.
+- Run #227 / API `36427852795`: **FAILED** at `:core:pdf:compileDebugKotlin`; Android `PdfDocument` is not a Kotlin `Closeable`, so `.use {}` was invalid.
+- Repair/exact validated candidate: `08cf9090c32e773b595b74102508fd4b8800ab01`.
+- GitHub Actions PR run #229 / API `36428222433`: **SUCCESS**.
+- Core PDF tests: SUCCESS, including compare publication failure/cancellation cleanup tests.
+- Converter tests: SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
