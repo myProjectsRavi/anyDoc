@@ -3,17 +3,17 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-28_cycle-003`  
+**Current report:** `2026-09-28_cycle-004`  
 **Report status:** COMPLETE  
-**Cycle:** 003  
-**Current Epic:** `E003` — Large-input and resource safety  
-**Current Feature:** `F005` — Media temporary-space preflight  
-**Current User Story:** `US-R003-P2-01A` — Preflight decoded PCM cache expansion before audio transcoding (COMPLETE)  
-**Hourly run counter:** 15  
+**Cycle:** 004  
+**Current Epic:** `E004` — Heap-safe PDF rasterization  
+**Current Feature:** `F006` — PDF compressor raster memory budget  
+**Current User Story:** `US-R004-P2-01A` — Bound PDF compressor page bitmap allocation (COMPLETE)  
+**Hourly run counter:** 16  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 003 run 001
+**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 004 run 001
 
 ## Git checkpoint
 
@@ -34,6 +34,8 @@
 
 **Cycle 003: 1 / 1 scoped mandatory items COMPLETE**
 
+**Cycle 004: 1 / 1 scoped mandatory items COMPLETE**
+
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
 ### Mandatory states
@@ -49,9 +51,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** make batch foreground execution fail-safe across process death before attempting durable recovery.
+**Primary:** continue the P2 memory/allocation audit one bounded path at a time.
 
-**Current subtask:** retain durable read access for SAF-selected batch inputs, then wire transactional Room queue snapshots and conservative process-death restoration.
+**Completed current subtask:** `US-R004-P2-01A` bounds PDF-compressor ARGB_8888 page raster allocations using a heap-aware bitmap budget while preserving ordinary A4/150-DPI output dimensions.
+
+**Next candidate for a future cycle:** inspect `PdfPageImageExporter`, whose requested raster dimensions are still derived directly from page size × caller scale factor and whose bitmap cleanup is not protected by `finally` if encoding fails.
 
 
 ## Cycle 002 run 001
@@ -74,6 +78,21 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 
+
+
+## Cycle 004 run 001
+
+- Started only after Cycle 003 was confirmed COMPLETE and its documentation head `c56e9cecf88699fa56664efd2362181261df5cab` had successful PR CI run #178.
+- Selected exactly one bounded P2 resource-safety story: `US-R004-P2-01A`.
+- Confirmed `PdfCompressor` allocated `ARGB_8888` rasters directly from PDF page dimensions × render DPI without any pixel/heap cap, allowing pathological page dimensions to request very large bitmaps.
+- Production commit `67bae0bec912a1ceeee7885f15c2976759a7383e` adds a heap-aware bitmap budget capped at 32 MiB and scales oversized page rasters down proportionally before `Bitmap.createBitmap`.
+- Test-inclusive exact code HEAD: `f38abd2cead70d106411ed474e9e375605d96b65`.
+- Added JVM regression coverage for ordinary A4/150-DPI dimensions, oversized aspect-ratio-preserving downscale, heap-budget clamping, and pathological-dimension overflow safety.
+- GitHub Actions PR run #182 / API `36378666554`: SUCCESS on exact code/test HEAD `f38abd2cead70d106411ed474e9e375605d96b65`.
+- Passed gates: core PDF unit tests, converter unit tests, app lifecycle/unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint.
+- `US-R004-P2-01A` and Cycle 004 are COMPLETE.
+- No emulator, benchmark, or physical-device result is claimed.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 003 run 001
 
@@ -383,7 +402,8 @@ Docs:
 
 ## Next exact action
 
-1. Cycle 003 is complete. On the next engineering invocation, create Cycle 004 only under the sequencing rules.
-2. Re-audit the remaining highest-priority P2 large-input/memory risks before selecting exactly one new mandatory User Story.
-3. Do not reopen completed Cycle 001-003 stories without contradictory evidence.
-4. Keep `main` untouched and draft PR #1 unmerged.
+1. On the next invocation, re-read actual branch HEAD, PR #1, CI state, and sequencing docs.
+2. Because Cycle 004 is COMPLETE, create Cycle 005 only if sequencing still permits.
+3. Continue the P2 allocation audit with the highest-priority confirmed bounded defect; current evidence points to `PdfPageImageExporter` unbounded page-size × scale-factor raster allocation and failure-path bitmap cleanup.
+4. Do not reopen completed cycles without contradictory evidence.
+5. Keep `main` untouched and draft PR #1 unmerged.
