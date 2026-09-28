@@ -4,11 +4,11 @@
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
 **Current report:** `2026-09-28_cycle-008`  
-**Report status:** ACTIVE / INCOMPLETE  
+**Report status:** COMPLETE  
 **Cycle:** 008  
 **Current Epic:** `E008` — Failure-safe PDF comparison output  
 **Current Feature:** `F010` — Transactional PDF compare publication  
-**Current User Story:** `US-R008-P1-01A` — Stage PdfCompareTool final PDF publication  
+**Current User Story:** `US-R008-P1-01A` — Stage PdfCompareTool final PDF publication (COMPLETE)  
 **Hourly run counter:** 19  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -42,6 +42,8 @@
 
 **Cycle 007: 1 / 1 scoped mandatory items COMPLETE**
 
+**Cycle 008: 1 / 1 scoped mandatory items COMPLETE**
+
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
 ### Mandatory states
@@ -57,11 +59,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 008 is active. Make PdfCompareTool final PDF publication failure-safe and ensure document resources close on failure.
+**Primary:** Cycle 008 is complete; continue with the next highest-priority confirmed bounded defect only in the next sequenced cycle.
 
-**Current subtask:** `US-R008-P1-01A` stages the compare PDF before publication and guarantees PdfDocument cleanup across cancellation/failure.
+**Completed current subtask:** `US-R008-P1-01A` stages the compare PDF before publication and guarantees compare document/page/bitmap cleanup across cancellation/failure.
 
-**Priority change:** fresh Cycle 008 source inspection found a P1 direct-final-write defect in `PdfCompareTool`, which preempts the planned P2 allocation audit under backlog rules.
+**Next candidate for a future cycle:** `PdfCompareTool` simultaneously holds left/right rendered ARGB pages plus a diff bitmap at caller scale up to 4× with no heap-aware ceiling; bound the combined raster working set before returning to broader P2 audit.
 
 
 ## Cycle 002 run 001
@@ -105,6 +107,22 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 #
+
+### Cycle 008 completion evidence
+
+- Initial production refactor: `5bd0edea9d17ad835a1554d64c0cb5e11006885d`.
+- Regression-test commit: `a4746aac8a7523b9afd77803631e6677dc5460f2`.
+- First exact candidate run #227 / API `36427852795`: FAILED at `:core:pdf:compileDebugKotlin` because Android `PdfDocument` is not a Kotlin `Closeable`; `.use {}` was invalid.
+- Compile/resource fix: `08cf9090c32e773b595b74102508fd4b8800ab01`, replacing `.use {}` with explicit `try/finally { pdfDoc.close() }`.
+- Exact validated code/test HEAD: `08cf9090c32e773b595b74102508fd4b8800ab01`.
+- GitHub Actions PR run #229 / API `36428222433`: SUCCESS.
+- Passed gates: core PDF unit tests, converter tests, app lifecycle/unit tests, debug APK assembly, unsigned release/R8 assembly, Android lint.
+- Compare output now writes only to a same-directory staging file until the complete PDF succeeds, then publishes collision-safely.
+- Per-page left/right/diff bitmaps are recycled in `finally`; `PdfRenderer.Page` uses structured close; `PdfDocument` closes in `finally`.
+- `PdfComparePublicationSafetyTest` covers writer failure and cancellation leaving no final/staging residue.
+- No emulator, benchmark, or physical-device evidence is claimed.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+
 ## Cycle 008 run 001
 
 - Cycle 007 closure and docs-head CI were rechecked before opening Cycle 008.
@@ -485,9 +503,9 @@ Docs:
 
 ## Next exact action
 
-1. Refactor `PdfCompareTool` to write through `withStagedOutputFile`.
-2. Guarantee `PdfDocument` cleanup with structured resource handling on success/failure/cancellation.
-3. Add focused regression coverage proving compare-output failure leaves no final file/staging residue.
-4. Validate the exact code/test candidate through core PDF, converter, app tests, debug, release/R8, and lint.
-5. On terminal green CI, close Cycle 008 and return to the P2 memory/large-input audit.
+1. Re-read actual branch HEAD, PR #1, CI and sequencing docs.
+2. Because Cycle 008 is COMPLETE, create Cycle 009 durably before any production mutation.
+3. Highest-priority confirmed P2 candidate: bound `PdfCompareTool` combined raster working set; current implementation may hold left + right + diff ARGB_8888 bitmaps simultaneously at renderScale up to 4× with no heap-aware ceiling.
+4. Add pure sizing/budget regression coverage and preserve ordinary compare quality when within budget.
+5. Do not reopen completed P1 output-publication stories without contradictory evidence.
 6. Keep `main` untouched and draft PR #1 unmerged.
