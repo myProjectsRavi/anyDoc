@@ -1,5 +1,12 @@
 # AnyDoc Continuous Improvement Backlog
 
+## Active Cycle 008
+
+### Epic E008 — Failure-safe PDF comparison output
+
+#### Feature F010 — Transactional PDF compare publication
+- [IN_PROGRESS / P1] `US-R008-P1-01A` — Stage `PdfCompareTool` final PDF publication and guarantee document cleanup on failure/cancellation. Fresh source inspection found direct final writes, so this P1 story preempts the planned P2 audit.
+
 ## Closed Cycle 007
 
 ### Epic E007 — Failure-safe scan-image publication
