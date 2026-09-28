@@ -3,12 +3,12 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-28_cycle-006`  
-**Report status:** COMPLETE  
-**Cycle:** 006  
-**Current Epic:** `E006` — Failure-safe PDF page-image publication  
-**Current Feature:** `F008` — Transactional page-image and ZIP outputs  
-**Current User Story:** `US-R006-P1-01A` — Stage PdfPageImageExporter page-image and ZIP publication (COMPLETE)  
+**Current report:** `2026-09-28_cycle-007`  
+**Report status:** ACTIVE / INCOMPLETE  
+**Cycle:** 007  
+**Current Epic:** `E007` — Failure-safe scan-image publication  
+**Current Feature:** `F009` — Transactional scan-image and ZIP outputs  
+**Current User Story:** `US-R007-P1-01A` — Stage ScanImageExporter page-image and ZIP publication (ACTIVE / INCOMPLETE)  
 **Hourly run counter:** 18  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -55,11 +55,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 006 is complete; continue with the highest-priority confirmed safety defect only in the next sequenced cycle.
+**Primary:** Cycle 007 is active. Make ScanImageExporter page-image and ZIP publication transactional and failure-safe.
 
-**Completed current subtask:** `US-R006-P1-01A` makes PDF page-image and ZIP publication transactional and failure-safe.
+**Current subtask:** `US-R007-P1-01A` stages scan page images as an all-or-nothing set and publishes ZIP output only after complete construction.
 
-**Next candidate for a future cycle:** audit `ScanImageExporter`, which still writes scan page images and optional ZIP bundles directly to final paths and can leave partial user-visible files on encoding/cancellation/ZIP failure.
+**Next action:** inspect `ScanImageExporter` and existing staged-output primitives, implement the smallest safe transactional-publication change, add focused failure/cancellation regression tests, then validate the exact code/test SHA in GitHub Actions.
 
 
 ## Cycle 002 run 001
