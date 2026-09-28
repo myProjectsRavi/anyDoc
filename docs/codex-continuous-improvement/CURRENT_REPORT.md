@@ -1,42 +1,47 @@
 # Current Report
 
-**ID:** `2026-09-28_cycle-003`  
-**Report:** `reports/2026-09-28_cycle-003.md`  
+**ID:** `2026-09-28_cycle-004`  
+**Report:** `reports/2026-09-28_cycle-004.md`  
 **Status:** COMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
-**Epic:** `E003` — Large-input and resource safety  
-**Feature:** `F005` — Media temporary-space preflight  
-**Current User Story:** `US-R003-P2-01A` — Preflight decoded PCM cache expansion before audio transcoding
+**Epic:** `E004` — Heap-safe PDF rasterization  
+**Feature:** `F006` — PDF compressor raster memory budget  
+**Current User Story:** `US-R004-P2-01A` — Bound PDF compressor page bitmap allocation
 
-## Prior-cycle prerequisite
+## Finding
 
-Cycle 002 is closed 2/2. Exact final code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions run #163 / API `36360973174`.
+`PdfCompressor` rasterized each page to `ARGB_8888` using page dimensions × requested DPI with no allocation ceiling. Pathological PDF page dimensions could therefore request a bitmap large enough to exhaust the app heap.
 
-## Current finding
+## Implementation
 
-`AudioFormatConverter` creates a complete temporary 16-bit PCM file in app cache before several transcode paths. It currently does not preflight decoded PCM expansion against cache free space.
+- Production commit: `67bae0bec912a1ceeee7885f15c2976759a7383e`.
+- Exact test-inclusive candidate: `f38abd2cead70d106411ed474e9e375605d96b65`.
+- Raster dimensions are now bounded by a heap-aware allocation budget, never above 32 MiB for the page bitmap.
+- Oversized pages are downscaled proportionally; ordinary A4 at 150 DPI retains its expected raster dimensions.
+- Regression tests cover normal sizing, budget enforcement/aspect ratio, heap-budget clamping, and pathological dimension arithmetic.
 
-## Completion gate
+## Validation
 
-Require core PDF tests, converter tests, app tests, debug assembly, unsigned release/R8 assembly, and lint on the exact candidate or a documentation-only descendant with the same code tree.
+GitHub Actions run #182 / API `36378666554`: **SUCCESS** on exact candidate `f38abd2cead70d106411ed474e9e375605d96b65`.
 
-## Next exact action
+Passed:
+- core PDF unit tests
+- converter unit tests
+- app lifecycle/unit tests
+- debug APK assembly
+- unsigned release/R8 assembly
+- Android lint
 
-Implement and test the PCM cache-space preflight, then validate it in GitHub Actions.
+No emulator, benchmark, or physical-device result is claimed.
 
 ## Completion
 
-`US-R003-P2-01A` is COMPLETE.
+`US-R004-P2-01A`: COMPLETE.  
+Cycle 004: **1/1 COMPLETE**.
 
-- Production guard commit: `41a65dc859ac2afd04db4a1120ee5338adf42430`.
-- Exact test-inclusive candidate: `9b48f14915f14ba99f68282910fdabfaa95c15a1`.
-- GitHub Actions run #175 / API `36371211681`: SUCCESS.
-- Core PDF tests: passed.
-- Converter unit tests: passed.
-- App unit tests: passed.
-- Debug APK assembly: passed.
-- Unsigned release/R8 assembly: passed.
-- Android lint: passed.
-- No emulator, benchmark, or physical-device evidence is claimed.
-- Draft PR #1 remains open/draft/unmerged; `main` remains untouched.
+Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+
+## Next exact action
+
+On the next invocation, create Cycle 005 only if sequencing remains satisfied. Continue the P2 allocation audit with the highest-priority confirmed bounded path; current source review identifies `PdfPageImageExporter` as the next candidate because raster size is still page size × caller scale factor with no memory cap, and failure-path bitmap recycling should be reviewed.
