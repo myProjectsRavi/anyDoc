@@ -240,3 +240,13 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Unsigned release/R8 assembly: SUCCESS.
 - Android lint: SUCCESS.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 008 run 001 — pre-implementation evidence
+
+- Cycle 007 exact candidate `e71273f59968bb218a8571a5065598db184c2c72` passed run #218; documentation head `65dca27557ad6dbc4f5671ba138b47e1697e8331` passed PR run #221.
+- Fresh source inspection confirms `PdfCompareTool` writes directly to a final PDF path via `FileOutputStream(outputFile)`.
+- Its `android.graphics.pdf.PdfDocument` is explicitly closed only after successful write, so earlier comparison/render/write failure can skip closure.
+- Existing staged-output primitives provide no-partial-final publication and collision-safe move semantics.
+- Cycle 008 completion is not claimed yet.
+- No emulator, benchmark, or physical-device evidence is claimed.
