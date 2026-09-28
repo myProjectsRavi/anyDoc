@@ -90,6 +90,10 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 - This cycle will bound page-image raster allocation before `Bitmap.createBitmap`, preserve normal requested dimensions when they fit, and add focused JVM regression coverage.
 - Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
+- Production raster-cap commit: `0e2e234d9f40e2c2dda00e83252c9d12c878dfc1`.
+- Exact test-inclusive candidate before this documentation checkpoint: `1da09b8e9f7a016e29c6b74eb47e9db94a626c73`.
+- GitHub Actions PR run #191 / API `36384766508` is queued/in progress for that candidate; no pass is claimed yet.
+
 ## Cycle 004 run 001
 
 - Started only after Cycle 003 was confirmed COMPLETE and its documentation head `c56e9cecf88699fa56664efd2362181261df5cab` had successful PR CI run #178.
