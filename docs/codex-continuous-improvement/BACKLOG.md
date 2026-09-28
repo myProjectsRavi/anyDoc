@@ -1,11 +1,12 @@
 # AnyDoc Continuous Improvement Backlog
 
-## Active Cycle 008
+## Closed Cycle 008
 
 ### Epic E008 — Failure-safe PDF comparison output
 
 #### Feature F010 — Transactional PDF compare publication
-- [IN_PROGRESS / P1] `US-R008-P1-01A` — Stage `PdfCompareTool` final PDF publication and guarantee document cleanup on failure/cancellation. Fresh source inspection found direct final writes, so this P1 story preempts the planned P2 audit.
+- [COMPLETE / CI #229] `US-R008-P1-01A` — Stage `PdfCompareTool` final PDF publication and guarantee document/page/bitmap cleanup on failure/cancellation. Exact candidate `08cf9090c32e773b595b74102508fd4b8800ab01` passed run #229 / API `36428222433`.
+- [NEXT CANDIDATE / P2] Bound PdfCompareTool combined raster memory: left + right + diff ARGB_8888 bitmaps can coexist at renderScale up to 4× without a heap-aware ceiling.
 
 ## Closed Cycle 007
 
