@@ -208,3 +208,19 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Existing `withStagedOutputFiles` regression coverage proves set-level no-early-publish and cleanup after later-writer failure; `withStagedOutputFile` covers single-output failure cleanup.
 - Cycle 006 will wire the exporter to those primitives and add page-export-specific staging regression evidence.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 006 completion evidence
+
+- Story: `US-R006-P1-01A` — transactional page-image/ZIP publication.
+- Production refactor commit: `c40b0cd48f814089ae31d749e431eafd7f19495b`.
+- Exact code/test candidate: `eb355e7c4b7ce2039c02ee96153eef62a2391511`.
+- `PdfPageImagePublicationSafetyTest` verifies a later page writer failure leaves no earlier page final and a ZIP entry failure leaves no final bundle/staging residue.
+- GitHub Actions PR run #209 / API `36393317583`: **SUCCESS**.
+- Core PDF tests: SUCCESS.
+- Converter tests: SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
