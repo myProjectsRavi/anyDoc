@@ -5,7 +5,7 @@
 ### Epic E005 — Heap-safe PDF page-image export
 
 #### Feature F007 — Page-image raster memory budget
-- [IN_PROGRESS] `US-R005-P2-01A` — Bound `PdfPageImageExporter` ARGB_8888 rasters by a heap-aware byte budget. Partial cleanup commit `0004c118cbdbcab88c71333a6cc697b5e8bac5a2` passed CI #186; allocation cap/tests remain.
+- [IN_PROGRESS / CI_PENDING] `US-R005-P2-01A` — Bound `PdfPageImageExporter` ARGB_8888 rasters by a heap-aware byte budget. Cleanup commit `0004c118cbdbcab88c71333a6cc697b5e8bac5a2`; raster-cap commit `0e2e234d9f40e2c2dda00e83252c9d12c878dfc1`; exact test-inclusive candidate `1da09b8e9f7a016e29c6b74eb47e9db94a626c73`; PR CI #191 pending.
 - [FOLLOW-UP CANDIDATE] Audit direct final-file publication/ZIP failure cleanup in page-image export after the allocation story is green; do not widen the active story before its completion gate.
 
 ## Closed Cycle 004
