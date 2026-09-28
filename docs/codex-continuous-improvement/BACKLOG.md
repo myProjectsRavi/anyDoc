@@ -4,12 +4,12 @@ Canonical branch: `codex/anydoc-continuous-improvement`
 
 This backlog is ordered by user-data safety, correctness, reliability, performance, UX, then optional capability. Items may move only when evidence changes priority.
 
-## Active Cycle 003
+## Closed Cycle 003
 
 ### Epic E003 — Large-input and resource safety
 
 #### Feature F005 — Media temporary-space preflight
-- [CURRENT / IN_PROGRESS] `US-R003-P2-01A` — Estimate decoded 16-bit PCM cache demand before audio transcoding; reject known-insufficient cache space before decode; add converter-module unit tests and CI coverage.
+- [COMPLETE / CI #175] `US-R003-P2-01A` — Estimate decoded 16-bit PCM cache demand before audio transcoding; reject known-insufficient cache space before decode; converter-module tests and CI coverage added. Exact candidate `9b48f14915f14ba99f68282910fdabfaa95c15a1` passed run #175 / API `36371211681`.
 
 ## Closed Cycle 002
 
