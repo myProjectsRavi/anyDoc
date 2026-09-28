@@ -146,3 +146,24 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Android lint: SUCCESS.
 - PCM guard coverage includes a representative 60-second 44.1 kHz stereo estimate, conservative defaults for missing rate/channels, unknown/invalid duration behavior, and saturation for pathological metadata.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 004 completion evidence
+
+- Story: `US-R004-P2-01A` — bound PDF compressor page bitmap allocation.
+- Production commit: `67bae0bec912a1ceeee7885f15c2976759a7383e`.
+- Exact test-inclusive candidate: `f38abd2cead70d106411ed474e9e375605d96b65`.
+- GitHub Actions run #182 / API `36378666554`: **SUCCESS**.
+- Core PDF unit tests: SUCCESS, including new raster-budget tests.
+- Converter unit tests: SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- Regression coverage verifies:
+  - normal A4 at 150 DPI is not unnecessarily downscaled;
+  - oversized pages are proportionally reduced to fit the ARGB_8888 byte budget;
+  - the heap-aware budget is clamped between conservative bounds;
+  - pathological page dimensions do not overflow allocation arithmetic.
+- No measured peak-memory benchmark is claimed by this story.
+- No emulator or physical-device evidence is claimed.
