@@ -4,11 +4,11 @@
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
 **Current report:** `2026-09-28_cycle-005`  
-**Report status:** ACTIVE / INCOMPLETE  
+**Report status:** COMPLETE  
 **Cycle:** 005  
 **Current Epic:** `E005` — Heap-safe PDF page-image export  
 **Current Feature:** `F007` — Page-image raster memory budget  
-**Current User Story:** `US-R005-P2-01A` — Bound PdfPageImageExporter page bitmap allocation  
+**Current User Story:** `US-R005-P2-01A` — Bound PdfPageImageExporter page bitmap allocation (COMPLETE)  
 **Hourly run counter:** 17  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -36,6 +36,8 @@
 
 **Cycle 004: 1 / 1 scoped mandatory items COMPLETE**
 
+**Cycle 005: 1 / 1 scoped mandatory items COMPLETE**
+
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
 ### Mandatory states
@@ -51,11 +53,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** continue the P2 memory/allocation audit one bounded path at a time.
+**Primary:** Cycle 005 is complete; continue with the highest-priority newly confirmed safety defect only in the next sequenced cycle.
 
-**Completed current subtask:** `US-R004-P2-01A` bounds PDF-compressor ARGB_8888 page raster allocations using a heap-aware bitmap budget while preserving ordinary A4/150-DPI output dimensions.
+**Completed current subtask:** `US-R005-P2-01A` bounds PDF page-image ARGB_8888 raster allocations and guarantees bitmap recycling across export failure.
 
-**Next candidate for a future cycle:** inspect `PdfPageImageExporter`, whose requested raster dimensions are still derived directly from page size × caller scale factor and whose bitmap cleanup is not protected by `finally` if encoding fails.
+**Next candidate for a future cycle:** page-image export still writes image and ZIP bytes directly to final filenames; audit/stage those outputs so encoding/ZIP failure or cancellation cannot leave partial user-visible files.
 
 
 ## Cycle 002 run 001
@@ -93,6 +95,20 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 - Production raster-cap commit: `0e2e234d9f40e2c2dda00e83252c9d12c878dfc1`.
 - Exact test-inclusive candidate before this documentation checkpoint: `1da09b8e9f7a016e29c6b74eb47e9db94a626c73`.
 - GitHub Actions PR run #191 / API `36384766508` is queued/in progress for that candidate; no pass is claimed yet.
+
+
+### Cycle 005 completion
+
+- Partial cleanup commit `0004c118cbdbcab88c71333a6cc697b5e8bac5a2` guarantees page-image bitmap recycling in `finally`.
+- Raster-cap production commit `0e2e234d9f40e2c2dda00e83252c9d12c878dfc1` bounds requested ARGB_8888 page images with a heap-aware 8–32 MiB budget.
+- Same-story review found an extreme-aspect O(n) single-pixel correction loop in both the new exporter helper and the Cycle 004 compressor helper. It was replaced with constant-time mathematical clamping in commits `328f38feafd5b4a320f392844f53dc1cf733c9a3` and `76f726f88f1344c73104f512c66bfae104d62283`.
+- Extreme-aspect regression coverage landed in `dae9af02c26f09b2fa85697a21d9c3dd58d5b95f` and `aca6223a10cb73862f8dbed226e1292e1ca863e8`.
+- Exact validated code/test HEAD: `aca6223a10cb73862f8dbed226e1292e1ca863e8`.
+- GitHub Actions PR run #199 / API `36385089020`: SUCCESS.
+- Passed gates: core PDF tests, converter tests, app lifecycle/unit tests, debug APK assembly, unsigned release/R8 assembly, Android lint.
+- Caller review confirmed normal UI scale is clamped to 0.25–2.0; ordinary exports remain below the cap for normal page sizes.
+- No emulator, benchmark, or physical-device evidence is claimed.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 004 run 001
 
@@ -416,8 +432,8 @@ Docs:
 
 ## Next exact action
 
-1. Bound `PdfPageImageExporter` ARGB_8888 page rasters with a heap-aware byte ceiling while preserving normal requested output dimensions.
-2. Add focused JVM tests for normal sizing, oversized proportional downscale, pathological dimensions/scale, and budget arithmetic.
-3. Validate the exact candidate through core PDF tests, converter tests, app tests, debug assembly, unsigned release/R8, and lint.
-4. If green, close `US-R005-P2-01A` and Cycle 005 and synchronize STATE/CURRENT_REPORT/BACKLOG/VALIDATION/report.
+1. Re-read actual branch HEAD, PR #1, CI and sequencing docs.
+2. Because Cycle 005 is COMPLETE, create Cycle 006 only if sequencing still permits.
+3. Highest-priority confirmed next defect: make `PdfPageImageExporter` final image/ZIP publication failure-safe so encoding, cancellation, or ZIP failure cannot leave partial user-visible output files.
+4. Preserve the new no-CI-churn invariant: activate Cycle 006 before code; keep the code/test candidate stable while CI runs; finalize docs only after terminal CI.
 5. Keep `main` untouched and draft PR #1 unmerged.
