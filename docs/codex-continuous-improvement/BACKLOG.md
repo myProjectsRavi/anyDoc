@@ -9,8 +9,8 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E002 — Background execution reliability
 
 #### Feature F004 — Fail-safe batch foreground-service lifecycle
-- [CURRENT / CI_PENDING] `US-R002-P1-01A` — Prevent unsafe sticky foreground-service restart while executable batch queue state is process-local. Code/test HEAD: `59cce5de17c6665734dbad00b02062afc187a53d`; run #120 pending.
-- [QUEUED] `US-R002-P1-01B` — Wire persisted batch-task state into true process-death recovery before any future sticky restart semantics are considered.
+- [COMPLETE] `US-R002-P1-01A` — Prevent unsafe sticky foreground-service restart while executable batch queue state is process-local. Validated by successor CI.
+- [COMPLETE / CI #163] `US-R002-P1-01B` — Durable persisted batch-task recovery, conservative recovered-task admission, and service-owned RUNNING/terminal persistence. Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619`; run #163 / API `36360973174` passed all required gates.
 
 ## Closed Cycle 001
 
@@ -96,3 +96,9 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - [IN_PROGRESS / CI_RECOVERY] `US-R002-P1-01B` — runtime restore/persist wiring is implemented, but validation exposed two test-fixture defects. Fixes are at `6d7eb138de94355e54537babd08cd65cb5e7fc7c` and `367c3785a8bae18fd2324ae673464706f316e7da`.
 - Full CI for `367c3785a8bae18fd2324ae673464706f316e7da` is pending. Do not mark complete until app tests, debug, release/R8, and lint pass.
 - Next bounded slice after green: service-side durable RUNNING/terminal transition persistence plus terminal-state snapshot regression coverage.
+
+
+### Cycle 002 closure — 2026-09-28
+- `US-R002-P1-01A`: COMPLETE.
+- `US-R002-P1-01B`: COMPLETE; exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions run #163 / API `36360973174` (core PDF unit tests, app unit tests, debug APK, unsigned release/R8, Android lint).
+- Cycle 002 scoped mandatory backlog: 2/2 COMPLETE. Draft PR #1 remains open/draft/unmerged; `main` remains untouched.
