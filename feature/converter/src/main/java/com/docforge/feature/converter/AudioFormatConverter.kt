@@ -9,6 +9,7 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.net.Uri
+import android.os.StatFs
 import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
@@ -106,6 +107,7 @@ class AudioFormatConverter(
         }
 
         val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.M4A_AAC)
+        preflightPcmCache(inputUri)
         val pcmFile = createTempPcmFile()
 
         return try {
@@ -142,6 +144,7 @@ class AudioFormatConverter(
         checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
         val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
+        preflightPcmCache(inputUri)
         val pcmFile = createTempPcmFile()
 
         return try {
@@ -214,6 +217,7 @@ class AudioFormatConverter(
             "${outputFormat.name} encoder not available on this device. Source can only be converted if the device exposes a ${outputFormat.name} encoder."
         }
 
+        preflightPcmCache(inputUri)
         val pcmFile = createTempPcmFile()
 
         return try {
@@ -638,6 +642,23 @@ class AudioFormatConverter(
         return resolveNonConflictingFile(outputDir, base, extension)
     }
 
+    private fun preflightPcmCache(inputUri: Uri) {
+        val requiredBytes = withAudioTrack(inputUri) { _, _, trackFormat ->
+            requiredPcmCacheBytes(
+                durationMs = readDurationMs(trackFormat),
+                sampleRateHz = readOptionalInt(trackFormat, MediaFormat.KEY_SAMPLE_RATE),
+                channelCount = readOptionalInt(trackFormat, MediaFormat.KEY_CHANNEL_COUNT)
+            )
+        } ?: return
+
+        val availableBytes = StatFs(context.cacheDir.absolutePath).availableBytes
+        require(availableBytes >= requiredBytes) {
+            "Not enough temporary storage to decode this audio. Required " +
+                "${requiredBytes / (1024L * 1024L)} MiB, available " +
+                "${availableBytes / (1024L * 1024L)} MiB."
+        }
+    }
+
     private fun createTempPcmFile(): File {
         val tempDir = context.cacheDir
         return File.createTempFile("docforge_audio_", ".pcm", tempDir).also {
@@ -752,4 +773,53 @@ private fun DataOutputStream.writeIntLE(value: Int) {
 private fun DataOutputStream.writeShortLE(value: Short) {
     writeByte(value.toInt() and 0xFF)
     writeByte((value.toInt() shr 8) and 0xFF)
+}
+
+
+internal const val AUDIO_PCM_CACHE_RESERVE_BYTES: Long = 32L * 1024L * 1024L
+private const val DEFAULT_PCM_SAMPLE_RATE_HZ = 48_000
+private const val DEFAULT_PCM_CHANNEL_COUNT = 2
+private const val PCM_16BIT_BYTES_PER_SAMPLE = 2L
+
+internal fun requiredPcmCacheBytes(
+    durationMs: Long?,
+    sampleRateHz: Int?,
+    channelCount: Int?
+): Long? {
+    val duration = durationMs?.takeIf { it > 0L } ?: return null
+    val sampleRate = sampleRateHz?.takeIf { it > 0 } ?: DEFAULT_PCM_SAMPLE_RATE_HZ
+    val channels = channelCount?.takeIf { it > 0 } ?: DEFAULT_PCM_CHANNEL_COUNT
+
+    val wholeSeconds = duration / 1000L
+    val remainderMs = duration % 1000L
+
+    val wholeBytes = saturatingMultiply(
+        saturatingMultiply(
+            saturatingMultiply(wholeSeconds, sampleRate.toLong()),
+            channels.toLong()
+        ),
+        PCM_16BIT_BYTES_PER_SAMPLE
+    )
+    val remainderBytes = saturatingMultiply(
+        saturatingMultiply(
+            saturatingMultiply(remainderMs, sampleRate.toLong()),
+            channels.toLong()
+        ),
+        PCM_16BIT_BYTES_PER_SAMPLE
+    ) / 1000L
+
+    val pcmBytes = saturatingAdd(wholeBytes, remainderBytes)
+    return saturatingAdd(pcmBytes, AUDIO_PCM_CACHE_RESERVE_BYTES)
+}
+
+private fun saturatingMultiply(left: Long, right: Long): Long {
+    if (left <= 0L || right <= 0L) return 0L
+    if (left > Long.MAX_VALUE / right) return Long.MAX_VALUE
+    return left * right
+}
+
+private fun saturatingAdd(left: Long, right: Long): Long {
+    if (left == Long.MAX_VALUE || right == Long.MAX_VALUE) return Long.MAX_VALUE
+    if (left > Long.MAX_VALUE - right) return Long.MAX_VALUE
+    return left + right
 }
