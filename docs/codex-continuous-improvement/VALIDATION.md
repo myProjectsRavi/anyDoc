@@ -118,3 +118,8 @@ Cycle 001 remains open. Output-safety item R001-P1-03 and lifecycle item R001-P1
 - Exact code HEAD before documentation writes: `367c3785a8bae18fd2324ae673464706f316e7da`.
 - Runs #158 / API `36359747983` and #159 / API `36359750553` are the current successor validation attempts. No pass is claimed until a terminal successful run covers the exact code candidate (or a documentation-only descendant containing the same code tree).
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 002 final validation
+
+Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions run #163 / API `36360973174`. Core PDF unit tests, app unit tests, debug APK assembly, unsigned release/R8 assembly, and Android lint passed. This closes `US-R002-P1-01B` and Cycle 002 at 2/2 scoped stories complete. No emulator, benchmark, or physical-device result is claimed.
