@@ -3,17 +3,17 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-28_cycle-007`  
-**Report status:** COMPLETE  
-**Cycle:** 007  
-**Current Epic:** `E007` — Failure-safe scan-image publication  
-**Current Feature:** `F009` — Transactional scan-image and ZIP outputs  
-**Current User Story:** `US-R007-P1-01A` — Stage ScanImageExporter page-image and ZIP publication (COMPLETE)  
-**Hourly run counter:** 18  
+**Current report:** `2026-09-28_cycle-008`  
+**Report status:** ACTIVE / INCOMPLETE  
+**Cycle:** 008  
+**Current Epic:** `E008` — Failure-safe PDF comparison output  
+**Current Feature:** `F010` — Transactional PDF compare publication  
+**Current User Story:** `US-R008-P1-01A` — Stage PdfCompareTool final PDF publication  
+**Hourly run counter:** 19  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 006 run 001
+**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 008 run 001
 
 ## Git checkpoint
 
@@ -57,11 +57,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 007 is complete; continue with the next highest-priority confirmed safety defect only in the next sequenced cycle.
+**Primary:** Cycle 008 is active. Make PdfCompareTool final PDF publication failure-safe and ensure document resources close on failure.
 
-**Completed current subtask:** `US-R007-P1-01A` stages scan page images as an all-or-nothing set and publishes ZIP output only after complete construction.
+**Current subtask:** `US-R008-P1-01A` stages the compare PDF before publication and guarantees PdfDocument cleanup across cancellation/failure.
 
-**Next candidate for a future cycle:** resume the P2 allocation/large-input audit and choose the highest-priority confirmed bounded defect from current source evidence; do not reopen completed P1 publication stories without contradictory evidence.
+**Priority change:** fresh Cycle 008 source inspection found a P1 direct-final-write defect in `PdfCompareTool`, which preempts the planned P2 allocation audit under backlog rules.
 
 
 ## Cycle 002 run 001
@@ -104,7 +104,18 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 - Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 
-### Cycle 007 completion evidence
+#
+## Cycle 008 run 001
+
+- Cycle 007 closure and docs-head CI were rechecked before opening Cycle 008.
+- Fresh P2 allocation audit inspected remaining bitmap-heavy PDF paths.
+- That inspection discovered a higher-priority P1 defect in `PdfCompareTool`: it allocates a final output filename and writes the PDF directly to that user-visible path. Cancellation/failure during page comparison or `PdfDocument.writeTo` can therefore leave a partial final file.
+- `PdfDocument.close()` is currently reached only on the success path, so exceptions can also retain native/document resources longer than necessary.
+- Backlog rules require newly confirmed P1 issues to preempt P2 work.
+- Scope: use `withStagedOutputFile` for compare-PDF publication, guarantee `PdfDocument` closure with `use`, preserve collision-safe naming/result semantics, and add focused failure-cleanup regression coverage.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
+
+## Cycle 007 completion evidence
 
 - Production refactor commit: `c47880d484c8436dab60bd185e09a737c6302eb5`.
 - Exact code/test candidate: `e71273f59968bb218a8571a5065598db184c2c72`.
@@ -474,8 +485,9 @@ Docs:
 
 ## Next exact action
 
-1. Re-read actual branch HEAD, PR #1, CI and sequencing docs.
-2. Because Cycle 007 is COMPLETE, create Cycle 008 durably before any production mutation.
-3. Resume the highest-priority confirmed bounded P2 memory/large-input safety defect from fresh source inspection.
-4. Do not reopen completed P1 publication stories without contradictory evidence.
-5. Keep `main` untouched and draft PR #1 unmerged.
+1. Refactor `PdfCompareTool` to write through `withStagedOutputFile`.
+2. Guarantee `PdfDocument` cleanup with structured resource handling on success/failure/cancellation.
+3. Add focused regression coverage proving compare-output failure leaves no final file/staging residue.
+4. Validate the exact code/test candidate through core PDF, converter, app tests, debug, release/R8, and lint.
+5. On terminal green CI, close Cycle 008 and return to the P2 memory/large-input audit.
+6. Keep `main` untouched and draft PR #1 unmerged.
