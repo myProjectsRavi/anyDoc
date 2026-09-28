@@ -167,3 +167,12 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
   - pathological page dimensions do not overflow allocation arithmetic.
 - No measured peak-memory benchmark is claimed by this story.
 - No emulator or physical-device evidence is claimed.
+
+
+## Cycle 005 run 001 — pre-completion evidence
+
+- Cycle 004 exact candidate `f38abd2cead70d106411ed474e9e375605d96b65` passed run #182 / API `36378666554`.
+- Partial `PdfPageImageExporter` cleanup commit `0004c118cbdbcab88c71333a6cc697b5e8bac5a2` moved bitmap recycling into `finally`; run #186 / API `36382246055` passed all existing workflow gates.
+- Source inspection confirms page-image raster width/height still come directly from PDF page dimensions × caller `scaleFactor` with no allocation ceiling.
+- No completion claim for Cycle 005 yet.
+- No emulator, benchmark, or physical-device evidence is claimed.
