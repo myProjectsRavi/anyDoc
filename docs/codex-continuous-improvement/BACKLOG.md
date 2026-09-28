@@ -1,11 +1,12 @@
 # AnyDoc Continuous Improvement Backlog
 
-## Active Cycle 006
+## Closed Cycle 006
 
 ### Epic E006 — Failure-safe PDF page-image publication
 
 #### Feature F008 — Transactional page-image and ZIP outputs
-- [IN_PROGRESS / P1] `US-R006-P1-01A` — Stage non-ZIP page-image outputs as an all-or-nothing set and stage ZIP output without publishing intermediate page images. Direct final writes currently risk partial user-visible results on failure/cancellation.
+- [COMPLETE / CI #209] `US-R006-P1-01A` — Stage non-ZIP page-image outputs as an all-or-nothing set and stage ZIP output without publishing intermediate page images. Exact candidate `eb355e7c4b7ce2039c02ee96153eef62a2391511` passed run #209 / API `36393317583`.
+- [NEXT CANDIDATE / P1] Apply equivalent transactional publication safety to `ScanImageExporter`, which still writes scan pages and ZIP bundles directly to final paths.
 
 ## Closed Cycle 005
 
