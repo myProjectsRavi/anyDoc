@@ -75,14 +75,16 @@ class PdfPageImageExporter(
                             }
                             val file = resolveNonConflictingFile(outputDir, "${base}_p${pageIndex + 1}", ext)
 
-                            FileOutputStream(file).use { stream ->
-                                val ok = bitmap.compress(format.toBitmapCompressFormat(), jpegQuality.coerceIn(10, 100), stream)
-                                require(ok) { "Failed to encode page ${pageIndex + 1}." }
+                            try {
+                                FileOutputStream(file).use { stream ->
+                                    val ok = bitmap.compress(format.toBitmapCompressFormat(), jpegQuality.coerceIn(10, 100), stream)
+                                    require(ok) { "Failed to encode page ${pageIndex + 1}." }
+                                }
+                                files += file
+                                totalBytes += file.length()
+                            } finally {
+                                bitmap.recycle()
                             }
-                            bitmap.recycle()
-
-                            files += file
-                            totalBytes += file.length()
                         }
                     }
 
