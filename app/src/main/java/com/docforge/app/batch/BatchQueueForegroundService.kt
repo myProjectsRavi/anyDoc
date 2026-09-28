@@ -34,6 +34,11 @@ class BatchQueueForegroundService : Service() {
     private var processingJob: Job? = null
 
     private val dependencies by lazy { (application as com.docforge.app.DocForgeApp).dependencies }
+    private val persistenceStore by lazy {
+        BatchQueuePersistenceStore(
+            com.docforge.core.storage.db.DocForgeDatabase.get(applicationContext).batchQueueTaskDao()
+        )
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -118,6 +123,9 @@ class BatchQueueForegroundService : Service() {
         try {
             while (true) {
                 val task = BatchQueueRuntimeStore.startNextQueuedTask(allowedTaskIds, total) ?: break
+                if (!persistRunningCheckpoint(task.id)) {
+                    return
+                }
                 notifyProgress(
                     text = "Running ${BatchQueueRuntimeStore.state.value.processedCount + 1}/$total: ${task.type.title}",
                     processed = BatchQueueRuntimeStore.state.value.processedCount,
@@ -141,14 +149,27 @@ class BatchQueueForegroundService : Service() {
                         outputPath = outcome.outputPath,
                         outputSizeBytes = outcome.outputSizeBytes
                     )
+                    if (!persistTerminalCheckpoint(
+                            "Task completed, but its queue state could not be saved. Review the output before retrying."
+                        )
+                    ) {
+                        return
+                    }
                 } catch (cancelled: CancellationException) {
                     BatchQueueRuntimeStore.markTaskCanceled(task.id)
+                    runCatching { persistQueueSnapshot() }
                     throw cancelled
                 } catch (error: Throwable) {
                     BatchQueueRuntimeStore.markTaskFailure(
                         taskId = task.id,
                         errorMessage = error.message ?: "Task failed"
                     )
+                    if (!persistTerminalCheckpoint(
+                            "Task failed, but its queue state could not be saved. Review the queue before retrying."
+                        )
+                    ) {
+                        return
+                    }
                 }
 
                 val state = BatchQueueRuntimeStore.state.value
@@ -162,16 +183,58 @@ class BatchQueueForegroundService : Service() {
             val finalState = BatchQueueRuntimeStore.state.value
             val summary = "Batch complete: ${finalState.successCount} success, ${finalState.failureCount} failed"
             BatchQueueRuntimeStore.finishProcessing(summary)
+            persistTerminalCheckpoint(
+                "Batch finished, but the final queue state could not be saved. Review outputs before retrying."
+            )
             showCompletionNotification(summary)
         } catch (_: CancellationException) {
             BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()
             val canceledState = BatchQueueRuntimeStore.state.value
             val summary = "Batch queue canceled: ${canceledState.successCount} success, ${canceledState.failureCount} failed"
             BatchQueueRuntimeStore.finishProcessing(summary)
+            persistTerminalCheckpoint(
+                "Batch cancellation completed, but the final queue state could not be saved."
+            )
             showCompletionNotification(summary)
         } finally {
             stopForeground(STOP_FOREGROUND_REMOVE)
         }
+    }
+
+    private suspend fun persistRunningCheckpoint(taskId: Long): Boolean {
+        return runCatching {
+            persistQueueSnapshot()
+        }.fold(
+            onSuccess = { true },
+            onFailure = { error ->
+                val message = error.message ?: "Unable to save the running queue state."
+                BatchQueueRuntimeStore.markTaskFailure(
+                    taskId = taskId,
+                    errorMessage = "Task was not run because queue state could not be saved: $message"
+                )
+                BatchQueueRuntimeStore.failProcessing(
+                    "Batch stopped before running task #$taskId because its queue state could not be saved."
+                )
+                runCatching { persistQueueSnapshot() }
+                false
+            }
+        )
+    }
+
+    private suspend fun persistTerminalCheckpoint(failureMessage: String): Boolean {
+        return runCatching {
+            persistQueueSnapshot()
+        }.fold(
+            onSuccess = { true },
+            onFailure = {
+                BatchQueueRuntimeStore.failProcessing(failureMessage)
+                false
+            }
+        )
+    }
+
+    private suspend fun persistQueueSnapshot() {
+        persistenceStore.replaceSnapshot(BatchQueueRuntimeStore.state.value.tasks)
     }
 
     private suspend fun executeTask(task: BatchQueueTask): BatchExecutionOutcome {

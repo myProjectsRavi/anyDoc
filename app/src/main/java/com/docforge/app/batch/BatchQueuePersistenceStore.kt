@@ -35,9 +35,6 @@ internal object BatchQueuePersistenceMapper {
         snapshotAtMillis: Long = System.currentTimeMillis()
     ): List<BatchQueueTaskEntity> {
         return tasks
-            .filter { task ->
-                task.status == BatchTaskStatus.QUEUED || task.status == BatchTaskStatus.RUNNING
-            }
             .mapIndexed { index, task ->
                 BatchQueueTaskEntity(
                     id = task.id,
@@ -46,9 +43,9 @@ internal object BatchQueuePersistenceMapper {
                     inputSummary = task.inputSummary,
                     outputBaseName = task.outputBaseName,
                     status = task.status.name,
-                    outputPath = null,
-                    outputSizeBytes = 0L,
-                    errorMessage = null,
+                    outputPath = task.outputPath,
+                    outputSizeBytes = task.outputSizeBytes ?: 0L,
+                    errorMessage = task.errorMessage,
                     createdAtMillis = snapshotAtMillis + index
                 )
             }

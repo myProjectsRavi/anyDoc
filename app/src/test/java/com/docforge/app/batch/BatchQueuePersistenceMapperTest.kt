@@ -15,19 +15,32 @@ import org.robolectric.annotation.Config
 class BatchQueuePersistenceMapperTest {
 
     @Test
-    fun snapshot_persistsOnlyRecoverableTasks_inQueueOrder() {
+    fun snapshot_persistsTerminalEvidence_inQueueOrder() {
         val queued = task(11L, BatchTaskStatus.QUEUED)
         val running = task(12L, BatchTaskStatus.RUNNING)
-        val completed = task(13L, BatchTaskStatus.SUCCESS)
+        val completed = task(
+            id = 13L,
+            status = BatchTaskStatus.SUCCESS,
+            outputPath = "/documents/output_13.pdf",
+            outputSizeBytes = 4_096L
+        )
+        val failed = task(
+            id = 14L,
+            status = BatchTaskStatus.FAILED,
+            errorMessage = "conversion failed"
+        )
 
         val entities = BatchQueuePersistenceMapper.toEntities(
-            tasks = listOf(queued, running, completed),
+            tasks = listOf(queued, running, completed, failed),
             snapshotAtMillis = 1_000L
         )
 
-        assertEquals(listOf(11L, 12L), entities.map { it.id })
-        assertEquals(listOf(1_000L, 1_001L), entities.map { it.createdAtMillis })
-        assertEquals(listOf("QUEUED", "RUNNING"), entities.map { it.status })
+        assertEquals(listOf(11L, 12L, 13L, 14L), entities.map { it.id })
+        assertEquals(listOf(1_000L, 1_001L, 1_002L, 1_003L), entities.map { it.createdAtMillis })
+        assertEquals(listOf("QUEUED", "RUNNING", "SUCCESS", "FAILED"), entities.map { it.status })
+        assertEquals("/documents/output_13.pdf", entities[2].outputPath)
+        assertEquals(4_096L, entities[2].outputSizeBytes)
+        assertEquals("conversion failed", entities[3].errorMessage)
     }
 
     @Test
@@ -40,6 +53,21 @@ class BatchQueuePersistenceMapperTest {
         assertNull(restored.outputPath)
         assertNull(restored.outputSizeBytes)
         assertTrue(restored.errorMessage.orEmpty().contains("Recovered after app restart"))
+    }
+
+    @Test
+    fun restore_skipsTerminalRows_butKeepsRecoverableWork() {
+        val restored = BatchQueuePersistenceMapper.fromEntities(
+            listOf(
+                entity(id = 51L, status = "SUCCESS"),
+                entity(id = 52L, status = "FAILED"),
+                entity(id = 53L, status = "CANCELED"),
+                entity(id = 54L, status = "QUEUED")
+            )
+        )
+
+        assertEquals(listOf(54L), restored.map { it.id })
+        assertEquals(BatchTaskStatus.QUEUED, restored.single().status)
     }
 
     @Test
@@ -67,13 +95,22 @@ class BatchQueuePersistenceMapperTest {
         assertTrue(BatchQueuePersistenceMapper.fromEntities(malformed).isEmpty())
     }
 
-    private fun task(id: Long, status: BatchTaskStatus) = BatchQueueTask(
+    private fun task(
+        id: Long,
+        status: BatchTaskStatus,
+        outputPath: String? = null,
+        outputSizeBytes: Long? = null,
+        errorMessage: String? = null
+    ) = BatchQueueTask(
         id = id,
         type = BatchTaskType.PDF_COMPRESS,
         inputUris = listOf(Uri.parse("content://provider/$id.pdf")),
         inputSummary = "input-$id.pdf",
         outputBaseName = "output_$id",
-        status = status
+        status = status,
+        outputPath = outputPath,
+        outputSizeBytes = outputSizeBytes,
+        errorMessage = errorMessage
     )
 
     private fun entity(
