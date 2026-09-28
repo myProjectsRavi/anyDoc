@@ -1,5 +1,12 @@
 # AnyDoc Continuous Improvement Backlog
 
+## Active Cycle 006
+
+### Epic E006 — Failure-safe PDF page-image publication
+
+#### Feature F008 — Transactional page-image and ZIP outputs
+- [IN_PROGRESS / P1] `US-R006-P1-01A` — Stage non-ZIP page-image outputs as an all-or-nothing set and stage ZIP output without publishing intermediate page images. Direct final writes currently risk partial user-visible results on failure/cancellation.
+
 ## Closed Cycle 005
 
 ### Epic E005 — Heap-safe PDF page-image export
