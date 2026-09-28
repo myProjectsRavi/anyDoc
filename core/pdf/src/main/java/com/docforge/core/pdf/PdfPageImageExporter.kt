@@ -17,6 +17,7 @@ import java.io.FileOutputStream
 import kotlin.coroutines.coroutineContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.math.sqrt
 
 enum class PdfPageImageFormat {
     JPG,
@@ -59,13 +60,22 @@ class PdfPageImageExporter(
 
                     val files = mutableListOf<File>()
                     var totalBytes = 0L
+                    val bitmapBudgetBytes = pdfPageImageBitmapBudgetBytes(Runtime.getRuntime().maxMemory())
 
                     repeat(renderer.pageCount) { pageIndex ->
                         checkCancelled()
                         renderer.openPage(pageIndex).use { page ->
-                            val width = (page.width * scaleFactor).toInt().coerceAtLeast(1)
-                            val height = (page.height * scaleFactor).toInt().coerceAtLeast(1)
-                            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                            val rasterSize = boundedPdfPageImageRasterSize(
+                                pageWidthPoints = page.width,
+                                pageHeightPoints = page.height,
+                                scaleFactor = scaleFactor,
+                                maxBitmapBytes = bitmapBudgetBytes
+                            )
+                            val bitmap = Bitmap.createBitmap(
+                                rasterSize.width,
+                                rasterSize.height,
+                                Bitmap.Config.ARGB_8888
+                            )
                             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
 
                             val ext = when (format) {
@@ -142,4 +152,59 @@ private fun PdfPageImageFormat.toBitmapCompressFormat(): Bitmap.CompressFormat {
             }
         }
     }
+}
+
+
+private const val PDF_PAGE_IMAGE_BYTES_PER_PIXEL = 4L
+private const val PDF_PAGE_IMAGE_MIN_BITMAP_BUDGET_BYTES = 8L * 1024L * 1024L
+private const val PDF_PAGE_IMAGE_MAX_BITMAP_BUDGET_BYTES = 32L * 1024L * 1024L
+
+internal fun pdfPageImageBitmapBudgetBytes(maxHeapBytes: Long): Long {
+    val heapAwareBudget = (maxHeapBytes / 8L).coerceAtLeast(1L)
+    return heapAwareBudget.coerceIn(
+        PDF_PAGE_IMAGE_MIN_BITMAP_BUDGET_BYTES,
+        PDF_PAGE_IMAGE_MAX_BITMAP_BUDGET_BYTES
+    )
+}
+
+internal fun boundedPdfPageImageRasterSize(
+    pageWidthPoints: Int,
+    pageHeightPoints: Int,
+    scaleFactor: Float,
+    maxBitmapBytes: Long
+): PdfRasterSize {
+    require(pageWidthPoints > 0 && pageHeightPoints > 0) { "PDF page dimensions must be positive." }
+    require(scaleFactor.isFinite() && scaleFactor > 0f) { "Scale factor must be finite and positive." }
+    require(maxBitmapBytes >= PDF_PAGE_IMAGE_BYTES_PER_PIXEL) { "Bitmap budget is too small." }
+
+    val desiredWidth = (pageWidthPoints.toDouble() * scaleFactor.toDouble())
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+        .coerceAtLeast(1)
+    val desiredHeight = (pageHeightPoints.toDouble() * scaleFactor.toDouble())
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+        .coerceAtLeast(1)
+
+    val maxPixels = (maxBitmapBytes / PDF_PAGE_IMAGE_BYTES_PER_PIXEL).coerceAtLeast(1L)
+    val desiredPixels = desiredWidth.toDouble() * desiredHeight.toDouble()
+    if (desiredPixels <= maxPixels.toDouble()) {
+        return PdfRasterSize(desiredWidth, desiredHeight)
+    }
+
+    val downscale = sqrt(maxPixels.toDouble() / desiredPixels)
+    var width = (desiredWidth.toDouble() * downscale).toInt().coerceAtLeast(1)
+    var height = (desiredHeight.toDouble() * downscale).toInt().coerceAtLeast(1)
+
+    while (width.toLong() * height.toLong() > maxPixels) {
+        if (width >= height && width > 1) {
+            width -= 1
+        } else if (height > 1) {
+            height -= 1
+        } else {
+            break
+        }
+    }
+
+    return PdfRasterSize(width, height)
 }
