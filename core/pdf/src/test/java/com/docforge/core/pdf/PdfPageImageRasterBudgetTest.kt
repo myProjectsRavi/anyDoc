@@ -61,6 +61,21 @@ class PdfPageImageRasterBudgetTest {
     }
 
     @Test
+    fun extremeAspectRatio_isBoundedWithoutIterativePixelWalkdown() {
+        val budget = 8L * 1024L * 1024L
+        val size = boundedPdfPageImageRasterSize(
+            pageWidthPoints = Int.MAX_VALUE,
+            pageHeightPoints = 1,
+            scaleFactor = 2.5f,
+            maxBitmapBytes = budget
+        )
+
+        assertTrue(size.width > 0)
+        assertTrue(size.height > 0)
+        assertTrue(size.width.toLong() * size.height.toLong() * 4L <= budget)
+    }
+
+    @Test
     fun invalidScaleFactors_areRejectedBeforeBitmapAllocation() {
         assertThrows(IllegalArgumentException::class.java) {
             boundedPdfPageImageRasterSize(595, 842, Float.NaN, 8L * 1024L * 1024L)
