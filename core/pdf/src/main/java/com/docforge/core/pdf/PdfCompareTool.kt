@@ -78,7 +78,8 @@ class PdfCompareTool(
                                     extension = "pdf"
                                 ) { stagedFile ->
                                     val diffPcts = mutableListOf<Float>()
-                                    android.graphics.pdf.PdfDocument().use { pdfDoc ->
+                                    val pdfDoc = android.graphics.pdf.PdfDocument()
+                                    try {
                                         for (pageIndex in 0 until pageCount) {
                                             checkCancelled()
                                             var leftBmp: Bitmap? = null
@@ -108,6 +109,8 @@ class PdfCompareTool(
                                         }
 
                                         FileOutputStream(stagedFile).use { pdfDoc.writeTo(it) }
+                                    } finally {
+                                        pdfDoc.close()
                                     }
                                     diffPcts.toList()
                                 }
