@@ -45,6 +45,21 @@ class PdfCompressorRasterBudgetTest {
     }
 
     @Test
+    fun extremeAspectRatio_isBoundedWithoutIterativePixelWalkdown() {
+        val budget = 8L * 1024L * 1024L
+        val size = boundedPdfRasterSize(
+            pageWidthPoints = Int.MAX_VALUE,
+            pageHeightPoints = 1,
+            renderDpi = 150,
+            maxBitmapBytes = budget
+        )
+
+        assertTrue(size.width > 0)
+        assertTrue(size.height > 0)
+        assertTrue(size.width.toLong() * size.height.toLong() * 4L <= budget)
+    }
+
+    @Test
     fun pathologicalPageDimensions_doNotOverflowBudgetArithmetic() {
         val budget = 8L * 1024L * 1024L
         val size = boundedPdfRasterSize(
