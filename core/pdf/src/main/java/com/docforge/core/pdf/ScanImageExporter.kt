@@ -9,8 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.OutputStream
 import kotlin.coroutines.coroutineContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -48,53 +48,95 @@ class ScanImageExporter(
         val base = outputBaseName.ifBlank { "scan_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
-        val outputFiles = mutableListOf<File>()
-        var totalBytes = 0L
+        val extension = if (format == ScanImageFormat.JPG) "jpg" else "png"
 
-        imageUris.forEachIndexed { index, uri ->
-            checkCancelled()
-            val bitmap = decodeBitmap(uri) ?: error("Failed to decode page ${index + 1}: $uri")
-            val extension = if (format == ScanImageFormat.JPG) "jpg" else "png"
-            val outputFile = resolveNonConflictingFile(outputDir, "${base}_p${index + 1}", extension)
-
-            FileOutputStream(outputFile).use { stream ->
-                val success = bitmap.compress(
-                    if (format == ScanImageFormat.JPG) Bitmap.CompressFormat.JPEG else Bitmap.CompressFormat.PNG,
-                    jpegQuality.coerceIn(10, 100),
-                    stream
-                )
-                require(success) { "Failed to write page ${index + 1}." }
-            }
-            bitmap.recycle()
-
-            outputFiles += outputFile
-            totalBytes += outputFile.length()
-        }
-
-        val zipFile = if (zipBundle) {
-            val zip = resolveNonConflictingFile(outputDir, "${base}_${format.name.lowercase()}_bundle", "zip")
-            ZipOutputStream(FileOutputStream(zip)).use { zipOut ->
-                outputFiles.forEach { imageFile ->
-                    checkCancelled()
-                    FileInputStream(imageFile).use { input ->
-                        zipOut.putNextEntry(ZipEntry(imageFile.name))
-                        input.copyTo(zipOut, bufferSize = 8 * 1024)
-                        zipOut.closeEntry()
+        if (zipBundle) {
+            val stagedZip = withStagedOutputFile(
+                directory = outputDir,
+                baseName = "${base}_${format.name.lowercase()}_bundle",
+                extension = "zip"
+            ) { stagedFile ->
+                ZipOutputStream(FileOutputStream(stagedFile)).use { zipOut ->
+                    imageUris.forEachIndexed { index, uri ->
+                        checkCancelled()
+                        zipOut.putNextEntry(ZipEntry("${base}_p${index + 1}.$extension"))
+                        try {
+                            encodeScanPage(
+                                uri = uri,
+                                pageIndex = index,
+                                format = format,
+                                jpegQuality = jpegQuality,
+                                output = zipOut
+                            )
+                        } finally {
+                            zipOut.closeEntry()
+                        }
                     }
                 }
+                Unit
             }
-            // Delete individual files — ZIP contains them all
-            outputFiles.forEach { it.delete() }
-            zip
-        } else {
-            null
+
+            return@withContext ScanImageExportResult(
+                outputFiles = emptyList(),
+                outputSizeBytes = stagedZip.outputFile.length(),
+                bundleZipFile = stagedZip.outputFile
+            )
         }
 
-        ScanImageExportResult(
-            outputFiles = if (zipFile != null) emptyList() else outputFiles,
-            outputSizeBytes = zipFile?.length() ?: totalBytes,
-            bundleZipFile = zipFile
+        val pageRequests = imageUris.mapIndexed { index, uri ->
+            StagedOutputRequest(
+                baseName = "${base}_p${index + 1}",
+                extension = extension
+            ) { stagedFile ->
+                checkCancelled()
+                FileOutputStream(stagedFile).use { stream ->
+                    encodeScanPage(
+                        uri = uri,
+                        pageIndex = index,
+                        format = format,
+                        jpegQuality = jpegQuality,
+                        output = stream
+                    )
+                }
+                Unit
+            }
+        }
+
+        val stagedPages = withStagedOutputFiles(
+            directory = outputDir,
+            requests = pageRequests
         )
+        val outputFiles = stagedPages.map { it.outputFile }
+
+        ScanImageExportResult(
+            outputFiles = outputFiles,
+            outputSizeBytes = outputFiles.sumOf(File::length),
+            bundleZipFile = null
+        )
+    }
+
+    private fun encodeScanPage(
+        uri: Uri,
+        pageIndex: Int,
+        format: ScanImageFormat,
+        jpegQuality: Int,
+        output: OutputStream
+    ) {
+        val bitmap = decodeBitmap(uri) ?: error("Failed to decode page ${pageIndex + 1}: $uri")
+        try {
+            val success = bitmap.compress(
+                if (format == ScanImageFormat.JPG) {
+                    Bitmap.CompressFormat.JPEG
+                } else {
+                    Bitmap.CompressFormat.PNG
+                },
+                jpegQuality.coerceIn(10, 100),
+                output
+            )
+            require(success) { "Failed to write page ${pageIndex + 1}." }
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     private fun decodeBitmap(uri: Uri): Bitmap? {
