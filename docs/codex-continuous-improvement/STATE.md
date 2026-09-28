@@ -3,17 +3,17 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-27_cycle-002`  
+**Current report:** `2026-09-28_cycle-003`  
 **Report status:** ACTIVE / INCOMPLETE  
-**Cycle:** 002  
-**Current Epic:** `E002` — Background execution reliability  
-**Current Feature:** `F004` — Fail-safe batch foreground-service lifecycle  
-**Current User Story:** `US-R002-P1-01B` — Add durable persisted queue recovery after process death  
-**Hourly run counter:** 14  
+**Cycle:** 003  
+**Current Epic:** `E003` — Large-input and resource safety  
+**Current Feature:** `F005` — Media temporary-space preflight  
+**Current User Story:** `US-R003-P2-01A` — Preflight decoded PCM cache expansion before audio transcoding  
+**Hourly run counter:** 15  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
 **Last completed full audit:** not yet complete; initial Cycle 001 audit is active  
-**State checkpoint timestamp:** 2026-09-27 UTC, Cycle 002 run 014
+**State checkpoint timestamp:** 2026-09-28 UTC, Cycle 003 run 001
 
 ## Git checkpoint
 
@@ -30,7 +30,9 @@
 
 **Cycle 001: 8 / 8 mandatory items COMPLETE**
 
-**Cycle 002: 1 / 2 scoped mandatory items COMPLETE**
+**Cycle 002: 2 / 2 scoped mandatory items COMPLETE**
+
+**Cycle 003: 0 / 1 currently scoped mandatory items COMPLETE**
 
 Items are marked COMPLETE only when their required evidence is present. Compile-only success is not treated as lifecycle/device evidence.
 
@@ -66,6 +68,18 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 
 
+
+
+## Cycle 003 run 001
+
+- Reconciled Cycle 002 closure after a message-delivery timeout left canonical STATE/report files stale even though code/CI completed.
+- Verified Cycle 002 final code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed run #163 / API `36360973174`: core PDF tests, app tests, debug APK, unsigned release/R8, and lint all succeeded.
+- Opened Cycle 003 only after Cycle 002 technical completion was verified.
+- Selected one bounded highest-priority resource-safety story: `US-R003-P2-01A`.
+- Confirmed `AudioFormatConverter` writes a complete decoded PCM temp file under `cacheDir` before AAC/WAV/MP3/FLAC transcode paths, with no decoded-size/free-space preflight.
+- Planned guard uses known duration/sample-rate/channel metadata, 16-bit PCM semantics already enforced by the decoder, saturating arithmetic, and a conservative cache reserve.
+- Converter module currently has no unit-test lane; this story will add JUnit-only coverage and an authoritative CI step.
+- Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Cycle 002 run 014
 
@@ -364,8 +378,8 @@ Docs:
 
 ## Next exact action
 
-1. Inspect the authoritative successor CI for exact code HEAD `367c3785a8bae18fd2324ae673464706f316e7da` (run #158/#159 or a justified successor).
-2. If app tests still fail, diagnose and fix the exact failure inside `US-R002-P1-01B`; do not advance scope.
-3. Once the full required CI gate is green, implement the next bounded slice: persist foreground-service RUNNING and terminal transitions, retaining terminal Room rows as durable completion evidence while restoring only QUEUED/RUNNING work.
-4. Add regression coverage for terminal snapshot persistence and terminal-row non-restoration.
+1. Implement the PCM decoded-size/cache-space preflight in `AudioFormatConverter`.
+2. Add converter-module JUnit tests for representative stereo PCM expansion, invalid/unknown metadata handling, and Long overflow saturation.
+3. Add `:feature:converter:testDebugUnitTest` to continuous CI.
+4. Inspect/fix the exact-head CI result before marking `US-R003-P2-01A` complete.
 5. Keep `main` untouched and draft PR #1 unmerged.
