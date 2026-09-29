@@ -3,12 +3,12 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-29_cycle-010`  
+**Current report:** `2026-09-29_cycle-011`  
 **Report status:** ACTIVE / INCOMPLETE  
-**Cycle:** 010  
-**Current Epic:** `E010` — Failure-safe image-to-PDF publication  
-**Current Feature:** `F012` — Transactional PdfCreator output  
-**Current User Story:** `US-R010-P1-01A` — Stage PdfCreator final PDF and guarantee cleanup (ACTIVE)  
+**Cycle:** 011  
+**Current Epic:** `E011` — Failure-safe batch image conversion  
+**Current Feature:** `F013` — Atomic ImageFormatConverter batch publication  
+**Current User Story:** `US-R011-P1-01A` — Stage ImageFormatConverter batch outputs and guarantee bitmap cleanup (ACTIVE)  
 **Hourly run counter:** 19  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -59,11 +59,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 010 is ACTIVE. Make `PdfCreator` image-to-PDF publication transactional and failure/cancellation-safe.
+**Primary:** Cycle 011 is ACTIVE. Make `ImageFormatConverter.convertBatch` publication atomic and failure/cancellation-safe.
 
 **Completed current subtask:** `US-R008-P1-01A` stages the compare PDF before publication and guarantees compare document/page/bitmap cleanup across cancellation/failure.
 
-**Next exact action:** route `PdfCreator` final output through `withStagedOutputFile`, guarantee `PdfDocument` closure and per-image bitmap recycling across decode/draw/write failure or cancellation, add focused JVM publication-safety tests, then validate the exact code/test candidate in authoritative PR CI.
+**Next exact action:** route `ImageFormatConverter.convertBatch` through `withStagedOutputFiles`, guarantee source/scaled bitmap recycling across decode/scale/encode failure or cancellation, add focused later-item-failure publication-safety tests, then validate the exact code/test candidate in authoritative PR CI.
 
 
 ## Cycle 002 run 001
