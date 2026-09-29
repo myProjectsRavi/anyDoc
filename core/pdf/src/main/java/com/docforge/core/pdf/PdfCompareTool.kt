@@ -167,7 +167,7 @@ class PdfCompareTool(
         output.eraseColor(Color.WHITE)
 
         var diffPixels = 0L
-        val totalPixels = w.toLong() * h.toLong()
+        val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
 
         for (y in 0 until h) {
             for (x in 0 until w) {
