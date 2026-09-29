@@ -3,12 +3,12 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-28_cycle-008`  
-**Report status:** COMPLETE  
-**Cycle:** 008  
-**Current Epic:** `E008` — Failure-safe PDF comparison output  
-**Current Feature:** `F010` — Transactional PDF compare publication  
-**Current User Story:** `US-R008-P1-01A` — Stage PdfCompareTool final PDF publication (COMPLETE)  
+**Current report:** `2026-09-29_cycle-009`  
+**Report status:** ACTIVE / INCOMPLETE  
+**Cycle:** 009  
+**Current Epic:** `E009` — Heap-safe PDF comparison  
+**Current Feature:** `F011` — Combined comparison raster memory budget  
+**Current User Story:** `US-R009-P2-01A` — Bound PdfCompareTool combined raster working set (ACTIVE)  
 **Hourly run counter:** 19  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -59,11 +59,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 008 is complete; continue with the next highest-priority confirmed bounded defect only in the next sequenced cycle.
+**Primary:** Cycle 009 is ACTIVE. Bound `PdfCompareTool`'s simultaneously live left/right/diff ARGB_8888 raster working set with overflow-safe proportional sizing.
 
 **Completed current subtask:** `US-R008-P1-01A` stages the compare PDF before publication and guarantees compare document/page/bitmap cleanup across cancellation/failure.
 
-**Next candidate for a future cycle:** `PdfCompareTool` simultaneously holds left/right rendered ARGB pages plus a diff bitmap at caller scale up to 4× with no heap-aware ceiling; bound the combined raster working set before returning to broader P2 audit.
+**Next exact action:** implement a compare-level aggregate raster budget before `Bitmap.createBitmap`, preserve ordinary requested dimensions, use overflow-safe arithmetic, convert diff pixel counts/totals to `Long`, add focused JVM regression tests, then validate the exact code/test candidate in authoritative PR CI.
 
 
 ## Cycle 002 run 001
