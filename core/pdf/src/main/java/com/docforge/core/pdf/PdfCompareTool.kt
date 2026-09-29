@@ -17,7 +17,9 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.sqrt
 
 data class PdfCompareResult(
     val outputFile: File,
@@ -32,6 +34,64 @@ data class PdfCompareResult(
  *
  * Sprint 4 feature — PDF Compare tool.
  */
+internal data class CompareRasterSize(val width: Int, val height: Int)
+
+internal object CompareRasterBudget {
+    private const val BYTES_PER_PIXEL = 4L
+    private const val MIN_BUDGET_BYTES = 12L * 1024L * 1024L
+    private const val MAX_BUDGET_BYTES = 48L * 1024L * 1024L
+
+    fun heapAwareBudgetBytes(maxHeapBytes: Long): Long =
+        (maxHeapBytes / 8L).coerceIn(MIN_BUDGET_BYTES, MAX_BUDGET_BYTES)
+
+    fun fit(
+        left: CompareRasterSize?,
+        right: CompareRasterSize?,
+        budgetBytes: Long
+    ): Pair<CompareRasterSize?, CompareRasterSize?> {
+        require(budgetBytes >= BYTES_PER_PIXEL) { "Raster budget is too small." }
+        val requestedBytes = workingSetBytes(left, right)
+        if (requestedBytes <= budgetBytes) return left to right
+
+        val scale = sqrt(budgetBytes.toDouble() / requestedBytes.toDouble())
+        fun scaled(size: CompareRasterSize?): CompareRasterSize? = size?.let {
+            CompareRasterSize(
+                width = floor(it.width * scale).toInt().coerceAtLeast(1),
+                height = floor(it.height * scale).toInt().coerceAtLeast(1)
+            )
+        }
+
+        var fittedLeft = scaled(left)
+        var fittedRight = scaled(right)
+        while (workingSetBytes(fittedLeft, fittedRight) > budgetBytes) {
+            val candidate = listOfNotNull(fittedLeft, fittedRight).maxByOrNull { it.width.toLong() * it.height }
+                ?: break
+            if (candidate.width <= 1 && candidate.height <= 1) break
+            val reduced = if (candidate.width >= candidate.height && candidate.width > 1) {
+                candidate.copy(width = candidate.width - 1)
+            } else {
+                candidate.copy(height = (candidate.height - 1).coerceAtLeast(1))
+            }
+            if (fittedLeft === candidate) fittedLeft = reduced else fittedRight = reduced
+        }
+        return fittedLeft to fittedRight
+    }
+
+    fun workingSetBytes(left: CompareRasterSize?, right: CompareRasterSize?): Long {
+        fun pixels(size: CompareRasterSize?): Long = size?.let {
+            Math.multiplyExact(it.width.toLong(), it.height.toLong())
+        } ?: 0L
+        val leftPixels = pixels(left)
+        val rightPixels = pixels(right)
+        val diffPixels = when {
+            left == null -> rightPixels
+            right == null -> leftPixels
+            else -> Math.multiplyExact(max(left.width, right.width).toLong(), max(left.height, right.height).toLong())
+        }
+        return Math.multiplyExact(Math.addExact(Math.addExact(leftPixels, rightPixels), diffPixels), BYTES_PER_PIXEL)
+    }
+}
+
 class PdfCompareTool(
     private val context: Context
 ) {
@@ -86,8 +146,15 @@ class PdfCompareTool(
                                             var rightBmp: Bitmap? = null
                                             var diffBmp: Bitmap? = null
                                             try {
-                                                leftBmp = renderPage(leftRenderer, pageIndex, scale)
-                                                rightBmp = renderPage(rightRenderer, pageIndex, scale)
+                                                val requestedLeft = requestedSize(leftRenderer, pageIndex, scale)
+                                                val requestedRight = requestedSize(rightRenderer, pageIndex, scale)
+                                                val (leftSize, rightSize) = CompareRasterBudget.fit(
+                                                    left = requestedLeft,
+                                                    right = requestedRight,
+                                                    budgetBytes = CompareRasterBudget.heapAwareBudgetBytes(Runtime.getRuntime().maxMemory())
+                                                )
+                                                leftBmp = renderPage(leftRenderer, pageIndex, leftSize)
+                                                rightBmp = renderPage(rightRenderer, pageIndex, rightSize)
 
                                                 val diff = diffBitmaps(leftBmp, rightBmp, threshold)
                                                 diffBmp = diff.first
@@ -129,12 +196,20 @@ class PdfCompareTool(
         }
     }
 
-    private fun renderPage(renderer: PdfRenderer, pageIndex: Int, scale: Float): Bitmap? {
+    private fun requestedSize(renderer: PdfRenderer, pageIndex: Int, scale: Float): CompareRasterSize? {
         if (pageIndex >= renderer.pageCount) return null
         renderer.openPage(pageIndex).use { page ->
-            val w = (page.width * scale).toInt().coerceAtLeast(1)
-            val h = (page.height * scale).toInt().coerceAtLeast(1)
-            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            return CompareRasterSize(
+                width = (page.width * scale).toInt().coerceAtLeast(1),
+                height = (page.height * scale).toInt().coerceAtLeast(1)
+            )
+        }
+    }
+
+    private fun renderPage(renderer: PdfRenderer, pageIndex: Int, size: CompareRasterSize?): Bitmap? {
+        if (size == null || pageIndex >= renderer.pageCount) return null
+        renderer.openPage(pageIndex).use { page ->
+            val bitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
             return try {
                 bitmap.eraseColor(Color.WHITE)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
