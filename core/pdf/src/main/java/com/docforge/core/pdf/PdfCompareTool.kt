@@ -63,16 +63,28 @@ internal object CompareRasterBudget {
 
         var fittedLeft = scaled(left)
         var fittedRight = scaled(right)
-        while (workingSetBytes(fittedLeft, fittedRight) > budgetBytes) {
-            val candidate = listOfNotNull(fittedLeft, fittedRight).maxByOrNull { it.width.toLong() * it.height }
-                ?: break
-            if (candidate.width <= 1 && candidate.height <= 1) break
-            val reduced = if (candidate.width >= candidate.height && candidate.width > 1) {
-                candidate.copy(width = candidate.width - 1)
+        if (workingSetBytes(fittedLeft, fittedRight) <= budgetBytes) return fittedLeft to fittedRight
+
+        fun scaledAt(factor: Double, size: CompareRasterSize?): CompareRasterSize? = size?.let {
+            CompareRasterSize(
+                floor(it.width * factor).toInt().coerceAtLeast(1),
+                floor(it.height * factor).toInt().coerceAtLeast(1)
+            )
+        }
+        require(workingSetBytes(scaledAt(0.0, left), scaledAt(0.0, right)) <= budgetBytes)
+        var low = 0.0
+        var high = scale
+        repeat(48) {
+            val mid = (low + high) / 2.0
+            val nextLeft = scaledAt(mid, left)
+            val nextRight = scaledAt(mid, right)
+            if (workingSetBytes(nextLeft, nextRight) <= budgetBytes) {
+                low = mid
+                fittedLeft = nextLeft
+                fittedRight = nextRight
             } else {
-                candidate.copy(height = (candidate.height - 1).coerceAtLeast(1))
+                high = mid
             }
-            if (fittedLeft === candidate) fittedLeft = reduced else fittedRight = reduced
         }
         return fittedLeft to fittedRight
     }
