@@ -1,46 +1,37 @@
 # Current Report
 
-**ID:** `2026-09-28_cycle-008`  
-**Report:** `reports/2026-09-28_cycle-008.md`  
+**ID:** `2026-09-29_cycle-009`  
+**Report:** `reports/2026-09-29_cycle-009.md`  
 **Status:** COMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Baseline main:** `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`  
-**Epic:** `E008` — Failure-safe PDF comparison output  
-**Feature:** `F010` — Transactional PDF compare publication  
-**Current User Story:** `US-R008-P1-01A` — Stage PdfCompareTool final PDF publication
+**Epic:** `E009` — Heap-safe PDF comparison  
+**Feature:** `F011` — Combined comparison raster memory budget  
+**Current User Story:** `US-R009-P2-01A` — Bound PdfCompareTool combined raster working set
 
 ## Implementation
 
-- Initial production refactor: `5bd0edea9d17ad835a1554d64c0cb5e11006885d`.
-- Regression tests: `a4746aac8a7523b9afd77803631e6677dc5460f2`.
-- Final compile/resource fix and exact candidate: `08cf9090c32e773b595b74102508fd4b8800ab01`.
-- Compare output now uses `withStagedOutputFile` and is published only after the complete PDF has been written.
-- PdfDocument closes in `finally`; PdfRenderer pages use structured close; per-page comparison bitmaps recycle in `finally`.
-- Added failure/cancellation publication regression tests.
+- Overflow-safe compare pixel accounting uses `Long` and checked multiplication.
+- PdfCompareTool now budgets the simultaneously live left, right, and diff ARGB_8888 raster working set before allocation.
+- Oversized comparisons are proportionally downscaled while ordinary requested dimensions are preserved.
+- Missing-page comparisons account for the copied diff bitmap.
+- Same-story correction replaced a potentially large decrement loop with bounded binary-search sizing.
 
 ## Validation
 
-Initial run #227 / API `36427852795`: FAILED during core PDF compilation because Android PdfDocument is not Closeable and cannot use Kotlin `use`.
+Exact code/test candidate before the correction: `8b882642bacb1a82681432c8411d33973a179f07`; authoritative CI #240 / API `36591153899`: SUCCESS.
 
-GitHub Actions PR run #229 / API `36428222433`: **SUCCESS** on exact repaired candidate `08cf9090c32e773b595b74102508fd4b8800ab01`.
+Correction commit and exact validated HEAD: `6aaf834c6c812c2c125f66f3e4bc1cb484c3f050`; authoritative AnyDoc Continuous CI #242 / API `36597862459`: SUCCESS.
 
-Passed:
-- core PDF unit tests
-- converter unit tests
-- app lifecycle/unit tests
-- debug APK assembly
-- unsigned release/R8 assembly
-- Android lint
-
-No emulator, benchmark, or physical-device result is claimed.
+Focused regression coverage verifies ordinary dimensions, opposing pathological aspect ratios, and missing-page working-set accounting. No emulator, benchmark, or physical-device evidence is claimed.
 
 ## Completion
 
-`US-R008-P1-01A`: COMPLETE.  
-Cycle 008: **1/1 COMPLETE**.
+`US-R009-P2-01A`: COMPLETE.  
+Cycle 009: **1/1 COMPLETE**.
 
 Draft PR #1 remains open/draft/unmerged. `main` remains untouched.
 
 ## Next exact action
 
-Create Cycle 009 durably before code. Highest-priority confirmed P2 follow-up: bound PdfCompareTool's combined left/right/diff bitmap working set with a heap-aware ceiling.
+Continue the evidence-backed P2 audit. Before any new production mutation, durably open the next cycle and select the highest-priority remaining actionable defect from current source evidence.
