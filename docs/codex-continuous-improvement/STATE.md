@@ -3,12 +3,12 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-29_cycle-009`  
+**Current report:** `2026-09-29_cycle-010`  
 **Report status:** ACTIVE / INCOMPLETE  
-**Cycle:** 009  
-**Current Epic:** `E009` — Heap-safe PDF comparison  
-**Current Feature:** `F011` — Combined comparison raster memory budget  
-**Current User Story:** `US-R009-P2-01A` — Bound PdfCompareTool combined raster working set (ACTIVE)  
+**Cycle:** 010  
+**Current Epic:** `E010` — Failure-safe image-to-PDF publication  
+**Current Feature:** `F012` — Transactional PdfCreator output  
+**Current User Story:** `US-R010-P1-01A` — Stage PdfCreator final PDF and guarantee cleanup (ACTIVE)  
 **Hourly run counter:** 19  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -59,11 +59,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 009 is ACTIVE. Bound `PdfCompareTool`'s simultaneously live left/right/diff ARGB_8888 raster working set with overflow-safe proportional sizing.
+**Primary:** Cycle 010 is ACTIVE. Make `PdfCreator` image-to-PDF publication transactional and failure/cancellation-safe.
 
 **Completed current subtask:** `US-R008-P1-01A` stages the compare PDF before publication and guarantees compare document/page/bitmap cleanup across cancellation/failure.
 
-**Next exact action:** implement a compare-level aggregate raster budget before `Bitmap.createBitmap`, preserve ordinary requested dimensions, use overflow-safe arithmetic, convert diff pixel counts/totals to `Long`, add focused JVM regression tests, then validate the exact code/test candidate in authoritative PR CI.
+**Next exact action:** route `PdfCreator` final output through `withStagedOutputFile`, guarantee `PdfDocument` closure and per-image bitmap recycling across decode/draw/write failure or cancellation, add focused JVM publication-safety tests, then validate the exact code/test candidate in authoritative PR CI.
 
 
 ## Cycle 002 run 001
