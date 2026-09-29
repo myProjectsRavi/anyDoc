@@ -3,6 +3,7 @@ package com.docforge.core.pdf
 import java.nio.file.Files
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -59,4 +60,37 @@ class PdfComparePublicationSafetyTest {
             directory.deleteRecursively()
         }
     }
+
+    @Test
+    fun compareRasterBudget_preservesOrdinaryRequestedDimensions() {
+        val left = CompareRasterSize(900, 1200)
+        val right = CompareRasterSize(900, 1200)
+        val budget = 48L * 1024L * 1024L
+        val fitted = CompareRasterBudget.fit(left, right, budget)
+        assertEquals(left, fitted.first)
+        assertEquals(right, fitted.second)
+        assertTrue(CompareRasterBudget.workingSetBytes(fitted.first, fitted.second) <= budget)
+    }
+
+    @Test
+    fun compareRasterBudget_boundsCombinedOpposingAspectRasters() {
+        val left = CompareRasterSize(16000, 1000)
+        val right = CompareRasterSize(1000, 16000)
+        val budget = 12L * 1024L * 1024L
+        val fitted = CompareRasterBudget.fit(left, right, budget)
+        assertTrue(CompareRasterBudget.workingSetBytes(fitted.first, fitted.second) <= budget)
+        assertTrue(fitted.first!!.width < left.width)
+        assertTrue(fitted.second!!.height < right.height)
+    }
+
+    @Test
+    fun compareRasterBudget_missingPageAccountsForDiffCopy() {
+        val right = CompareRasterSize(5000, 5000)
+        val budget = 12L * 1024L * 1024L
+        val fitted = CompareRasterBudget.fit(null, right, budget)
+        assertEquals(null, fitted.first)
+        assertTrue(CompareRasterBudget.workingSetBytes(fitted.first, fitted.second) <= budget)
+        assertTrue(fitted.second!!.width < right.width)
+    }
+
 }
