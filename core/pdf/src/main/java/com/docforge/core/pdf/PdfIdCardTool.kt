@@ -32,17 +32,18 @@ class PdfIdCardTool(
     ): PdfIdCardResult = withContext(Dispatchers.IO) {
         val front = decodeBitmapConstrained(context, frontImageUri, maxLongEdge = 1800)
             ?: error("Unable to decode front image.")
-        val back = decodeBitmapConstrained(context, backImageUri, maxLongEdge = 1800)
-            ?: error("Unable to decode back image.")
+        var back: Bitmap? = null
 
         try {
+            back = decodeBitmapConstrained(context, backImageUri, maxLongEdge = 1800)
+                ?: error("Unable to decode back image.")
+
             val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
                 context = context,
                 bucket = DocForgeOutputBucket.DOCUMENTS
             )
             val sanitized = outputName.ifBlank { "id_card_sheet_${System.currentTimeMillis()}" }
                 .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-            val output = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
             val dimensions = when (pageSize) {
                 PdfPageSize.LETTER -> 612 to 792
@@ -51,50 +52,64 @@ class PdfIdCardTool(
                 PdfPageSize.A4 -> 595 to 842
             }
 
-            val pdf = android.graphics.pdf.PdfDocument()
-            val page = pdf.startPage(
-                android.graphics.pdf.PdfDocument.PageInfo.Builder(
-                    dimensions.first,
-                    dimensions.second,
-                    1
-                ).create()
-            )
+            val stagedResult = withStagedOutputFile(
+                directory = outputDir,
+                baseName = sanitized,
+                extension = "pdf"
+            ) { stagedFile ->
+                val pdf = android.graphics.pdf.PdfDocument()
+                try {
+                    val page = pdf.startPage(
+                        android.graphics.pdf.PdfDocument.PageInfo.Builder(
+                            dimensions.first,
+                            dimensions.second,
+                            1
+                        ).create()
+                    )
 
-            val canvas = page.canvas
-            canvas.drawColor(Color.WHITE)
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-            val margin = 24
-            val gap = 18
-            val halfHeight = (dimensions.second - (margin * 2) - gap) / 2
-            val usableWidth = dimensions.first - (margin * 2)
+                    val canvas = page.canvas
+                    canvas.drawColor(Color.WHITE)
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+                    val margin = 24
+                    val gap = 18
+                    val halfHeight = (dimensions.second - (margin * 2) - gap) / 2
+                    val usableWidth = dimensions.first - (margin * 2)
 
-            val topRect = Rect(margin, margin, margin + usableWidth, margin + halfHeight)
-            val bottomTop = margin + halfHeight + gap
-            val bottomRect = Rect(margin, bottomTop, margin + usableWidth, bottomTop + halfHeight)
+                    val topRect = Rect(margin, margin, margin + usableWidth, margin + halfHeight)
+                    val bottomTop = margin + halfHeight + gap
+                    val bottomRect = Rect(margin, bottomTop, margin + usableWidth, bottomTop + halfHeight)
 
-            drawBitmapFitCenter(canvas, front, topRect, paint)
-            drawBitmapFitCenter(canvas, back, bottomRect, paint)
+                    drawBitmapFitCenter(canvas, front, topRect, paint)
+                    drawBitmapFitCenter(canvas, back, bottomRect, paint)
 
-            paint.color = Color.DKGRAY
-            paint.textSize = 12f
-            canvas.drawText("Front", margin.toFloat(), (topRect.bottom + 14).toFloat(), paint)
-            canvas.drawText("Back", margin.toFloat(), (bottomRect.bottom + 14).toFloat(), paint)
+                    paint.color = Color.DKGRAY
+                    paint.textSize = 12f
+                    canvas.drawText("Front", margin.toFloat(), (topRect.bottom + 14).toFloat(), paint)
+                    canvas.drawText("Back", margin.toFloat(), (bottomRect.bottom + 14).toFloat(), paint)
 
-            pdf.finishPage(page)
-
-            FileOutputStream(output).use { stream ->
-                pdf.writeTo(stream)
+                    pdf.finishPage(page)
+                    FileOutputStream(stagedFile).use { stream ->
+                        pdf.writeTo(stream)
+                    }
+                } finally {
+                    pdf.close()
+                }
             }
-            pdf.close()
 
             PdfIdCardResult(
-                outputFile = output,
+                outputFile = stagedResult.outputFile,
                 pageCount = 1,
-                outputSizeBytes = output.length()
+                outputSizeBytes = stagedResult.outputFile.length()
             )
         } finally {
-            front.recycle()
-            back.recycle()
+            if (!front.isRecycled) {
+                front.recycle()
+            }
+            back?.let { bitmap ->
+                if (!bitmap.isRecycled) {
+                    bitmap.recycle()
+                }
+            }
         }
     }
 
