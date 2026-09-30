@@ -6,7 +6,9 @@ import android.net.Uri
 import android.os.Build
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
+import com.docforge.core.pdf.StagedOutputRequest
 import com.docforge.core.pdf.decodeBitmapConstrained
+import com.docforge.core.pdf.withStagedOutputFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -44,37 +46,47 @@ class ImageFormatConverter(
         val base = outputBaseName.ifBlank { "img_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
-        val files = mutableListOf<File>()
-        var totalBytes = 0L
-
-        inputUris.forEachIndexed { index, uri ->
-            val bitmap = decodeBitmap(uri) ?: error("Failed to decode input image: $uri")
-
-            val scaled = scaleBitmap(bitmap, scaleFactor.coerceIn(0.2f, 3f))
-            if (scaled !== bitmap) {
-                bitmap.recycle()
-            }
-
-            val ext = when (outputFormat) {
-                ImageOutputFormat.JPG -> "jpg"
-                ImageOutputFormat.PNG -> "png"
-                ImageOutputFormat.WEBP -> "webp"
-            }
-            val output = com.docforge.core.pdf.resolveNonConflictingFile(outputDir, "${base}_${index + 1}", ext)
-
-            FileOutputStream(output).use { stream ->
-                val ok = scaled.compress(outputFormat.toCompressFormat(), quality.coerceIn(10, 100), stream)
-                require(ok) { "Failed to encode output image for $uri" }
-            }
-            scaled.recycle()
-
-            files += output
-            totalBytes += output.length()
+        val safeScale = scaleFactor.coerceIn(0.2f, 3f)
+        val safeQuality = quality.coerceIn(10, 100)
+        val ext = when (outputFormat) {
+            ImageOutputFormat.JPG -> "jpg"
+            ImageOutputFormat.PNG -> "png"
+            ImageOutputFormat.WEBP -> "webp"
         }
+
+        val requests = inputUris.mapIndexed { index, uri ->
+            StagedOutputRequest(
+                baseName = "${base}_${index + 1}",
+                extension = ext
+            ) { stagedFile ->
+                val bitmap = decodeBitmap(uri) ?: error("Failed to decode input image: $uri")
+                var scaled: Bitmap? = null
+                try {
+                    scaled = scaleBitmap(bitmap, safeScale)
+                    FileOutputStream(stagedFile).use { stream ->
+                        val ok = scaled.compress(outputFormat.toCompressFormat(), safeQuality, stream)
+                        require(ok) { "Failed to encode output image for $uri" }
+                    }
+                } finally {
+                    if (scaled != null && scaled !== bitmap && !scaled.isRecycled) {
+                        scaled.recycle()
+                    }
+                    if (!bitmap.isRecycled) {
+                        bitmap.recycle()
+                    }
+                }
+            }
+        }
+
+        val results = withStagedOutputFiles(
+            directory = outputDir,
+            requests = requests
+        )
+        val files = results.map { it.outputFile }
 
         ImageFormatConversionResult(
             outputFiles = files,
-            outputSizeBytes = totalBytes
+            outputSizeBytes = files.sumOf { it.length() }
         )
     }
 
