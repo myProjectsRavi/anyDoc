@@ -3,12 +3,12 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-09-29_cycle-011`  
+**Current report:** `2026-09-30_cycle-012`  
 **Report status:** ACTIVE / INCOMPLETE  
-**Cycle:** 011  
-**Current Epic:** `E011` — Failure-safe batch image conversion  
-**Current Feature:** `F013` — Atomic ImageFormatConverter batch publication  
-**Current User Story:** `US-R011-P1-01A` — Stage ImageFormatConverter batch outputs and guarantee bitmap cleanup (ACTIVE)  
+**Cycle:** 012  
+**Current Epic:** `E012` — Failure-safe ID-card PDF creation  
+**Current Feature:** `F014` — Atomic PdfIdCardTool publication and cleanup  
+**Current User Story:** `US-R012-P1-01A` — Stage ID-card PDF output and guarantee document/bitmap cleanup (ACTIVE)  
 **Hourly run counter:** 19  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
@@ -59,11 +59,11 @@ Items are marked COMPLETE only when their required evidence is present. Compile-
 
 ## Current implementation task
 
-**Primary:** Cycle 011 is ACTIVE. Make `ImageFormatConverter.convertBatch` publication atomic and failure/cancellation-safe.
+**Primary:** Cycle 012 is ACTIVE. Make `PdfIdCardTool.createFrontBackSheet` publication atomic and guarantee document/bitmap cleanup across failure and cancellation.
 
 **Completed current subtask:** `US-R008-P1-01A` stages the compare PDF before publication and guarantees compare document/page/bitmap cleanup across cancellation/failure.
 
-**Next exact action:** route `ImageFormatConverter.convertBatch` through `withStagedOutputFiles`, guarantee source/scaled bitmap recycling across decode/scale/encode failure or cancellation, add focused later-item-failure publication-safety tests, then validate the exact code/test candidate in authoritative PR CI.
+**Cycle 011 completion evidence:** `ImageFormatConverter.convertBatch` transactional batch publication and bitmap cleanup commit `e8b1a082bb2b694a87a2671b22f4f44002064958`; GitHub Actions run #252 / API `36661236769`: SUCCESS.\n\n**Next exact action:** route `PdfIdCardTool.createFrontBackSheet` through `withStagedOutputFile`, guarantee front/back bitmap recycling and `PdfDocument.close()` across decode/render/write failure or cancellation, add focused publication-safety regression coverage, then validate the exact code/test candidate in authoritative PR CI.
 
 
 ## Cycle 002 run 001
