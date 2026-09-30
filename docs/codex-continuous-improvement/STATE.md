@@ -5,7 +5,7 @@
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
 **Current report:** `2026-09-30_cycle-012`  
 **Report status:** ACTIVE / INCOMPLETE  
-**Cycle:** 012  
+**Cycle:** 013  
 **Current Epic:** `E012` — Failure-safe ID-card PDF creation  
 **Current Feature:** `F014` — Atomic PdfIdCardTool publication and cleanup  
 **Current User Story:** `US-R012-P1-01A` — Stage ID-card PDF output and guarantee document/bitmap cleanup (ACTIVE)  
