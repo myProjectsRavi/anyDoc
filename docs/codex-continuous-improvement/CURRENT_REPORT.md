@@ -1,18 +1,18 @@
 # Current Report
 
-**ID:** `2026-09-29_cycle-010`  
-**Status:** ACTIVE / INCOMPLETE  
+**ID:** `2026-09-30_cycle-012`  
+**Status:** COMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E010` — Failure-safe image-to-PDF publication  
-**Feature:** `F012` — Transactional PdfCreator output  
-**Current User Story:** `US-R010-P1-01A` — Stage PdfCreator final PDF and guarantee cleanup
+**Epic:** `E012` — Failure-safe ID-card PDF creation  
+**Feature:** `F014` — Atomic PdfIdCardTool publication and cleanup  
+**User Story:** `US-R012-P1-01A` — Stage ID-card PDF output and guarantee document/bitmap cleanup
 
-## Evidence
+## Completion evidence
 
-Fresh source audit after Cycle 009 found `PdfCreator.createPdfFromImages` writes directly to its allocated final file. A cancellation or write failure can leave partial user-visible output, while document and bitmap cleanup is not guaranteed on every exceptional path.
+Production candidate `930f13ecf68ad50a3fbd14328dcc4a43da77d729` passed GitHub Actions run #255. Regression-test candidate `d15c0690b11175405c4ee2647e2827a17d4b221c` passed run #257 / API `36737062704`.
 
-Cycle 009 documentation HEAD `55c8ff462f6306f9f0b3f7d8c3510e9e7d7d3c8d` passed authoritative PR CI #244 / API `36601339137`. PR #1 remains draft/unmerged and main remains untouched.
+No emulator, benchmark, or physical-device evidence is claimed. Draft PR #1 remains unmerged and main remains untouched.
 
 ## Next exact action
 
-Use the existing staged-output primitive, guarantee document/bitmap cleanup, preserve naming/result behavior, add focused regression coverage, and validate the exact candidate in PR CI.
+Select the highest-priority remaining actionable backlog item and activate the next cycle before production/test mutation.
