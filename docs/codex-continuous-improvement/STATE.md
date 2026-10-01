@@ -7,8 +7,8 @@
 **Report status:** ACTIVE / INCOMPLETE  
 **Cycle:** 013  
 **Current Epic:** `E013` — Failure-safe OCR text publication  
-**Current Feature:** `F015` — Atomic PdfIdCardTool publication and cleanup  
-**Current User Story:** `US-R012-P1-01A` — Stage ID-card PDF output and guarantee document/bitmap cleanup (ACTIVE)  
+**Current Feature:** `F015` — Atomic OCR text publication and cleanup  
+**Current User Story:** `US-R013-P1-01A` — Stage PDF/image OCR text output and guarantee failure/cancellation cleanup (ACTIVE)  
 **Hourly run counter:** 19  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-09-25T18:37:33Z baseline checkpoint  
