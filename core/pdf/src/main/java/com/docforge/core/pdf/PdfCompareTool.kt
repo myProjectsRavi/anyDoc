@@ -100,7 +100,10 @@ internal object CompareRasterBudget {
             right == null -> leftPixels
             else -> Math.multiplyExact(max(left.width, right.width).toLong(), max(left.height, right.height).toLong())
         }
-        val totalPixels = listOf(leftPixels, rightPixels, diffPixels).fold(0L) { total, pixels ->\n            if (total > Long.MAX_VALUE - pixels) Long.MAX_VALUE else total + pixels\n        }\n        return if (totalPixels > Long.MAX_VALUE / BYTES_PER_PIXEL) Long.MAX_VALUE else totalPixels * BYTES_PER_PIXEL
+        val totalPixels = listOf(leftPixels, rightPixels, diffPixels).fold(0L) { total, pixels ->
+            if (total > Long.MAX_VALUE - pixels) Long.MAX_VALUE else total + pixels
+        }
+        return if (totalPixels > Long.MAX_VALUE / BYTES_PER_PIXEL) Long.MAX_VALUE else totalPixels * BYTES_PER_PIXEL
     }
 }
 
