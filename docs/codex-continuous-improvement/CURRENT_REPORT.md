@@ -1,18 +1,31 @@
 # Current Report
 
-**ID:** `2026-09-30_cycle-012`  
-**Status:** COMPLETE  
+**ID:** `2026-10-01_cycle-014`  
+**Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E012` — Failure-safe ID-card PDF creation  
-**Feature:** `F014` — Atomic PdfIdCardTool publication and cleanup  
-**User Story:** `US-R012-P1-01A` — Stage ID-card PDF output and guarantee document/bitmap cleanup
+**Epic:** `E014` — Heap-safe PDF comparison  
+**Feature:** `F016` — Bounded PdfCompareTool raster allocation  
+**User Story:** `US-R014-P2-01A` — Bound combined comparison raster memory
 
-## Completion evidence
+## Starting evidence
 
-Production candidate `930f13ecf68ad50a3fbd14328dcc4a43da77d729` passed GitHub Actions run #255. Regression-test candidate `d15c0690b11175405c4ee2647e2827a17d4b221c` passed run #257 / API `36737062704`.
+Cycle 013 is complete. Its OCR transactional-publication candidate `490d0b611bae83b5b2142779010e9ddea5def892` passed GitHub Actions run #264 / API `36884683987`.
 
-No emulator, benchmark, or physical-device evidence is claimed. Draft PR #1 remains unmerged and main remains untouched.
+Cycle 014 was activated canonically in `STATE.md` before production/test mutation. Current branch activation HEAD is `a2ff5373be9e7c58fc25442de9c6cc19efe4c75a`; GitHub Actions run #266 / API `36899851444` completed successfully on that exact HEAD.
+
+## Source finding
+
+`PdfCompareTool` already contains `CompareRasterBudget` and accounts for simultaneous left, right, and diff ARGB_8888 rasters. The remaining bounded defect is arithmetic robustness: `workingSetBytes()` uses exact Long addition/multiplication, so extreme but representable Int dimensions can throw `ArithmeticException` before `fit()` can downscale them.
+
+## Acceptance criteria
+
+- Preserve combined left + right + diff raster accounting.
+- Make working-set accounting saturate rather than overflow for pathological dimensions.
+- Preserve proportional fitting within the supplied byte budget.
+- Add focused unit regressions for accounting, fitting, and extreme-dimension saturation.
+- Validate the exact code/test candidate through the authoritative GitHub Actions workflow.
+- Do not claim emulator, benchmark, or physical-device evidence.
 
 ## Next exact action
 
-Select the highest-priority remaining actionable backlog item and activate the next cycle before production/test mutation.
+Add focused `CompareRasterBudget` regressions and replace overflow-prone working-set arithmetic with saturating arithmetic, then validate the exact candidate with GitHub Actions.
