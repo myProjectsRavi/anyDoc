@@ -6,7 +6,7 @@
 **Current report:** `2026-09-30_cycle-012`  
 **Report status:** ACTIVE / INCOMPLETE  
 **Cycle:** 013  
-**Current Epic:** `E012` — Failure-safe ID-card PDF creation  
+**Current Epic:** `E013` — Failure-safe OCR text publication  
 **Current Feature:** `F014` — Atomic PdfIdCardTool publication and cleanup  
 **Current User Story:** `US-R012-P1-01A` — Stage ID-card PDF output and guarantee document/bitmap cleanup (ACTIVE)  
 **Hourly run counter:** 19  
