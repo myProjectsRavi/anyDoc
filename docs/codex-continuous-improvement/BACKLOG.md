@@ -200,3 +200,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E019 — Failure-safe PDF page cropping
 #### Feature F021 — Transactional cropped PDF publication
 - [ACTIVE] `US-R019-P1-01A` — Stage both cropAllPages and cropPages outputs and add focused publication-safety regression coverage.
+
+
+## Cycle 019 closure — 2026-10-02
+- [COMPLETE / CI #315] `US-R019-P1-01A` — PdfPageCropTool cropAllPages/cropPages publication is transactional. Exact code/test SHA `0bed6b770f9ad9810e92cbf3c697347276b7dddf` passed push run #315 / API `37033912072`.
+- [NEXT / P1] `US-R020-P1-01A` — Make PdfHeaderFooterTool final PDF publication transactional.
+
+## Cycle 020 active
+### Epic E020 — Failure-safe PDF header/footer export
+#### Feature F022 — Transactional header/footer PDF publication
+- [ACTIVE] `US-R020-P1-01A` — Stage PdfHeaderFooterTool output and add focused publication-safety regression coverage.
