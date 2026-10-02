@@ -313,3 +313,14 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 
 ## Cycle 017 starting evidence
 `PdfAnnotator.annotate()` still serializes with `outDoc.save(outputFile)` directly to a final collision-safe path. Next mutation: stage serialization with `withStagedOutputFile`, preserve annotations/page behavior, add focused failure/cancellation regression coverage, and validate the exact candidate.
+
+
+## Cycle 017 completion evidence
+- Story: `US-R017-P1-01A`.
+- Production SHA: `b2b5965079834140a8826f8c2e76b48fc5659d1c`.
+- Focused test SHA: `1317a901837bca9cb61f6ccc892e8b4fe4575f65`.
+- Validated HEAD: `1ff75b03667a798c6f3be02fd253932c6ffb7e53`.
+- GitHub Actions #300 / API `37029105532`: **SUCCESS** across all configured gates.
+
+## Cycle 018 starting evidence
+`PdfPasswordTool.protect()` and `removePassword()` both call `document.save(outputFile)` on final collision-safe paths. Writer failure can therefore leave a partial visible protected/unlocked PDF. Next mutation: stage both output modes and add focused publication-safety tests.
