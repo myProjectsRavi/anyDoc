@@ -1,29 +1,28 @@
 # Current Report
 
-**ID:** `2026-10-02_cycle-016`  
+**ID:** `2026-10-02_cycle-017`  
 **Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E016` — Failure-safe PDF signing  
-**Feature:** `F018` — Transactional signed PDF publication  
-**User Story:** `US-R016-P1-01A` — Stage PdfSigner final PDF publication
+**Epic:** `E017` — Failure-safe PDF annotation  
+**Feature:** `F019` — Transactional annotated PDF publication  
+**User Story:** `US-R017-P1-01A` — Stage PdfAnnotator final PDF publication
 
 ## Starting evidence
 
-Cycle 015 is complete. Exact code/test SHA `8fbe11331df90911cce055e93a9535cc8459a22e` passed GitHub Actions run #282 / API `37025519540`.
+Cycle 016 is complete. Exact code/test SHA `57a0664f8174065de9052963a5ff48188de2ba3a` passed GitHub Actions run #289 / API `37027249729`.
 
 ## Source finding
 
-`PdfSigner.signMultiple()` currently creates a collision-safe final path and calls `outDoc.save(outputFile)` directly. If serialization fails or cancellation is observed around the write, a partial user-visible PDF can remain.
+`PdfAnnotator.annotate()` writes directly to a collision-safe final destination via `outDoc.save(outputFile)`. Writer failure can leave a partial user-visible PDF.
 
 ## Acceptance criteria
 
-- Publish the signed PDF only after serialization succeeds.
-- Preserve collision-safe naming, page count, placements, and signature rendering.
-- Failure/cancellation must leave no partial final signed PDF.
-- Add focused unit regression coverage for staged publication failure.
-- Validate the exact code/test candidate through authoritative GitHub Actions.
-- Do not claim emulator, benchmark, or physical-device evidence.
+- Publish annotated PDF only after serialization succeeds.
+- Preserve annotation commands, page ordering, collision-safe naming, and output metadata.
+- Failure/cancellation leaves no partial final output.
+- Add focused staged-publication regressions.
+- Exact code/test candidate passes authoritative GitHub Actions.
 
 ## Next exact action
 
-Wrap PdfSigner output serialization in `withStagedOutputFile`, add focused publication-safety regression coverage, and validate the exact candidate.
+Wrap PdfAnnotator serialization in `withStagedOutputFile`, add focused writer-failure/cancellation tests, and validate the exact candidate.
