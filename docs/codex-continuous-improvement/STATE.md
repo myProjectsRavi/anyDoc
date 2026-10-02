@@ -3,24 +3,24 @@
 **Canonical state:** this file  
 **Branch:** `codex/anydoc-continuous-improvement`  
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.  
-**Current report:** `2026-10-01_cycle-014`  
+**Current report:** `2026-10-02_cycle-015`  
 **Report status:** ACTIVE / INCOMPLETE  
-**Cycle:** 014  
-**Current Epic:** `E014` — Heap-safe PDF comparison  
-**Current Feature:** `F016` — Bounded PdfCompareTool raster allocation  
-**Current User Story:** `US-R014-P2-01A` — Bound combined comparison raster memory (ACTIVE)  
+**Cycle:** 015  
+**Current Epic:** `E015` — Heap-safe ID-card sheet creation  
+**Current Feature:** `F017` — Bounded dual image decode memory  
+**Current User Story:** `US-R015-P2-01A` — Bound combined front/back bitmap memory (ACTIVE)  
 **Hourly run counter:** 20  
 **Six-hour checkpoint counter:** 0  
 **Report creation timestamp:** 2026-10-01 UTC  
-**Last completed cycle:** Cycle 013  
+**Last completed cycle:** Cycle 014  
 **State checkpoint timestamp:** 2026-10-01 UTC
 
 ## Git checkpoint
 
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Cycle 013 validated code SHA: `490d0b611bae83b5b2142779010e9ddea5def892`
-- Cycle 013 CI: run #264 / API `36884683987` — SUCCESS
+- Cycle 014 validated code/test SHA: `973871f62be541e4d9c239272e832a0b2c2eafc1`
+- Cycle 014 CI: run #275 / API `36962785571` — SUCCESS
 
 ## Next executable step
 
-Inspect existing PdfCompareTool raster-budget code, add missing focused regression coverage, and validate the exact candidate with GitHub Actions.
+Bound `PdfIdCardTool` combined retained front/back bitmap memory with a conservative heap-aware decode ceiling, add focused regressions, and validate the exact candidate with GitHub Actions.
