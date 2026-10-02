@@ -93,4 +93,10 @@ class PdfComparePublicationSafetyTest {
         assertTrue(fitted.second!!.width < right.width)
     }
 
+    @Test
+    fun compareRasterBudget_extremeDimensionsSaturateWorkingSet() {
+        val extreme = CompareRasterSize(Int.MAX_VALUE, Int.MAX_VALUE)
+        assertEquals(Long.MAX_VALUE, CompareRasterBudget.workingSetBytes(extreme, extreme))
+    }
+
 }
