@@ -1,24 +1,24 @@
 # Current Report
 
-**ID:** `2026-10-02_cycle-019`  
+**ID:** `2026-10-02_cycle-020`  
 **Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E019` — Failure-safe PDF page cropping  
-**Feature:** `F021` — Transactional cropped PDF publication  
-**User Story:** `US-R019-P1-01A` — Stage PdfPageCropTool outputs
+**Epic:** `E020` — Failure-safe PDF header/footer export  
+**Feature:** `F022` — Transactional header/footer PDF publication  
+**User Story:** `US-R020-P1-01A` — Stage PdfHeaderFooterTool output
 
 ## Starting evidence
-Cycle 018 exact code/test SHA `853804e2863dbb630409ca6fcbdc7a854bca45a5` passed GitHub Actions #308 / API `37031208024`.
+Cycle 019 exact code/test SHA `0bed6b770f9ad9810e92cbf3c697347276b7dddf` passed GitHub Actions push run #315 / API `37033912072`.
 
 ## Source finding
-Both crop paths call `document.save(outputFile)` on final collision-safe paths, so save failure can expose a partial cropped PDF.
+`addHeaderFooter()` writes directly to a final collision-safe path via `document.save(outputFile)`, allowing partial user-visible output on serialization failure.
 
 ## Acceptance criteria
 - Publish only after successful serialization.
-- Preserve crop geometry, page count, naming, and validation behavior.
+- Preserve header/footer/page-number rendering, page count, naming, and validation.
 - Failure/cancellation leaves no partial final PDF.
 - Add focused publication-safety regression coverage.
 - Pass authoritative GitHub Actions on the exact code/test candidate.
 
 ## Next exact action
-Stage both crop save paths, add focused tests, and validate.
+Stage Header/Footer output, add focused tests, and validate.
