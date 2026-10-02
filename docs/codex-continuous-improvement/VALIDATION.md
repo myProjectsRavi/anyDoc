@@ -267,3 +267,23 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 - Unsigned release/R8 assembly: SUCCESS.
 - Android lint: SUCCESS.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 015 completion evidence
+
+- Story: `US-R015-P2-01A` — bound combined front/back ID-card bitmap memory.
+- Production SHA: `7fc73e9ca8f389f7a4bd5484935e73dab3f6568a`.
+- Exact test-inclusive SHA: `8fbe11331df90911cce055e93a9535cc8459a22e`.
+- GitHub Actions run #282 / API `37025519540`: **SUCCESS**.
+- Core PDF unit tests: SUCCESS.
+- Converter unit tests: SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- Focused budget regressions: 32 MiB -> 591 px, 128 MiB -> 1182 px, 512 MiB -> 1800 px.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 016 starting evidence
+
+Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-safe final destination and calls `outDoc.save(outputFile)` directly. A save failure or cancellation can therefore leave a partial user-visible signed PDF. Next mutation: route the save through `withStagedOutputFile`, preserve page/placement behavior, add focused publication-failure regression coverage, and validate the exact candidate with GitHub Actions.
