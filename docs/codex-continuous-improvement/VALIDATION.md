@@ -324,3 +324,14 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 
 ## Cycle 018 starting evidence
 `PdfPasswordTool.protect()` and `removePassword()` both call `document.save(outputFile)` on final collision-safe paths. Writer failure can therefore leave a partial visible protected/unlocked PDF. Next mutation: stage both output modes and add focused publication-safety tests.
+
+
+## Cycle 018 completion evidence
+- Story: `US-R018-P1-01A`.
+- Exact code/test SHA: `853804e2863dbb630409ca6fcbdc7a854bca45a5`.
+- GitHub Actions run #308 / API `37031208024`: **SUCCESS**.
+- Core PDF unit tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 019 starting evidence
+`PdfPageCropTool.cropAllPages()` and `cropPages()` both save directly to final user-visible paths. Next mutation: stage both save paths with `withStagedOutputFile`, preserve crop geometry/naming/page counts, add focused failure/cancellation tests, and validate.
