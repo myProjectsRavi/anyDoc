@@ -3,22 +3,22 @@
 **ID:** `2026-10-02_cycle-018`  
 **Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E018` — Failure-safe password PDF output  
-**Feature:** `F020` — Transactional protected/unlocked publication  
-**User Story:** `US-R018-P1-01A` — Stage PdfPasswordTool protect/removePassword outputs
+**Epic:** `E018` — Failure-safe PDF password operations  
+**Feature:** `F020` — Transactional protected/unlocked PDF publication  
+**User Story:** `US-R018-P1-01A` — Stage PdfPasswordTool protect/unlock outputs
 
 ## Starting evidence
-Cycle 017 validated HEAD `1ff75b03667a798c6f3be02fd253932c6ffb7e53` passed GitHub Actions #300 / API `37029105532`.
+Cycle 017 current candidate passed GitHub Actions #300 / API `37029105532`.
 
 ## Source finding
-Both password-protect and password-remove paths serialize directly to final output paths with `document.save(outputFile)`.
+Both `protect()` and `removePassword()` write directly to collision-safe final PDF paths via `document.save(outputFile)`, allowing partial user-visible output if serialization fails.
 
 ## Acceptance criteria
-- Stage both protect and unlock serialization.
-- Preserve encryption/removal behavior, password validation, collision-safe naming, page count, and result metadata.
-- Failure/cancellation publishes no partial final.
-- Add focused publication-safety regressions.
-- Exact code/test candidate passes authoritative GitHub Actions.
+- Publish protected and unlocked PDFs only after successful serialization.
+- Preserve encryption/decryption behavior, page count, naming, and error semantics.
+- Failure/cancellation leaves no partial final PDF.
+- Add focused publication-safety regression coverage.
+- Pass authoritative GitHub Actions on the exact code/test candidate.
 
 ## Next exact action
-Route both save operations through `withStagedOutputFile`, add failure/cancellation tests, and validate.
+Route both password-tool save paths through `withStagedOutputFile`, add focused tests, and validate.
