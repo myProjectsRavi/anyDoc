@@ -335,3 +335,14 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 
 ## Cycle 019 starting evidence
 `PdfPageCropTool.cropAllPages()` and `cropPages()` both save directly to final user-visible paths. Next mutation: stage both save paths with `withStagedOutputFile`, preserve crop geometry/naming/page counts, add focused failure/cancellation tests, and validate.
+
+
+## Cycle 019 completion evidence
+- Story: `US-R019-P1-01A`.
+- Exact code/test SHA: `0bed6b770f9ad9810e92cbf3c697347276b7dddf`.
+- GitHub Actions push run #315 / API `37033912072`: **SUCCESS**.
+- Core PDF unit tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 020 starting evidence
+`PdfHeaderFooterTool.addHeaderFooter()` calls `document.save(outputFile)` directly on the final collision-safe path. Next mutation: stage serialization with `withStagedOutputFile`, preserve overlays/page numbers/naming, add focused failure/cancellation tests, and validate.
