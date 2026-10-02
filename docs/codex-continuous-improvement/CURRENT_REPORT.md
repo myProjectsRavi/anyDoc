@@ -1,31 +1,31 @@
 # Current Report
 
-**ID:** `2026-10-01_cycle-014`  
+**ID:** `2026-10-02_cycle-015`  
 **Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E014` — Heap-safe PDF comparison  
-**Feature:** `F016` — Bounded PdfCompareTool raster allocation  
-**User Story:** `US-R014-P2-01A` — Bound combined comparison raster memory
+**Epic:** `E015` — Heap-safe ID-card sheet creation  
+**Feature:** `F017` — Bounded dual image decode memory  
+**User Story:** `US-R015-P2-01A` — Bound combined front/back bitmap memory
 
 ## Starting evidence
 
-Cycle 013 is complete. Its OCR transactional-publication candidate `490d0b611bae83b5b2142779010e9ddea5def892` passed GitHub Actions run #264 / API `36884683987`.
+Cycle 014 is complete. Exact code/test SHA `973871f62be541e4d9c239272e832a0b2c2eafc1` passed GitHub Actions run #275 / API `36962785571`.
 
-Cycle 014 was activated canonically in `STATE.md` before production/test mutation. Current branch activation HEAD is `a2ff5373be9e7c58fc25442de9c6cc19efe4c75a`; GitHub Actions run #266 / API `36899851444` completed successfully on that exact HEAD.
+Cycle 015 was activated canonically in `STATE.md` before production/test mutation. Activation HEAD `45f8330e60b58e87f96a782f64fdcf3121c997b8` passed GitHub Actions run #276 / API `36964642960`.
 
 ## Source finding
 
-`PdfCompareTool` already contains `CompareRasterBudget` and accounts for simultaneous left, right, and diff ARGB_8888 rasters. The remaining bounded defect is arithmetic robustness: `workingSetBytes()` uses exact Long addition/multiplication, so extreme but representable Int dimensions can throw `ArithmeticException` before `fit()` can downscale them.
+`PdfIdCardTool.createFrontBackSheet()` retains the decoded front bitmap while decoding and retaining the back bitmap. Both calls currently use a fixed `maxLongEdge = 1800`, so two near-square ARGB_8888 inputs can coexist without a heap-aware combined ceiling.
 
 ## Acceptance criteria
 
-- Preserve combined left + right + diff raster accounting.
-- Make working-set accounting saturate rather than overflow for pathological dimensions.
-- Preserve proportional fitting within the supplied byte budget.
-- Add focused unit regressions for accounting, fitting, and extreme-dimension saturation.
-- Validate the exact code/test candidate through the authoritative GitHub Actions workflow.
+- Preserve current front/back sheet layout and output behavior.
+- Derive a conservative per-image decode long-edge ceiling from a combined two-bitmap ARGB_8888 heap budget.
+- Clamp the ceiling so normal/high-memory devices do not exceed the existing 1800 px quality cap.
+- Add focused pure unit regressions for low, normal, and high heap sizes.
+- Validate the exact code/test candidate through authoritative GitHub Actions.
 - Do not claim emulator, benchmark, or physical-device evidence.
 
 ## Next exact action
 
-Add focused `CompareRasterBudget` regressions and replace overflow-prone working-set arithmetic with saturating arithmetic, then validate the exact candidate with GitHub Actions.
+Introduce the pure heap-aware ID-card decode budget helper, wire both front/back decodes through its ceiling, add focused regressions, and validate the exact candidate with GitHub Actions.
