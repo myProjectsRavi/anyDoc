@@ -150,3 +150,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - `US-R002-P1-01A`: COMPLETE.
 - `US-R002-P1-01B`: COMPLETE; exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions run #163 / API `36360973174` (core PDF unit tests, app unit tests, debug APK, unsigned release/R8, Android lint).
 - Cycle 002 scoped mandatory backlog: 2/2 COMPLETE. Draft PR #1 remains open/draft/unmerged; `main` remains untouched.
+
+
+## Cycle 015 closure — 2026-10-02
+- [COMPLETE / CI #282] `US-R015-P2-01A` — Bound combined front/back ID-card bitmap memory with a heap-aware decode ceiling. Exact code/test SHA `8fbe11331df90911cce055e93a9535cc8459a22e` passed run #282 / API `37025519540`.
+- [NEXT / P1] `US-R016-P1-01A` — Make PdfSigner final PDF publication transactional; current `outDoc.save(outputFile)` writes directly to the user-visible destination.
+
+## Cycle 016 active
+### Epic E016 — Failure-safe PDF signing
+#### Feature F018 — Transactional signed PDF publication
+- [ACTIVE] `US-R016-P1-01A` — Stage PdfSigner final PDF publication and add focused failure/cancellation regression coverage.
