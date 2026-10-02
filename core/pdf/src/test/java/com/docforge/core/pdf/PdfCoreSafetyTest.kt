@@ -249,4 +249,11 @@ class PdfCoreSafetyTest {
         assertEquals(Long.MAX_VALUE, requiredCacheBytesForKnownInput(Long.MAX_VALUE))
     }
 
+    @Test
+    fun idCardDecodeBudget_scalesForLowNormalAndHighHeap() {
+        assertEquals(591, IdCardDecodeBudget.maxLongEdge(32L * 1024L * 1024L))
+        assertEquals(1182, IdCardDecodeBudget.maxLongEdge(128L * 1024L * 1024L))
+        assertEquals(1800, IdCardDecodeBudget.maxLongEdge(512L * 1024L * 1024L))
+    }
+
 }
