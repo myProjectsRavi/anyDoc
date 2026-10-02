@@ -170,3 +170,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E017 — Failure-safe PDF annotation
 #### Feature F019 — Transactional annotated PDF publication
 - [ACTIVE] `US-R017-P1-01A` — Stage PdfAnnotator final PDF publication and add focused writer-failure/cancellation regressions.
+
+
+## Cycle 016 closure — 2026-10-02
+- [COMPLETE / CI #289] `US-R016-P1-01A` — PdfSigner final PDF publication is transactional via same-directory staging. Exact candidate `57a0664f8174065de9052963a5ff48188de2ba3a` passed run #289 / API `37027249729`.
+- [NEXT / P1] `US-R017-P1-01A` — Make PdfAnnotator final PDF publication transactional.
+
+## Cycle 017 active
+### Epic E017 — Failure-safe PDF annotation
+#### Feature F019 — Transactional annotated PDF publication
+- [ACTIVE] `US-R017-P1-01A` — Stage PdfAnnotator final PDF publication and add focused failure/cancellation regression coverage.
