@@ -20,7 +20,8 @@
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
 - Cycle 015 validated code/test SHA: `8fbe11331df90911cce055e93a9535cc8459a22e`
 - Cycle 015 CI: run #282 / API `37025519540` — SUCCESS
+- Cycle 016 activation report HEAD before this canonical reconciliation: `6de615b7c38bd3e7fff3f9295098a36a38275ac8`
 
 ## Next executable step
 
-Stage PdfSigner final PDF publication with `withStagedOutputFile`, add focused failure/cancellation regression coverage, and validate the exact candidate with GitHub Actions.
+Wrap `PdfSigner` output serialization in `withStagedOutputFile`, preserve collision-safe naming/page/placement behavior, add focused publication-safety regression coverage, and validate the exact code/test candidate with GitHub Actions.
