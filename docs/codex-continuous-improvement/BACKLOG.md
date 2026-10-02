@@ -180,3 +180,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E017 — Failure-safe PDF annotation
 #### Feature F019 — Transactional annotated PDF publication
 - [ACTIVE] `US-R017-P1-01A` — Stage PdfAnnotator final PDF publication and add focused failure/cancellation regression coverage.
+
+
+## Cycle 017 closure — 2026-10-02
+- [COMPLETE / CI #300] `US-R017-P1-01A` — PdfAnnotator final publication is transactional. Validated HEAD `1ff75b03667a798c6f3be02fd253932c6ffb7e53` passed run #300 / API `37029105532`.
+- [NEXT / P1] `US-R018-P1-01A` — Make PdfPasswordTool protect/unlock final PDF publication transactional.
+
+## Cycle 018 active
+### Epic E018 — Failure-safe password PDF output
+#### Feature F020 — Transactional protected/unlocked publication
+- [ACTIVE] `US-R018-P1-01A` — Stage PdfPasswordTool protect/removePassword outputs and add focused failure/cancellation coverage.
