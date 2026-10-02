@@ -1,35 +1,29 @@
 # Current Report
 
-**ID:** `2026-10-02_cycle-015`  
+**ID:** `2026-10-02_cycle-016`  
 **Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E015` — Heap-safe ID-card sheet creation  
-**Feature:** `F017` — Bounded dual image decode memory  
-**User Story:** `US-R015-P2-01A` — Bound combined front/back bitmap memory
+**Epic:** `E016` — Failure-safe PDF signing  
+**Feature:** `F018` — Transactional signed PDF publication  
+**User Story:** `US-R016-P1-01A` — Stage PdfSigner final PDF publication
 
 ## Starting evidence
 
-Cycle 014 is complete. Exact code/test SHA `973871f62be541e4d9c239272e832a0b2c2eafc1` passed GitHub Actions run #275 / API `36962785571`.
-
-Cycle 015 was activated canonically in `STATE.md` before production/test mutation. Activation HEAD `45f8330e60b58e87f96a782f64fdcf3121c997b8` passed GitHub Actions run #276 / API `36964642960`.
+Cycle 015 is complete. Exact code/test SHA `8fbe11331df90911cce055e93a9535cc8459a22e` passed GitHub Actions run #282 / API `37025519540`.
 
 ## Source finding
 
-`PdfIdCardTool.createFrontBackSheet()` retains the decoded front bitmap while decoding and retaining the back bitmap. Both calls currently use a fixed `maxLongEdge = 1800`, so two near-square ARGB_8888 inputs can coexist without a heap-aware combined ceiling.
+`PdfSigner.signMultiple()` currently creates a collision-safe final path and calls `outDoc.save(outputFile)` directly. If serialization fails or cancellation is observed around the write, a partial user-visible PDF can remain.
 
 ## Acceptance criteria
 
-- Preserve current front/back sheet layout and output behavior.
-- Derive a conservative per-image decode long-edge ceiling from a combined two-bitmap ARGB_8888 heap budget.
-- Clamp the ceiling so normal/high-memory devices do not exceed the existing 1800 px quality cap.
-- Add focused pure unit regressions for low, normal, and high heap sizes.
+- Publish the signed PDF only after serialization succeeds.
+- Preserve collision-safe naming, page count, placements, and signature rendering.
+- Failure/cancellation must leave no partial final signed PDF.
+- Add focused unit regression coverage for staged publication failure.
 - Validate the exact code/test candidate through authoritative GitHub Actions.
 - Do not claim emulator, benchmark, or physical-device evidence.
 
 ## Next exact action
 
-Introduce the pure heap-aware ID-card decode budget helper, wire both front/back decodes through its ceiling, add focused regressions, and validate the exact candidate with GitHub Actions.
-
-## Current validation checkpoint
-
-Production candidate `7fc73e9ca8f389f7a4bd5484935e73dab3f6568a` passed GitHub Actions run #279 / API `36990476378`. Focused pure unit regressions remain required before story closure. Two SHA-guarded attempts to add the regressions were blocked by the connector safety boundary. Exact next mutation: add assertions that `IdCardDecodeBudget.maxLongEdge()` yields 591 px at 32 MiB heap, 1182 px at 128 MiB, and preserves the 1800 px cap at 512 MiB; then validate the test-inclusive SHA with authoritative CI. No emulator, benchmark, or physical-device evidence is claimed.
+Wrap PdfSigner output serialization in `withStagedOutputFile`, add focused publication-safety regression coverage, and validate the exact candidate.
