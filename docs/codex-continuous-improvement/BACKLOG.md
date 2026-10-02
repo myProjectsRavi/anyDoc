@@ -190,3 +190,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E018 — Failure-safe password PDF output
 #### Feature F020 — Transactional protected/unlocked publication
 - [ACTIVE] `US-R018-P1-01A` — Stage PdfPasswordTool protect/removePassword outputs and add focused failure/cancellation coverage.
+
+
+## Cycle 018 closure — 2026-10-02
+- [COMPLETE / CI #308] `US-R018-P1-01A` — PdfPasswordTool protect/unlock publication is transactional. Exact code/test SHA `853804e2863dbb630409ca6fcbdc7a854bca45a5` passed run #308 / API `37031208024`.
+- [NEXT / P1] `US-R019-P1-01A` — Make PdfPageCropTool output publication transactional.
+
+## Cycle 019 active
+### Epic E019 — Failure-safe PDF page cropping
+#### Feature F021 — Transactional cropped PDF publication
+- [ACTIVE] `US-R019-P1-01A` — Stage both cropAllPages and cropPages outputs and add focused publication-safety regression coverage.
