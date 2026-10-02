@@ -1,24 +1,24 @@
 # Current Report
 
-**ID:** `2026-10-02_cycle-017`  
+**ID:** `2026-10-02_cycle-018`  
 **Status:** ACTIVE / INCOMPLETE  
 **Branch:** `codex/anydoc-continuous-improvement`  
-**Epic:** `E017` — Failure-safe PDF annotation  
-**Feature:** `F019` — Transactional annotated PDF publication  
-**User Story:** `US-R017-P1-01A` — Stage PdfAnnotator final PDF publication
+**Epic:** `E018` — Failure-safe password PDF output  
+**Feature:** `F020` — Transactional protected/unlocked publication  
+**User Story:** `US-R018-P1-01A` — Stage PdfPasswordTool protect/removePassword outputs
 
 ## Starting evidence
-Cycle 016 exact candidate `57a0664f8174065de9052963a5ff48188de2ba3a` passed GitHub Actions #289 / API `37027249729`.
+Cycle 017 validated HEAD `1ff75b03667a798c6f3be02fd253932c6ffb7e53` passed GitHub Actions #300 / API `37029105532`.
 
 ## Source finding
-`PdfAnnotator.annotate()` writes the final PDF directly with `outDoc.save(outputFile)`, so serialization failure can expose a partial user-visible PDF.
+Both password-protect and password-remove paths serialize directly to final output paths with `document.save(outputFile)`.
 
 ## Acceptance criteria
-- Publish only after successful serialization.
-- Preserve collision-safe naming, annotations, page count, and output behavior.
-- Failure/cancellation leaves no partial final PDF.
-- Add focused regression coverage.
-- Pass authoritative GitHub Actions on the exact code/test SHA.
+- Stage both protect and unlock serialization.
+- Preserve encryption/removal behavior, password validation, collision-safe naming, page count, and result metadata.
+- Failure/cancellation publishes no partial final.
+- Add focused publication-safety regressions.
+- Exact code/test candidate passes authoritative GitHub Actions.
 
 ## Next exact action
-Wrap annotated PDF serialization in `withStagedOutputFile`, add focused publication-safety tests, and validate.
+Route both save operations through `withStagedOutputFile`, add failure/cancellation tests, and validate.
