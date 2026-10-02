@@ -67,63 +67,70 @@ class PdfSigner(
 
         val sanitized = outputName.ifBlank { "signed_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
-        context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_sign_src_", suffix = ".pdf") { sourceFile ->
-            loadPdfDocument(sourceFile).use { sourceDoc ->
-                require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
+        val stagedResult = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "pdf"
+        ) { stagedFile ->
+            context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_sign_src_", suffix = ".pdf") { sourceFile ->
+                loadPdfDocument(sourceFile).use { sourceDoc ->
+                    require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
 
-                placements.forEach { placement ->
-                    require(placement.targetPageOneBased in 1..sourceDoc.numberOfPages) {
-                        "Target page out of bounds: ${placement.targetPageOneBased}"
-                    }
-                }
-
-                val placementsByPage = placements.groupBy { placement -> placement.targetPageOneBased }
-
-                PDDocument().use { outDoc ->
-                    val signatureImage = LosslessFactory.createFromImage(outDoc, signatureBitmap)
-
-                    repeat(sourceDoc.numberOfPages) { pageIndex ->
-                        checkCancelled()
-                        val sourcePage = sourceDoc.getPage(pageIndex)
-                        val importedPage = importPage(outDoc, sourcePage)
-
-                        val pagePlacements = placementsByPage[pageIndex + 1].orEmpty()
-                        if (pagePlacements.isNotEmpty()) {
-                            PDPageContentStream(
-                                outDoc,
-                                importedPage,
-                                PDPageContentStream.AppendMode.APPEND,
-                                true,
-                                true
-                            ).use { stream ->
-                                pagePlacements.forEach { placement ->
-                                    checkCancelled()
-                                    drawSignature(
-                                        stream = stream,
-                                        page = importedPage,
-                                        signatureBitmap = signatureBitmap,
-                                        signatureImage = signatureImage,
-                                        xRatio = placement.xRatio,
-                                        yRatio = placement.yRatio,
-                                        widthRatio = placement.widthRatio
-                                    )
-                                }
-                            }
+                    placements.forEach { placement ->
+                        require(placement.targetPageOneBased in 1..sourceDoc.numberOfPages) {
+                            "Target page out of bounds: ${placement.targetPageOneBased}"
                         }
                     }
 
-                    outDoc.save(outputFile)
-                }
+                    val placementsByPage = placements.groupBy { placement -> placement.targetPageOneBased }
 
-                PdfCreationResult(
-                    outputFile = outputFile,
-                    pageCount = sourceDoc.numberOfPages,
-                    outputSizeBytes = outputFile.length()
-                )
+                    PDDocument().use { outDoc ->
+                        val signatureImage = LosslessFactory.createFromImage(outDoc, signatureBitmap)
+
+                        repeat(sourceDoc.numberOfPages) { pageIndex ->
+                            checkCancelled()
+                            val sourcePage = sourceDoc.getPage(pageIndex)
+                            val importedPage = importPage(outDoc, sourcePage)
+
+                            val pagePlacements = placementsByPage[pageIndex + 1].orEmpty()
+                            if (pagePlacements.isNotEmpty()) {
+                                PDPageContentStream(
+                                    outDoc,
+                                    importedPage,
+                                    PDPageContentStream.AppendMode.APPEND,
+                                    true,
+                                    true
+                                ).use { stream ->
+                                    pagePlacements.forEach { placement ->
+                                        checkCancelled()
+                                        drawSignature(
+                                            stream = stream,
+                                            page = importedPage,
+                                            signatureBitmap = signatureBitmap,
+                                            signatureImage = signatureImage,
+                                            xRatio = placement.xRatio,
+                                            yRatio = placement.yRatio,
+                                            widthRatio = placement.widthRatio
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        outDoc.save(stagedFile)
+                    }
+
+                    sourceDoc.numberOfPages
+                }
             }
         }
+
+        PdfCreationResult(
+            outputFile = stagedResult.outputFile,
+            pageCount = stagedResult.value,
+            outputSizeBytes = stagedResult.outputFile.length()
+        )
     }
 
     suspend fun getPageCount(inputUri: Uri): Int = withContext(Dispatchers.IO) {
