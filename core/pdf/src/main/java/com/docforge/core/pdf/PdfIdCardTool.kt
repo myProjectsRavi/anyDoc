@@ -14,12 +14,33 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 data class PdfIdCardResult(
     val outputFile: File,
     val pageCount: Int,
     val outputSizeBytes: Long
 )
+
+internal object IdCardDecodeBudget {
+    private const val BYTES_PER_ARGB_PIXEL = 4L
+    private const val PEAK_BITMAP_COUNT = 3L
+    private const val HEAP_BUDGET_DIVISOR = 8L
+    private const val MIN_LONG_EDGE = 512
+    private const val MAX_LONG_EDGE = 1800
+
+    /**
+     * The front bitmap remains resident while the back image is decoded. On the pre-P
+     * EXIF path, the decoded back source and its rotated replacement can briefly coexist,
+     * so reserve for three square ARGB_8888 bitmaps at the selected long edge.
+     */
+    fun maxLongEdge(maxHeapBytes: Long): Int {
+        val bitmapBudgetBytes = maxHeapBytes.coerceAtLeast(0L) / HEAP_BUDGET_DIVISOR
+        val bytesPerSquareEdge = BYTES_PER_ARGB_PIXEL * PEAK_BITMAP_COUNT
+        val edge = sqrt(bitmapBudgetBytes.toDouble() / bytesPerSquareEdge.toDouble()).toInt()
+        return edge.coerceIn(MIN_LONG_EDGE, MAX_LONG_EDGE)
+    }
+}
 
 class PdfIdCardTool(
     private val context: Context
@@ -30,12 +51,13 @@ class PdfIdCardTool(
         outputName: String,
         pageSize: PdfPageSize = PdfPageSize.A4
     ): PdfIdCardResult = withContext(Dispatchers.IO) {
-        val front = decodeBitmapConstrained(context, frontImageUri, maxLongEdge = 1800)
+        val decodeLongEdge = IdCardDecodeBudget.maxLongEdge(Runtime.getRuntime().maxMemory())
+        val front = decodeBitmapConstrained(context, frontImageUri, maxLongEdge = decodeLongEdge)
             ?: error("Unable to decode front image.")
         var back: Bitmap? = null
 
         try {
-            back = decodeBitmapConstrained(context, backImageUri, maxLongEdge = 1800)
+            back = decodeBitmapConstrained(context, backImageUri, maxLongEdge = decodeLongEdge)
                 ?: error("Unable to decode back image.")
 
             val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
