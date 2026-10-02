@@ -8,21 +8,17 @@
 **User Story:** `US-R017-P1-01A` — Stage PdfAnnotator final PDF publication
 
 ## Starting evidence
-
-Cycle 016 is complete. Exact code/test SHA `57a0664f8174065de9052963a5ff48188de2ba3a` passed GitHub Actions run #289 / API `37027249729`.
+Cycle 016 exact candidate `57a0664f8174065de9052963a5ff48188de2ba3a` passed GitHub Actions #289 / API `37027249729`.
 
 ## Source finding
-
-`PdfAnnotator.annotate()` writes directly to a collision-safe final destination via `outDoc.save(outputFile)`. Writer failure can leave a partial user-visible PDF.
+`PdfAnnotator.annotate()` writes the final PDF directly with `outDoc.save(outputFile)`, so serialization failure can expose a partial user-visible PDF.
 
 ## Acceptance criteria
-
-- Publish annotated PDF only after serialization succeeds.
-- Preserve annotation commands, page ordering, collision-safe naming, and output metadata.
-- Failure/cancellation leaves no partial final output.
-- Add focused staged-publication regressions.
-- Exact code/test candidate passes authoritative GitHub Actions.
+- Publish only after successful serialization.
+- Preserve collision-safe naming, annotations, page count, and output behavior.
+- Failure/cancellation leaves no partial final PDF.
+- Add focused regression coverage.
+- Pass authoritative GitHub Actions on the exact code/test SHA.
 
 ## Next exact action
-
-Wrap PdfAnnotator serialization in `withStagedOutputFile`, add focused writer-failure/cancellation tests, and validate the exact candidate.
+Wrap annotated PDF serialization in `withStagedOutputFile`, add focused publication-safety tests, and validate.
