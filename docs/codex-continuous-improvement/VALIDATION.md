@@ -287,3 +287,18 @@ Exact code HEAD `57704c181dcf374bbb61aea580fe92022858c619` passed GitHub Actions
 ## Cycle 016 starting evidence
 
 Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-safe final destination and calls `outDoc.save(outputFile)` directly. A save failure or cancellation can therefore leave a partial user-visible signed PDF. Next mutation: route the save through `withStagedOutputFile`, preserve page/placement behavior, add focused publication-failure regression coverage, and validate the exact candidate with GitHub Actions.
+
+
+## Cycle 016 completion evidence
+
+- Story: `US-R016-P1-01A` — stage PdfSigner final PDF publication.
+- Production SHA: `87a962a072ea41f8b699f1817469a1d968cd8164`.
+- Exact code/test SHA: `57a0664f8174065de9052963a5ff48188de2ba3a`.
+- GitHub Actions run #289 / API `37027249729`: **SUCCESS**.
+- Core PDF unit tests, converter unit tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- Failure/cancellation regression coverage verifies no partial final signed PDF is published.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 017 starting evidence
+
+`PdfAnnotator.annotate()` currently allocates a collision-safe final path and serializes with `outDoc.save(outputFile)`. A serialization failure can expose a partial annotated PDF. Next mutation: stage publication with `withStagedOutputFile`, preserve annotation behavior, add focused failure/cancellation coverage, and validate the exact candidate.
