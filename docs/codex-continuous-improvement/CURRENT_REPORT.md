@@ -29,3 +29,7 @@ Cycle 015 was activated canonically in `STATE.md` before production/test mutatio
 ## Next exact action
 
 Introduce the pure heap-aware ID-card decode budget helper, wire both front/back decodes through its ceiling, add focused regressions, and validate the exact candidate with GitHub Actions.
+
+## Current validation checkpoint
+
+Production candidate `7fc73e9ca8f389f7a4bd5484935e73dab3f6568a` passed GitHub Actions run #279 / API `36990476378`. Focused pure unit regressions remain required before story closure. Two SHA-guarded attempts to add the regressions were blocked by the connector safety boundary. Exact next mutation: add assertions that `IdCardDecodeBudget.maxLongEdge()` yields 591 px at 32 MiB heap, 1182 px at 128 MiB, and preserves the 1800 px cap at 512 MiB; then validate the test-inclusive SHA with authoritative CI. No emulator, benchmark, or physical-device evidence is claimed.
