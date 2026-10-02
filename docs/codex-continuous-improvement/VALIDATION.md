@@ -302,3 +302,14 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 ## Cycle 017 starting evidence
 
 `PdfAnnotator.annotate()` currently allocates a collision-safe final path and serializes with `outDoc.save(outputFile)`. A serialization failure can expose a partial annotated PDF. Next mutation: stage publication with `withStagedOutputFile`, preserve annotation behavior, add focused failure/cancellation coverage, and validate the exact candidate.
+
+
+## Cycle 016 completion evidence
+- Story: `US-R016-P1-01A`.
+- Exact code/test SHA: `57a0664f8174065de9052963a5ff48188de2ba3a`.
+- GitHub Actions run #289 / API `37027249729`: **SUCCESS**.
+- Core PDF unit tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 017 starting evidence
+`PdfAnnotator.annotate()` still serializes with `outDoc.save(outputFile)` directly to a final collision-safe path. Next mutation: stage serialization with `withStagedOutputFile`, preserve annotations/page behavior, add focused failure/cancellation regression coverage, and validate the exact candidate.
