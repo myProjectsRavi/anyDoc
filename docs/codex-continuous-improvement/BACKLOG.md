@@ -229,4 +229,4 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ## Cycle 025 active
 ### Epic E025 — Heap-safe shared image decoding
 #### Feature F027 — Runtime-heap-aware constrained bitmap decode
-- [ACTIVE] `US-R025-P2-01A` — Bound `decodeBitmapConstrained()` allocations and add focused budget tests.
+- [COMPLETE / CI #352] `US-R025-P2-01A` — Bound `decodeBitmapConstrained()` allocations and add focused budget tests. Exact candidate `9760f56e7067cf169a7336be06c01f7b3495ab83` passed run #352 / API `37137314847`.
