@@ -1,24 +1,24 @@
 # Current Report
 
-**ID:** `2026-10-03_cycle-028`
+**ID:** `2026-10-03_cycle-029`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E028` — Failure-safe PDF text extraction
-**Feature:** `F030` — Transactional extracted-text publication
-**User Story:** `US-R028-P1-01A` — Stage PdfTextExtractor TXT publication
+**Epic:** `E029` — Failure-safe document-to-PDF conversion
+**Feature:** `F031` — Transactional document PDF publication
+**User Story:** `US-R029-P1-01A` — Stage DocumentPdfConverter output and guarantee PdfDocument cleanup
 
 ## Starting evidence
-Cycle 027 exact candidate `bdaf63302abe83978a99a68f2d0c6cdb4d21eb8e` passed GitHub Actions #373 / API `37139896501`.
+Cycle 028 exact candidate `9a623321759316f02205342bf4d3b67e05f07b82` passed GitHub Actions #379 / API `37140903238`.
 
 ## Source finding
-`PdfTextExtractor.extractToTxt()` writes UTF-8 bytes directly to a collision-safe final `.txt` file. A write failure or cancellation can expose a partial final artifact.
+`DocumentPdfConverter` writes directly to a final collision-safe PDF path. Its Android `PdfDocument` is closed only after a successful `writeTo()`, so writer/render failure can expose partial output and skip document cleanup.
 
 ## Acceptance criteria
-- Serialize extracted text through same-directory staged publication.
-- Preserve current output naming, UTF-8 encoding, extracted char count, and page count.
-- Publish no final file on writer failure/cancellation and remove staging residue.
-- Add focused regression coverage.
-- Pass authoritative GitHub Actions on the exact code/test candidate.
+- Publish only through same-directory staged output.
+- Close `PdfDocument` in `finally` on success/failure.
+- Preserve parsing/layout/page-count/output naming behavior.
+- Add focused failure/cancellation publication coverage.
+- Pass authoritative GitHub Actions on the exact candidate.
 
 ## Next exact action
-Replace the direct final FileOutputStream with `withStagedOutputFile`, add publication-safety tests, and validate.
+Stage `writeLinesAsPdf` output, harden document cleanup, add tests, and validate.
