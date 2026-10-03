@@ -280,3 +280,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E030 — Failure-safe HTML-to-PDF conversion
 #### Feature F032 — Transactional HTML PDF publication
 - [ACTIVE] `US-R030-P1-01A` — Stage HTML-rendered PDF and add failure/cancellation coverage.
+
+
+## Cycle 030 closure — 2026-10-03
+- [COMPLETE / CI #392] `US-R030-P1-01A` — Stage HtmlPdfConverter final PDF publication. Exact candidate `80d58adeccadc418691b0bdd1ffd654fb4ea4d66` passed run #392 / API `37142421834`.
+- [NEXT / P1] `US-R031-P1-01A` — Stage TextPdfConverter final PDF publication.
+
+## Cycle 031 active
+### Epic E031 — Failure-safe text-to-PDF conversion
+#### Feature F033 — Transactional text PDF publication
+- [ACTIVE] `US-R031-P1-01A` — Stage TextPdfConverter final serialization and add focused failure/cancellation coverage.
