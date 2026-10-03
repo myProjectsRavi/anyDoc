@@ -356,3 +356,12 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - Core PDF unit tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
 - Focused tests cover quality ceiling, constrained heap budget, aspect-ratio preservation, heap clamp, pathological dimensions, and extreme aspect ratio.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 025 completion evidence
+- Story: `US-R025-P2-01A` — heap-aware shared constrained image decoding.
+- Production SHA: `73f9015f0c19ccde0e36ec9f770d9afb0c558582`.
+- Exact test-inclusive candidate: `9760f56e7067cf169a7336be06c01f7b3495ab83`.
+- GitHub Actions run #352 / API `37137314847`: **SUCCESS**.
+- Core PDF tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
