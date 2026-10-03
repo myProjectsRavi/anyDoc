@@ -230,3 +230,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E025 — Heap-safe shared image decoding
 #### Feature F027 — Runtime-heap-aware constrained bitmap decode
 - [COMPLETE / CI #352] `US-R025-P2-01A` — Bound `decodeBitmapConstrained()` allocations and add focused budget tests. Exact candidate `9760f56e7067cf169a7336be06c01f7b3495ab83` passed run #352 / API `37137314847`.
+
+
+## Cycle 025 closure — 2026-10-03
+- [COMPLETE / CI #352] `US-R025-P2-01A` — Heap-aware shared constrained image decoding. Exact candidate `9760f56e7067cf169a7336be06c01f7b3495ab83` passed run #352 / API `37137314847`.
+- [NEXT / P2] `US-R026-P2-01A` — Bound scanner perspective region decode before OpenCV native allocations.
+
+## Cycle 026 active
+### Epic E026 — Heap-safe scanner perspective correction
+#### Feature F028 — Bounded document-region decode before OpenCV warp
+- [ACTIVE] `US-R026-P2-01A` — Add heap-aware region sampling and focused sizing tests.
