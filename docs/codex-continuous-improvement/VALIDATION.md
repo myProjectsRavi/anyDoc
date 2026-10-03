@@ -365,3 +365,17 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - GitHub Actions run #352 / API `37137314847`: **SUCCESS**.
 - Core PDF tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
 - No emulator, benchmark, or physical-device evidence is claimed.
+
+
+## Cycle 026 completion evidence
+- Story: `US-R026-P2-01A` — heap-safe scanner perspective region decode.
+- Exact candidate: `05f815ad10c928d483ad2cd38c7b9325bc35a04f`.
+- GitHub Actions run #366 / API `37138433125`: **SUCCESS**.
+- Core PDF unit tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- The prior #364 compile failure was diagnosed as cross-module visibility of the shared bitmap budget helpers; `05f815ad...` repaired that visibility and passed all gates.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 027 starting evidence
+- `ImageFormatConverter` constrains source decode memory but allows `scaleFactor` through 3.0.
+- Direct width/height multiplication means a 3× linear upscale can require 9× pixel area while the source remains resident.
+- Next change: derive bounded scaled dimensions from requested scale and a conservative heap-aware ARGB_8888 budget, add converter-module JVM coverage, and validate.
