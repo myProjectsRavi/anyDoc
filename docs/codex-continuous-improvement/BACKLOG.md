@@ -250,3 +250,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E027 — Heap-safe image format scaling
 #### Feature F029 — Bounded scaled bitmap allocation
 - [ACTIVE] `US-R027-P2-01A` — Clamp scaled image dimensions to a conservative ARGB_8888 budget while preserving requested scale when safe.
+
+
+## Cycle 027 closure — 2026-10-03
+- [COMPLETE / CI #373] `US-R027-P2-01A` — Heap-safe ImageFormatConverter scaled output allocation. Exact candidate `bdaf63302abe83978a99a68f2d0c6cdb4d21eb8e` passed run #373 / API `37139896501`.
+- [NEXT / P1] `US-R028-P1-01A` — Stage PdfTextExtractor TXT publication.
+
+## Cycle 028 active
+### Epic E028 — Failure-safe PDF text extraction
+#### Feature F030 — Transactional extracted-text publication
+- [ACTIVE] `US-R028-P1-01A` — Stage extracted TXT output and add failure/cancellation coverage.
