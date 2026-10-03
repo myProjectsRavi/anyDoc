@@ -1101,16 +1101,6 @@ private fun buildDocumentCropRect(
     return Rect(left, top, safeRight, safeBottom)
 }
 
-private fun computeRegionSampleSize(width: Int, height: Int, maxLongEdge: Int): Int {
-    val safeMax = maxLongEdge.coerceAtLeast(512)
-    var sample = 1
-    val longest = maxOf(width, height).coerceAtLeast(1)
-    while (longest / sample > safeMax) {
-        sample *= 2
-    }
-    return sample.coerceAtLeast(1)
-}
-
 private fun isManagedScanCacheUri(uri: Uri): Boolean {
     if (uri.scheme != "file") return false
     val name = uri.lastPathSegment.orEmpty()
