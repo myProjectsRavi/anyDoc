@@ -73,13 +73,16 @@ class PdfMerger(
                     MergeInputType.IMAGE -> {
                         val bitmap = decodeBitmapConstrained(context, uri, maxLongEdge = 2200)
                             ?: error("Failed to decode image source: $uri")
-                        appendImagePage(
-                            document = mergedDoc,
-                            bitmap = bitmap,
-                            pageSizeMode = options.pageSizeMode
-                        )
-                        outputPageNumber += 1
-                        runCatching { bitmap.recycle() }.getOrThrow()
+                        try {
+                            appendImagePage(
+                                document = mergedDoc,
+                                bitmap = bitmap,
+                                pageSizeMode = options.pageSizeMode
+                            )
+                            outputPageNumber += 1
+                        } finally {
+                            bitmap.recycle()
+                        }
                     }
 
                     MergeInputType.UNSUPPORTED -> {
