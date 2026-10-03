@@ -260,3 +260,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E028 — Failure-safe PDF text extraction
 #### Feature F030 — Transactional extracted-text publication
 - [ACTIVE] `US-R028-P1-01A` — Stage extracted TXT output and add failure/cancellation coverage.
+
+
+## Cycle 028 closure — 2026-10-03
+- [COMPLETE / CI #379] `US-R028-P1-01A` — Transactional PdfTextExtractor TXT publication. Exact candidate `9a623321759316f02205342bf4d3b67e05f07b82` passed run #379 / API `37140903238`.
+- [NEXT / P1] `US-R029-P1-01A` — Stage DocumentPdfConverter output and guarantee PdfDocument cleanup.
+
+## Cycle 029 active
+### Epic E029 — Failure-safe document-to-PDF conversion
+#### Feature F031 — Transactional document PDF publication
+- [ACTIVE] `US-R029-P1-01A` — Stage final PDF and close Android PdfDocument on all exit paths.
