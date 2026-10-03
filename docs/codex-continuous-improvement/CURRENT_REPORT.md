@@ -1,7 +1,7 @@
 # Current Report
 
 **ID:** `2026-10-03_cycle-025`
-**Status:** ACTIVE / INCOMPLETE
+**Status:** COMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
 **Epic:** `E025` — Heap-safe shared image decoding
 **Feature:** `F027` — Runtime-heap-aware constrained bitmap decode
@@ -23,3 +23,7 @@ Cycle 024 exact candidate `31e2ff40cc58f4a80ad1d278daed2d7314be1661` passed GitH
 
 ## Next exact action
 Implement and wire a pure decode-bound helper, add focused tests, then validate.
+
+
+## Completion evidence
+Exact candidate `9760f56e7067cf169a7336be06c01f7b3495ab83` passed GitHub Actions run #352 / API `37137314847` across core PDF tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint. No emulator, benchmark, or physical-device evidence is claimed.
