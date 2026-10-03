@@ -72,6 +72,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.docforge.core.opencv.DetectedDocument
 import com.docforge.core.opencv.DocumentEdgeDetector
+import com.docforge.core.pdf.bitmapDecodeBudgetBytes
+import com.docforge.core.pdf.boundedBitmapRegionSampleSize
 import com.docforge.core.pdf.decodeBitmapConstrained
 import com.docforge.core.pdf.PdfPageSize
 import com.docforge.core.ui.model.StableUriRef
@@ -1024,10 +1026,11 @@ private fun decodeDocumentRegionForPerspective(
     }
 
     val decodeRect = buildDocumentCropRect(cornersInFullImage, fullWidth, fullHeight)
-    val sampleSize = computeRegionSampleSize(
+    val sampleSize = boundedBitmapRegionSampleSize(
         width = decodeRect.width(),
         height = decodeRect.height(),
-        maxLongEdge = 3600
+        requestedLongEdge = 2000,
+        maxBitmapBytes = bitmapDecodeBudgetBytes(Runtime.getRuntime().maxMemory())
     )
 
     val decodedBitmap = context.contentResolver.openInputStream(inputUri)?.use { stream ->
