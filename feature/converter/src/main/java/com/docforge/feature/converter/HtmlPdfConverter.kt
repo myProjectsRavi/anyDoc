@@ -8,7 +8,7 @@ import android.webkit.WebViewClient
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import com.docforge.core.pdf.PdfCreationResult
-import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -71,8 +71,6 @@ class HtmlPdfConverter(
         )
         val sanitized = outputName.ifBlank { "html_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
         val webView = WebView(context).apply {
             settings.javaScriptEnabled = false
             settings.allowFileAccess = false
@@ -113,22 +111,28 @@ class HtmlPdfConverter(
                     pdfDocument.finishPage(page)
                 }
 
-                withContext(Dispatchers.IO) {
-                    FileOutputStream(outputFile).use { out ->
-                        pdfDocument.writeTo(out)
+                val staged = withStagedOutputFile(
+                    directory = outputDir,
+                    baseName = sanitized,
+                    extension = "pdf"
+                ) { stagedFile ->
+                    withContext(Dispatchers.IO) {
+                        FileOutputStream(stagedFile).use { out ->
+                            pdfDocument.writeTo(out)
+                        }
                     }
                 }
+
+                HtmlPdfConversionResult(
+                    pdfResult = PdfCreationResult(
+                        outputFile = staged.outputFile,
+                        pageCount = pageCount,
+                        outputSizeBytes = staged.outputFile.length()
+                    )
+                )
             } finally {
                 pdfDocument.close()
             }
-
-            HtmlPdfConversionResult(
-                pdfResult = PdfCreationResult(
-                    outputFile = outputFile,
-                    pageCount = pageCount,
-                    outputSizeBytes = outputFile.length()
-                )
-            )
         } finally {
             webView.destroy()
         }

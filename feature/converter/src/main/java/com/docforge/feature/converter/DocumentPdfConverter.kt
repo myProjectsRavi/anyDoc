@@ -9,6 +9,7 @@ import android.util.Xml
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import com.docforge.core.pdf.PdfCreationResult
+import com.docforge.core.pdf.withStagedOutputFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
@@ -51,14 +52,19 @@ class DocumentPdfConverter(
 
         val sanitized = outputName.ifBlank { "doc_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = com.docforge.core.pdf.resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-        val pageCount = writeLinesAsPdf(lines, outputFile)
+        val staged = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "pdf"
+        ) { stagedFile ->
+            writeLinesAsPdf(lines, stagedFile)
+        }
+        val outputFile = staged.outputFile
 
         DocumentPdfConversionResult(
             pdfResult = PdfCreationResult(
                 outputFile = outputFile,
-                pageCount = pageCount,
+                pageCount = staged.value,
                 outputSizeBytes = outputFile.length()
             ),
             inputType = inputType,
@@ -263,36 +269,39 @@ class DocumentPdfConverter(
         val maxTextWidth = pageWidth - (margin * 2)
 
         val pdf = PdfDocument()
-        var pageNumber = 1
-        var page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
-        var canvas = page.canvas
-        var y = margin + paint.textSize
+        try {
+            var pageNumber = 1
+            var page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+            var canvas = page.canvas
+            var y = margin + paint.textSize
 
-        val wrappedLines = lines.flatMap { wrapLine(it, paint, maxTextWidth) }
+            val wrappedLines = lines.flatMap { wrapLine(it, paint, maxTextWidth) }
 
-        wrappedLines.forEach { line ->
-            if (y > pageHeight - margin) {
-                pdf.finishPage(page)
-                pageNumber += 1
-                page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
-                canvas = page.canvas
-                y = margin + paint.textSize
+            wrappedLines.forEach { line ->
+                if (y > pageHeight - margin) {
+                    pdf.finishPage(page)
+                    pageNumber += 1
+                    page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+                    canvas = page.canvas
+                    y = margin + paint.textSize
+                }
+                canvas.drawText(line, margin, y, paint)
+                y += lineHeight
             }
-            canvas.drawText(line, margin, y, paint)
-            y += lineHeight
-        }
 
-        if (wrappedLines.isEmpty()) {
-            canvas.drawText("[No extractable text found]", margin, y, paint)
-        }
+            if (wrappedLines.isEmpty()) {
+                canvas.drawText("[No extractable text found]", margin, y, paint)
+            }
 
-        pdf.finishPage(page)
+            pdf.finishPage(page)
 
-        FileOutputStream(outputFile).use { stream ->
-            pdf.writeTo(stream)
+            FileOutputStream(outputFile).use { stream ->
+                pdf.writeTo(stream)
+            }
+            return pageNumber
+        } finally {
+            pdf.close()
         }
-        pdf.close()
-        return pageNumber
     }
 
     private fun wrapLine(line: String, paint: Paint, maxWidth: Float): List<String> {

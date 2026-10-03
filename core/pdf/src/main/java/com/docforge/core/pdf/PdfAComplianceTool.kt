@@ -70,13 +70,21 @@ class PdfAComplianceTool(
                 // 3. Mark document catalog version
                 document.documentCatalog.version = "1.4"
 
-                val outputFile = resolveOutput(outputName, "pdfa")
-                document.save(outputFile)
+                val outputDir = outputDirectory()
+                val baseName = outputBaseName(outputName, "pdfa")
+                val stagedResult = withStagedOutputFile(
+                    directory = outputDir,
+                    baseName = baseName,
+                    extension = "pdf"
+                ) { stagedFile ->
+                    document.save(stagedFile)
+                    document.numberOfPages
+                }
 
                 PdfAResult(
-                    outputFile = outputFile,
-                    pageCount = document.numberOfPages,
-                    outputSizeBytes = outputFile.length()
+                    outputFile = stagedResult.outputFile,
+                    pageCount = stagedResult.value,
+                    outputSizeBytes = stagedResult.outputFile.length()
                 )
             }
         }
@@ -103,13 +111,15 @@ class PdfAComplianceTool(
 <?xpacket end="w"?>"""
     }
 
-    private fun resolveOutput(outputName: String, fallback: String): File {
-        val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
+    private fun outputDirectory(): File {
+        return DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
             bucket = DocForgeOutputBucket.DOCUMENTS
         )
-        val sanitized = outputName.ifBlank { "${fallback}_${System.currentTimeMillis()}" }
+    }
+
+    private fun outputBaseName(outputName: String, fallback: String): String {
+        return outputName.ifBlank { "${fallback}_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        return resolveNonConflictingFile(outputDir, sanitized, "pdf")
     }
 }

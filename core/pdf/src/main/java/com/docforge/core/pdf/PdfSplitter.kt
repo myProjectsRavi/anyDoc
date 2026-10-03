@@ -38,14 +38,12 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "split")
-            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-            PDDocument().use { outDoc ->
+            val outputFile = PDDocument().use { outDoc ->
                 for (pageOneBased in startPageOneBased..endPageOneBased) {
                     checkCancelled()
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                 }
-                outDoc.save(outputFile)
+                saveStagedPdf(outDoc, outputDir, sanitized)
             }
 
             PdfCreationResult(
@@ -76,23 +74,27 @@ class PdfSplitter(
             val outputDir = outputDirectory()
             val sanitizedBase = sanitizeName(outputBaseName, "extract")
 
-            val createdFiles = mutableListOf<File>()
-            var bytes = 0L
-
-            requested.forEach { pageOneBased ->
-                checkCancelled()
-                val out = File(outputDir, "${sanitizedBase}_p$pageOneBased.pdf")
-                PDDocument().use { outDoc ->
-                    importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
-                    outDoc.save(out)
+            val stagedOutputs = withStagedOutputFiles(
+                directory = outputDir,
+                requests = requested.map { pageOneBased ->
+                    StagedOutputRequest(
+                        baseName = "${sanitizedBase}_p$pageOneBased",
+                        extension = "pdf"
+                    ) { stagedFile ->
+                        checkCancelled()
+                        PDDocument().use { outDoc ->
+                            importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
+                            outDoc.save(stagedFile)
+                        }
+                        pageOneBased
+                    }
                 }
-                createdFiles += out
-                bytes += out.length()
-            }
+            )
+            val createdFiles = stagedOutputs.map { it.outputFile }
 
             PdfSplitResult(
                 outputFiles = createdFiles,
-                outputSizeBytes = bytes,
+                outputSizeBytes = createdFiles.sumOf { it.length() },
                 totalPagesExported = requested.size
             )
         }
@@ -111,31 +113,38 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitizedBase = sanitizeName(outputBaseName, "split_n")
-            val createdFiles = mutableListOf<File>()
-            var bytes = 0L
-
+            val ranges = mutableListOf<Pair<Int, Int>>()
             var startPageOneBased = 1
             while (startPageOneBased <= sourceDoc.numberOfPages) {
-                checkCancelled()
                 val endPageOneBased = min(startPageOneBased + pagesPerChunk - 1, sourceDoc.numberOfPages)
-                val out = File(outputDir, "${sanitizedBase}_${startPageOneBased}_${endPageOneBased}.pdf")
-
-                PDDocument().use { outDoc ->
-                    for (pageOneBased in startPageOneBased..endPageOneBased) {
-                        checkCancelled()
-                        importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
-                    }
-                    outDoc.save(out)
-                }
-
-                createdFiles += out
-                bytes += out.length()
+                ranges += startPageOneBased to endPageOneBased
                 startPageOneBased = endPageOneBased + 1
             }
 
+            val stagedOutputs = withStagedOutputFiles(
+                directory = outputDir,
+                requests = ranges.map { (startPage, endPage) ->
+                    StagedOutputRequest(
+                        baseName = "${sanitizedBase}_${startPage}_${endPage}",
+                        extension = "pdf"
+                    ) { stagedFile ->
+                        checkCancelled()
+                        PDDocument().use { outDoc ->
+                            for (pageOneBased in startPage..endPage) {
+                                checkCancelled()
+                                importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
+                            }
+                            outDoc.save(stagedFile)
+                        }
+                        endPage - startPage + 1
+                    }
+                }
+            )
+            val createdFiles = stagedOutputs.map { it.outputFile }
+
             PdfSplitResult(
                 outputFiles = createdFiles,
-                outputSizeBytes = bytes,
+                outputSizeBytes = createdFiles.sumOf { it.length() },
                 totalPagesExported = sourceDoc.numberOfPages
             )
         }
@@ -156,36 +165,43 @@ class PdfSplitter(
             val boundaries = resolveTopLevelBookmarkBoundaries(sourceDoc)
             require(boundaries.isNotEmpty()) { "No bookmark boundaries found in PDF outline." }
 
-            val createdFiles = mutableListOf<File>()
-            var bytes = 0L
-
-            boundaries.forEachIndexed { index, boundary ->
-                checkCancelled()
+            val segments = boundaries.mapIndexedNotNull { index, boundary ->
                 val nextStart = boundaries.getOrNull(index + 1)?.startPageOneBased ?: (totalPages + 1)
                 val endPage = (nextStart - 1).coerceAtMost(totalPages)
-                if (endPage < boundary.startPageOneBased) return@forEachIndexed
-
-                val titlePart = sanitizeName(boundary.title, "bookmark_${index + 1}")
-                val outFile = File(
-                    outputDir,
-                    "${sanitizedBase}_${index + 1}_${titlePart}_${boundary.startPageOneBased}_$endPage.pdf"
-                )
-
-                PDDocument().use { outDoc ->
-                    for (pageIndex in (boundary.startPageOneBased - 1)..(endPage - 1)) {
-                        checkCancelled()
-                        importPage(outDoc, sourceDoc.getPage(pageIndex))
-                    }
-                    outDoc.save(outFile)
+                if (endPage < boundary.startPageOneBased) {
+                    null
+                } else {
+                    Triple(index, boundary, endPage)
                 }
-
-                createdFiles += outFile
-                bytes += outFile.length()
             }
+
+            val stagedOutputs = withStagedOutputFiles(
+                directory = outputDir,
+                requests = segments.map { (index, boundary, endPage) ->
+                    val titlePart = sanitizeName(boundary.title, "bookmark_${index + 1}")
+                    val segmentBaseName =
+                        "${sanitizedBase}_${index + 1}_${titlePart}_${boundary.startPageOneBased}_$endPage"
+                    StagedOutputRequest(
+                        baseName = segmentBaseName,
+                        extension = "pdf"
+                    ) { stagedFile ->
+                        checkCancelled()
+                        PDDocument().use { outDoc ->
+                            for (pageIndex in (boundary.startPageOneBased - 1)..(endPage - 1)) {
+                                checkCancelled()
+                                importPage(outDoc, sourceDoc.getPage(pageIndex))
+                            }
+                            outDoc.save(stagedFile)
+                        }
+                        endPage - boundary.startPageOneBased + 1
+                    }
+                }
+            )
+            val createdFiles = stagedOutputs.map { it.outputFile }
 
             PdfSplitResult(
                 outputFiles = createdFiles,
-                outputSizeBytes = bytes,
+                outputSizeBytes = createdFiles.sumOf { it.length() },
                 totalPagesExported = totalPages
             )
         }
@@ -208,14 +224,12 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "reorder")
-            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-            PDDocument().use { outDoc ->
+            val outputFile = PDDocument().use { outDoc ->
                 orderedPagesOneBased.forEach { pageOneBased ->
                     checkCancelled()
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                 }
-                outDoc.save(outputFile)
+                saveStagedPdf(outDoc, outputDir, sanitized)
             }
 
             PdfCreationResult(
@@ -247,14 +261,12 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "delete")
-            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-            PDDocument().use { outDoc ->
+            val outputFile = PDDocument().use { outDoc ->
                 keptPages.forEach { pageOneBased ->
                     checkCancelled()
                     importPage(outDoc, sourceDoc.getPage(pageOneBased - 1))
                 }
-                outDoc.save(outputFile)
+                saveStagedPdf(outDoc, outputDir, sanitized)
             }
 
             PdfCreationResult(
@@ -285,9 +297,7 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "rotate")
-            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-            PDDocument().use { outDoc ->
+            val outputFile = PDDocument().use { outDoc ->
                 for (pageOneBased in 1..sourceDoc.numberOfPages) {
                     checkCancelled()
                     val sourcePage = sourceDoc.getPage(pageOneBased - 1)
@@ -296,7 +306,7 @@ class PdfSplitter(
                         imported.rotation = ((sourcePage.rotation + degreesClockwise) % 360 + 360) % 360
                     }
                 }
-                outDoc.save(outputFile)
+                saveStagedPdf(outDoc, outputDir, sanitized)
             }
 
             PdfCreationResult(
@@ -330,9 +340,7 @@ class PdfSplitter(
 
             val outputDir = outputDirectory()
             val sanitized = sanitizeName(outputName, "workspace")
-            val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-            PDDocument().use { outDoc ->
+            val outputFile = PDDocument().use { outDoc ->
                 visualOrderOneBased.forEach { pageOneBased ->
                     checkCancelled()
                     val sourcePage = sourceDoc.getPage(pageOneBased - 1)
@@ -342,7 +350,7 @@ class PdfSplitter(
                         imported.rotation = normalizeRotation(sourcePage.rotation + extraRotation)
                     }
                 }
-                outDoc.save(outputFile)
+                saveStagedPdf(outDoc, outputDir, sanitized)
             }
 
             PdfCreationResult(
@@ -372,6 +380,20 @@ class PdfSplitter(
         imported.cropBox = sourcePage.cropBox
         imported.resources = sourcePage.resources
         return imported
+    }
+
+    private suspend fun saveStagedPdf(
+        document: PDDocument,
+        outputDir: File,
+        baseName: String
+    ): File {
+        return withStagedOutputFile(
+            directory = outputDir,
+            baseName = baseName,
+            extension = "pdf"
+        ) { stagedFile ->
+            document.save(stagedFile)
+        }.outputFile
     }
 
     private fun outputDirectory(): File {

@@ -110,6 +110,35 @@ object BatchQueueRuntimeStore {
         return _state.value.tasks.filter { it.status == BatchTaskStatus.QUEUED }
     }
 
+    fun recoverableTasksSnapshot(): List<BatchQueueTask> {
+        return _state.value.tasks.filter {
+            it.status == BatchTaskStatus.QUEUED || it.status == BatchTaskStatus.RUNNING
+        }
+    }
+
+    fun restoreRecoverableTasksIfEmpty(tasks: List<BatchQueueTask>): Boolean {
+        if (_state.value.isProcessing || _state.value.tasks.isNotEmpty() || tasks.isEmpty()) {
+            return false
+        }
+
+        val restored = tasks
+            .filter { it.status == BatchTaskStatus.QUEUED }
+            .distinctBy { it.id }
+
+        if (restored.isEmpty()) return false
+
+        val restoredMaxId = restored.maxOf { it.id }
+        taskIdCounter.updateAndGet { current ->
+            nextTaskIdAfterRestore(current, restoredMaxId)
+        }
+
+        _state.value = BatchQueueUiState(
+            tasks = restored,
+            statusMessage = "Recovered ${restored.size} queued task(s) after app restart."
+        )
+        return true
+    }
+
     fun replaceQueueWithPreset(presetName: String, presetTasks: List<BatchQueuePresetTask>): Result<Unit> {
         if (_state.value.isProcessing) {
             return Result.failure(IllegalStateException("Stop processing before loading a preset."))
@@ -360,4 +389,11 @@ object BatchQueueRuntimeStore {
         val first = labels.first()
         return if (labels.size == 1) first else "$first +${labels.size - 1} more"
     }
+}
+
+
+internal fun nextTaskIdAfterRestore(currentNextId: Long, restoredMaxId: Long): Long {
+    if (restoredMaxId <= 0L) return currentNextId.coerceAtLeast(1L)
+    if (restoredMaxId == Long.MAX_VALUE) return Long.MAX_VALUE
+    return maxOf(currentNextId, restoredMaxId + 1L)
 }

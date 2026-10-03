@@ -54,28 +54,43 @@ class PdfCreator(
 
         val sanitized = outputName.ifBlank { "docforge_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val output = resolveNonConflictingFile(outputDir, sanitized, "pdf")
+        val staged = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "pdf"
+        ) { stagedFile ->
+            val pdf = PdfDocument()
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            try {
+                imageUris.forEachIndexed { index, uri ->
+                    checkCancelled()
+                    val bitmap = decodeBitmap(uri)
+                        ?: error("Failed to decode image: $uri")
+                    try {
+                        val pageSize = resolvePageSize(options.pageSize, bitmap)
+                        val pageInfo = PdfDocument.PageInfo.Builder(
+                            pageSize.first,
+                            pageSize.second,
+                            index + 1
+                        ).create()
+                        val page = pdf.startPage(pageInfo)
+                        drawBitmapFitCenter(page.canvas, bitmap, pageSize.first, pageSize.second, paint)
+                        pdf.finishPage(page)
+                    } finally {
+                        bitmap.recycle()
+                    }
+                }
 
-        val pdf = PdfDocument()
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
-        imageUris.forEachIndexed { index, uri ->
-            checkCancelled()
-            val bitmap = decodeBitmap(uri)
-                ?: error("Failed to decode image: $uri")
-
-            val pageSize = resolvePageSize(options.pageSize, bitmap)
-            val pageInfo = PdfDocument.PageInfo.Builder(pageSize.first, pageSize.second, index + 1).create()
-            val page = pdf.startPage(pageInfo)
-            drawBitmapFitCenter(page.canvas, bitmap, pageSize.first, pageSize.second, paint)
-            pdf.finishPage(page)
-            bitmap.recycle()
+                checkCancelled()
+                FileOutputStream(stagedFile).use { stream ->
+                    pdf.writeTo(stream)
+                }
+                checkCancelled()
+            } finally {
+                pdf.close()
+            }
         }
-
-        FileOutputStream(output).use { stream ->
-            pdf.writeTo(stream)
-        }
-        pdf.close()
+        val output = staged.outputFile
 
         PdfCreationResult(
             outputFile = output,

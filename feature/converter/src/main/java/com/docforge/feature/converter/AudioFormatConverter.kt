@@ -9,8 +9,12 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.net.Uri
+import android.os.StatFs
+import com.docforge.core.domain.io.ActiveTempFileRegistry
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
+import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -93,7 +97,7 @@ class AudioFormatConverter(
         }
     }
 
-    private fun convertToAacM4a(
+    private suspend fun convertToAacM4a(
         inputUri: Uri,
         outputBaseName: String,
         checkCancelled: () -> Unit
@@ -102,18 +106,26 @@ class AudioFormatConverter(
             "AAC encoder not available on this device."
         }
 
-        val outputFile = createOutputFile(outputBaseName, AudioConvertOutputFormat.M4A_AAC)
+        val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.M4A_AAC)
+        preflightPcmCache(inputUri)
         val pcmFile = createTempPcmFile()
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            encodePcmToAacM4a(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                encodePcmToAacM4a(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -122,27 +134,35 @@ class AudioFormatConverter(
                 durationMs = decoded.durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
-    private fun convertToWav(
+    private suspend fun convertToWav(
         inputUri: Uri,
         outputBaseName: String,
         checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
-        val outputFile = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
+        val outputTarget = createOutputFile(outputBaseName, AudioConvertOutputFormat.WAV)
+        preflightPcmCache(inputUri)
         val pcmFile = createTempPcmFile()
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            writeWav(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                writeWav(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -151,18 +171,18 @@ class AudioFormatConverter(
                 durationMs = decoded.durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
-    private fun convertToCompressed(
+    private suspend fun convertToCompressed(
         inputUri: Uri,
         outputBaseName: String,
         outputFormat: AudioConvertOutputFormat,
         targetMime: String,
         checkCancelled: () -> Unit
     ): AudioFormatConversionResult {
-        val outputFile = createOutputFile(outputBaseName, outputFormat)
+        val outputTarget = createOutputFile(outputBaseName, outputFormat)
         val sourceTrack = withAudioTrack(inputUri) { _, _, trackFormat ->
             Pair(
                 trackFormat.getString(MediaFormat.KEY_MIME).orEmpty(),
@@ -173,10 +193,17 @@ class AudioFormatConverter(
         val durationMs = sourceTrack.second
 
         if (normalizeMime(sourceMimeType) == normalizeMime(targetMime)) {
-            withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
-                extractor.selectTrack(trackIndex)
-                copyExtractorSamplesToFile(extractor, trackFormat, outputFile, checkCancelled)
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                withAudioTrack(inputUri) { extractor, trackIndex, trackFormat ->
+                    extractor.selectTrack(trackIndex)
+                    copyExtractorSamplesToFile(extractor, trackFormat, stagedFile, checkCancelled)
+                }
             }
+            val outputFile = staged.outputFile
             return AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -190,18 +217,26 @@ class AudioFormatConverter(
             "${outputFormat.name} encoder not available on this device. Source can only be converted if the device exposes a ${outputFormat.name} encoder."
         }
 
+        preflightPcmCache(inputUri)
         val pcmFile = createTempPcmFile()
 
         return try {
             val decoded = decodeToPcmFile(inputUri, pcmFile, checkCancelled)
-            encodePcmToRawCodec(
-                pcmFile = pcmFile,
-                outputFile = outputFile,
-                sampleRateHz = decoded.sampleRateHz,
-                channelCount = decoded.channelCount,
-                targetMime = targetMime,
-                checkCancelled = checkCancelled
-            )
+            val staged = withStagedOutputFile(
+                directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+                baseName = outputTarget.nameWithoutExtension,
+                extension = outputTarget.extension
+            ) { stagedFile ->
+                encodePcmToRawCodec(
+                    pcmFile = pcmFile,
+                    outputFile = stagedFile,
+                    sampleRateHz = decoded.sampleRateHz,
+                    channelCount = decoded.channelCount,
+                    targetMime = targetMime,
+                    checkCancelled = checkCancelled
+                )
+            }
+            val outputFile = staged.outputFile
             AudioFormatConversionResult(
                 outputFile = outputFile,
                 outputSizeBytes = outputFile.length(),
@@ -210,7 +245,7 @@ class AudioFormatConverter(
                 durationMs = durationMs
             )
         } finally {
-            pcmFile.delete()
+            deleteTempPcmFile(pcmFile)
         }
     }
 
@@ -604,14 +639,36 @@ class AudioFormatConverter(
             AudioConvertOutputFormat.FLAC -> "flac"
         }
 
-        return File(outputDir, "$base.$extension").also { file ->
-            if (file.exists()) file.delete()
+        return resolveNonConflictingFile(outputDir, base, extension)
+    }
+
+    private fun preflightPcmCache(inputUri: Uri) {
+        val requiredBytes = withAudioTrack(inputUri) { _, _, trackFormat ->
+            requiredPcmCacheBytes(
+                durationMs = readDurationMs(trackFormat),
+                sampleRateHz = readOptionalInt(trackFormat, MediaFormat.KEY_SAMPLE_RATE),
+                channelCount = readOptionalInt(trackFormat, MediaFormat.KEY_CHANNEL_COUNT)
+            )
+        } ?: return
+
+        val availableBytes = StatFs(context.cacheDir.absolutePath).availableBytes
+        require(availableBytes >= requiredBytes) {
+            "Not enough temporary storage to decode this audio. Required " +
+                "${requiredBytes / (1024L * 1024L)} MiB, available " +
+                "${availableBytes / (1024L * 1024L)} MiB."
         }
     }
 
     private fun createTempPcmFile(): File {
         val tempDir = context.cacheDir
-        return File.createTempFile("docforge_audio_", ".pcm", tempDir)
+        return File.createTempFile("docforge_audio_", ".pcm", tempDir).also {
+            ActiveTempFileRegistry.register(it)
+        }
+    }
+
+    private fun deleteTempPcmFile(file: File) {
+        ActiveTempFileRegistry.unregister(file)
+        file.delete()
     }
 
     private inline fun <T> withAudioTrack(
@@ -716,4 +773,53 @@ private fun DataOutputStream.writeIntLE(value: Int) {
 private fun DataOutputStream.writeShortLE(value: Short) {
     writeByte(value.toInt() and 0xFF)
     writeByte((value.toInt() shr 8) and 0xFF)
+}
+
+
+internal const val AUDIO_PCM_CACHE_RESERVE_BYTES: Long = 32L * 1024L * 1024L
+private const val DEFAULT_PCM_SAMPLE_RATE_HZ = 48_000
+private const val DEFAULT_PCM_CHANNEL_COUNT = 2
+private const val PCM_16BIT_BYTES_PER_SAMPLE = 2L
+
+internal fun requiredPcmCacheBytes(
+    durationMs: Long?,
+    sampleRateHz: Int?,
+    channelCount: Int?
+): Long? {
+    val duration = durationMs?.takeIf { it > 0L } ?: return null
+    val sampleRate = sampleRateHz?.takeIf { it > 0 } ?: DEFAULT_PCM_SAMPLE_RATE_HZ
+    val channels = channelCount?.takeIf { it > 0 } ?: DEFAULT_PCM_CHANNEL_COUNT
+
+    val wholeSeconds = duration / 1000L
+    val remainderMs = duration % 1000L
+
+    val wholeBytes = saturatingMultiply(
+        saturatingMultiply(
+            saturatingMultiply(wholeSeconds, sampleRate.toLong()),
+            channels.toLong()
+        ),
+        PCM_16BIT_BYTES_PER_SAMPLE
+    )
+    val remainderBytes = saturatingMultiply(
+        saturatingMultiply(
+            saturatingMultiply(remainderMs, sampleRate.toLong()),
+            channels.toLong()
+        ),
+        PCM_16BIT_BYTES_PER_SAMPLE
+    ) / 1000L
+
+    val pcmBytes = saturatingAdd(wholeBytes, remainderBytes)
+    return saturatingAdd(pcmBytes, AUDIO_PCM_CACHE_RESERVE_BYTES)
+}
+
+private fun saturatingMultiply(left: Long, right: Long): Long {
+    if (left <= 0L || right <= 0L) return 0L
+    if (left > Long.MAX_VALUE / right) return Long.MAX_VALUE
+    return left * right
+}
+
+private fun saturatingAdd(left: Long, right: Long): Long {
+    if (left == Long.MAX_VALUE || right == Long.MAX_VALUE) return Long.MAX_VALUE
+    if (left > Long.MAX_VALUE - right) return Long.MAX_VALUE
+    return left + right
 }
