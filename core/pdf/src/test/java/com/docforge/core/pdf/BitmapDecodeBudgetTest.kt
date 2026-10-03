@@ -87,4 +87,33 @@ class BitmapDecodeBudgetTest {
         assertTrue(size.height >= 1)
         assertTrue(size.width.toLong() * size.height.toLong() * 4L <= budget)
     }
+
+    @Test
+    fun regionSampleSize_respectsQualityCeilingWithPowerOfTwoSampling() {
+        val sample = boundedBitmapRegionSampleSize(
+            width = 6000,
+            height = 4000,
+            requestedLongEdge = 2000,
+            maxBitmapBytes = 16L * 1024L * 1024L
+        )
+
+        assertEquals(4, sample)
+        assertTrue(6000 / sample <= 2000)
+    }
+
+    @Test
+    fun regionSampleSize_becomesMoreConservativeUnderLowBudget() {
+        val budget = 4L * 1024L * 1024L
+        val sample = boundedBitmapRegionSampleSize(
+            width = 6000,
+            height = 4000,
+            requestedLongEdge = 2000,
+            maxBitmapBytes = budget
+        )
+
+        val decodedWidth = 6000 / sample
+        val decodedHeight = 4000 / sample
+        assertEquals(8, sample)
+        assertTrue(decodedWidth.toLong() * decodedHeight.toLong() * 4L <= budget)
+    }
 }
