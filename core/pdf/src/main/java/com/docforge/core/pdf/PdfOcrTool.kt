@@ -30,6 +30,7 @@ import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.math.max
+import kotlin.math.sqrt
 
 data class PdfOcrResult(
     val textOutputFile: File,
@@ -115,15 +116,18 @@ class PdfOcrTool(
                         repeat(renderer.pageCount) { pageIndex ->
                             coroutineCtx.ensureActive()
                             renderer.openPage(pageIndex).use { page ->
-                                val targetLongEdge = 1800
-                                val sourceWidth = page.width.coerceAtLeast(1)
-                                val sourceHeight = page.height.coerceAtLeast(1)
-                                val largestSide = max(sourceWidth, sourceHeight).coerceAtLeast(1)
-                                val scale = (targetLongEdge.toFloat() / largestSide.toFloat()).coerceAtMost(1f)
-                                val width = (sourceWidth * scale).toInt().coerceAtLeast(1)
-                                val height = (sourceHeight * scale).toInt().coerceAtLeast(1)
+                                val rasterSize = boundedPdfOcrRasterSize(
+                                    sourceWidth = page.width.coerceAtLeast(1),
+                                    sourceHeight = page.height.coerceAtLeast(1),
+                                    targetLongEdge = PDF_OCR_TARGET_LONG_EDGE,
+                                    maxBitmapBytes = pdfOcrBitmapBudgetBytes(Runtime.getRuntime().maxMemory())
+                                )
 
-                                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                                val bitmap = Bitmap.createBitmap(
+                                    rasterSize.width,
+                                    rasterSize.height,
+                                    Bitmap.Config.ARGB_8888
+                                )
                                 try {
                                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                                     val text = recognizer.process(InputImage.fromBitmap(bitmap, 0)).awaitTask()
@@ -460,4 +464,64 @@ class PdfOcrTool(
             continuation.cancel()
         }
     }
+}
+
+
+private const val PDF_OCR_TARGET_LONG_EDGE = 1800
+private const val PDF_OCR_BYTES_PER_PIXEL = 4L
+private const val PDF_OCR_MIN_BITMAP_BUDGET_BYTES = 8L * 1024L * 1024L
+private const val PDF_OCR_MAX_BITMAP_BUDGET_BYTES = 32L * 1024L * 1024L
+
+internal fun pdfOcrBitmapBudgetBytes(maxHeapBytes: Long): Long {
+    val heapAwareBudget = (maxHeapBytes / 8L).coerceAtLeast(1L)
+    return heapAwareBudget.coerceIn(
+        PDF_OCR_MIN_BITMAP_BUDGET_BYTES,
+        PDF_OCR_MAX_BITMAP_BUDGET_BYTES
+    )
+}
+
+internal fun boundedPdfOcrRasterSize(
+    sourceWidth: Int,
+    sourceHeight: Int,
+    targetLongEdge: Int = PDF_OCR_TARGET_LONG_EDGE,
+    maxBitmapBytes: Long
+): PdfRasterSize {
+    require(sourceWidth > 0 && sourceHeight > 0) { "PDF page dimensions must be positive." }
+    require(targetLongEdge > 0) { "OCR target long edge must be positive." }
+    require(maxBitmapBytes >= PDF_OCR_BYTES_PER_PIXEL) { "Bitmap budget is too small." }
+
+    val largestSide = max(sourceWidth, sourceHeight).toDouble().coerceAtLeast(1.0)
+    val qualityScale = (targetLongEdge.toDouble() / largestSide).coerceAtMost(1.0)
+    val desiredWidth = (sourceWidth.toDouble() * qualityScale)
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+        .coerceAtLeast(1)
+    val desiredHeight = (sourceHeight.toDouble() * qualityScale)
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+        .coerceAtLeast(1)
+
+    val maxPixels = (maxBitmapBytes / PDF_OCR_BYTES_PER_PIXEL).coerceAtLeast(1L)
+    val desiredPixels = desiredWidth.toDouble() * desiredHeight.toDouble()
+    if (desiredPixels <= maxPixels.toDouble()) {
+        return PdfRasterSize(desiredWidth, desiredHeight)
+    }
+
+    val budgetScale = sqrt(maxPixels.toDouble() / desiredPixels)
+    var width = (desiredWidth.toDouble() * budgetScale).toInt().coerceAtLeast(1)
+    var height = (desiredHeight.toDouble() * budgetScale).toInt().coerceAtLeast(1)
+
+    if (width.toLong() * height.toLong() > maxPixels) {
+        if (width >= height) {
+            width = minOf(width.toLong(), (maxPixels / height.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
+        } else {
+            height = minOf(height.toLong(), (maxPixels / width.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
+        }
+    }
+
+    return PdfRasterSize(width.coerceAtLeast(1), height.coerceAtLeast(1))
 }
