@@ -210,3 +210,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E020 — Failure-safe PDF header/footer export
 #### Feature F022 — Transactional header/footer PDF publication
 - [ACTIVE] `US-R020-P1-01A` — Stage PdfHeaderFooterTool output and add focused publication-safety regression coverage.
+
+
+## Cycle 023 closure — 2026-10-03
+- [COMPLETE / CI #339] `US-R023-P2-01A` — Guarantee PdfMerger image bitmap recycling on all append/render exit paths. Exact candidate `79d0d11a87de414ffd03937fd4590045ee7b6a8e` passed run #339 / API `37119773705`.
+- [NEXT / P2] `US-R024-P2-01A` — Bound PdfOcrTool PDF-page ARGB_8888 raster allocation with a heap-aware byte ceiling while preserving the 1800 px quality cap.
+
+## Cycle 024 active
+### Epic E024 — Heap-safe PDF OCR rasterization
+#### Feature F026 — Heap-aware OCR bitmap budget
+- [ACTIVE] `US-R024-P2-01A` — Add heap-aware OCR raster sizing and focused regression coverage.
