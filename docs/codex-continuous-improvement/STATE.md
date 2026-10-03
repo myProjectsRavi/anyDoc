@@ -3,25 +3,25 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-03_cycle-029`
+**Current report:** `2026-10-03_cycle-030`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 029
-**Current Epic:** `E029` — Failure-safe document-to-PDF conversion
-**Current Feature:** `F031` — Transactional document PDF publication
-**Current User Story:** `US-R029-P1-01A` — Stage DocumentPdfConverter output and guarantee PdfDocument cleanup (ACTIVE)
-**Last completed cycle:** Cycle 028
+**Cycle:** 030
+**Current Epic:** `E030` — Failure-safe HTML-to-PDF conversion
+**Current Feature:** `F032` — Transactional HTML PDF publication
+**Current User Story:** `US-R030-P1-01A` — Stage HtmlPdfConverter final PDF publication (ACTIVE)
+**Last completed cycle:** Cycle 029
 **State checkpoint timestamp:** 2026-10-03 UTC
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Cycle 028 validated code/test SHA: `9a623321759316f02205342bf4d3b67e05f07b82`
-- Cycle 028 CI: run #379 / API `37140903238` — SUCCESS
+- Cycle 029 validated code/test SHA: `b59881de6a87eb90fc1726746e8ba18a7dae7eae`
+- Cycle 029 CI: run #386 / API `37141704316` — SUCCESS
 
-## Cycle 028 completion evidence
-`PdfTextExtractor.extractToTxt()` now publishes through same-directory staging and focused tests cover writer failure/cancellation cleanup. Exact candidate `9a623321759316f02205342bf4d3b67e05f07b82` passed all configured workflow gates.
+## Cycle 029 completion evidence
+`DocumentPdfConverter` now serializes only into a staged same-directory PDF and closes Android `PdfDocument` in `finally`. Focused publication tests cover writer failure/cancellation. Exact candidate `b59881de6a87eb90fc1726746e8ba18a7dae7eae` passed all configured workflow gates.
 
-## Cycle 029 source evidence
-`DocumentPdfConverter.convertToPdf()` allocates a collision-safe final PDF path and passes it to `writeLinesAsPdf()`, which serializes directly with `FileOutputStream(outputFile)`. The Android `PdfDocument` is closed only after successful write, so serialization/render failure can expose a partial final PDF and skip cleanup.
+## Cycle 030 source evidence
+`HtmlPdfConverter.convertHtmlStringToPdf()` renders into an Android `PdfDocument` with WebView cleanup in `finally`, but serializes directly to a collision-safe final PDF path. A write failure or cancellation can therefore leave a partial user-visible PDF.
 
 ## Next executable step
-Stage the final PDF with `withStagedOutputFile`, make `PdfDocument.close()` unconditional via `finally`, preserve parsing/layout/page counts, add publication-safety regression coverage, and validate the exact candidate.
+Publish HTML-rendered PDF through `withStagedOutputFile`, preserve WebView/render/page-count behavior and existing cleanup, add focused failure/cancellation publication tests, and validate the exact candidate.
