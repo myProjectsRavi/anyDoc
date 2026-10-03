@@ -3,25 +3,25 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-03_cycle-027`
+**Current report:** `2026-10-03_cycle-028`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 027
-**Current Epic:** `E027` — Heap-safe image format scaling
-**Current Feature:** `F029` — Bounded scaled bitmap allocation
-**Current User Story:** `US-R027-P2-01A` — Bound ImageFormatConverter scaled output allocation (ACTIVE)
-**Last completed cycle:** Cycle 026
+**Cycle:** 028
+**Current Epic:** `E028` — Failure-safe PDF text extraction
+**Current Feature:** `F030` — Transactional extracted-text publication
+**Current User Story:** `US-R028-P1-01A` — Stage PdfTextExtractor TXT publication (ACTIVE)
+**Last completed cycle:** Cycle 027
 **State checkpoint timestamp:** 2026-10-03 UTC
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Cycle 026 validated code/test SHA: `05f815ad10c928d483ad2cd38c7b9325bc35a04f`
-- Cycle 026 CI: run #366 / API `37138433125` — SUCCESS
+- Cycle 027 validated code/test SHA: `bdaf63302abe83978a99a68f2d0c6cdb4d21eb8e`
+- Cycle 027 CI: run #373 / API `37139896501` — SUCCESS
 
-## Cycle 026 completion evidence
-Scanner perspective region decode now uses the shared heap-aware power-of-two region sampler, never requests beyond the 2000 px perspective-output quality ceiling, and preserves normalized corner mapping. The final visibility repair exposed the shared budget helpers cross-module. Exact candidate `05f815ad10c928d483ad2cd38c7b9325bc35a04f` passed all configured workflow gates.
+## Cycle 027 completion evidence
+`ImageFormatConverter` now derives scaled dimensions from the requested scale and heap-aware ARGB_8888 budget, preserving the requested scale when safe and proportionally reducing oversized upscales. Exact candidate `bdaf63302abe83978a99a68f2d0c6cdb4d21eb8e` passed all configured workflow gates.
 
-## Cycle 027 source evidence
-`ImageFormatConverter` decodes inputs through the shared constrained decoder but permits `scaleFactor` up to 3.0 and then calls `Bitmap.createScaledBitmap` with raw multiplied dimensions. A 3× linear scale is 9× pixel area, so the scaled bitmap can exceed the heap-aware decode budget by an order of magnitude while the source bitmap is still resident.
+## Cycle 028 source evidence
+`PdfTextExtractor.extractToTxt()` allocates a collision-safe final `.txt` path and writes bytes directly with `FileOutputStream(output)`. A writer failure or cancellation can therefore leave a partial user-visible extracted-text file.
 
 ## Next executable step
-Add a pure heap-aware scaled-size helper that preserves the requested scale when safe but proportionally clamps the output to a conservative ARGB_8888 byte budget, wire `scaleBitmap()` to it, add converter-module JVM tests for normal/downscale/upscale/constrained-heap/pathological dimensions, then validate the exact candidate.
+Route TXT serialization through `withStagedOutputFile`, preserve extraction/page-count/naming semantics, add focused failure/cancellation publication tests, and validate the exact candidate.
