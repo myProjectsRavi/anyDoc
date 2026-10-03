@@ -200,3 +200,23 @@ internal fun boundedBitmapDecodeTargetSize(
 
     return BitmapDecodeTargetSize(width.coerceAtLeast(1), height.coerceAtLeast(1))
 }
+
+
+internal fun boundedBitmapRegionSampleSize(
+    width: Int,
+    height: Int,
+    requestedLongEdge: Int,
+    maxBitmapBytes: Long
+): Int {
+    val target = boundedBitmapDecodeTargetSize(
+        sourceWidth = width,
+        sourceHeight = height,
+        requestedLongEdge = requestedLongEdge,
+        maxBitmapBytes = maxBitmapBytes
+    )
+    return computeSampleSize(
+        width = width,
+        height = height,
+        maxLongEdge = max(target.width, target.height)
+    )
+}
