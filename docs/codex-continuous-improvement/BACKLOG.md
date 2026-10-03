@@ -270,3 +270,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E029 — Failure-safe document-to-PDF conversion
 #### Feature F031 — Transactional document PDF publication
 - [ACTIVE] `US-R029-P1-01A` — Stage final PDF and close Android PdfDocument on all exit paths.
+
+
+## Cycle 029 closure — 2026-10-03
+- [COMPLETE / CI #386] `US-R029-P1-01A` — Transactional DocumentPdfConverter publication plus unconditional PdfDocument cleanup. Exact candidate `b59881de6a87eb90fc1726746e8ba18a7dae7eae` passed run #386 / API `37141704316`.
+- [NEXT / P1] `US-R030-P1-01A` — Stage HtmlPdfConverter final PDF publication.
+
+## Cycle 030 active
+### Epic E030 — Failure-safe HTML-to-PDF conversion
+#### Feature F032 — Transactional HTML PDF publication
+- [ACTIVE] `US-R030-P1-01A` — Stage HTML-rendered PDF and add failure/cancellation coverage.
