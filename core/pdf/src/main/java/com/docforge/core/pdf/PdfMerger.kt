@@ -79,7 +79,7 @@ class PdfMerger(
                             pageSizeMode = options.pageSizeMode
                         )
                         outputPageNumber += 1
-                        bitmap.recycle()
+                        runCatching { bitmap.recycle() }.getOrThrow()
                     }
 
                     MergeInputType.UNSUPPORTED -> {
