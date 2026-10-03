@@ -240,3 +240,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E026 — Heap-safe scanner perspective correction
 #### Feature F028 — Bounded document-region decode before OpenCV warp
 - [ACTIVE] `US-R026-P2-01A` — Add heap-aware region sampling and focused sizing tests.
+
+
+## Cycle 026 closure — 2026-10-03
+- [COMPLETE / CI #366] `US-R026-P2-01A` — Heap-aware scanner perspective region decode with a 2000 px quality ceiling and power-of-two sampling. Exact candidate `05f815ad10c928d483ad2cd38c7b9325bc35a04f` passed run #366 / API `37138433125`.
+- [NEXT / P2] `US-R027-P2-01A` — Bound ImageFormatConverter scaled output allocation by runtime heap.
+
+## Cycle 027 active
+### Epic E027 — Heap-safe image format scaling
+#### Feature F029 — Bounded scaled bitmap allocation
+- [ACTIVE] `US-R027-P2-01A` — Clamp scaled image dimensions to a conservative ARGB_8888 budget while preserving requested scale when safe.
