@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.exifinterface.media.ExifInterface
 import kotlin.math.max
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 private const val DEFAULT_MAX_LONG_EDGE = 2200
 private const val THUMBNAIL_MAX_LONG_EDGE = 400
@@ -34,7 +35,8 @@ fun decodeBitmapConstrained(
     uri: Uri,
     maxLongEdge: Int = DEFAULT_MAX_LONG_EDGE
 ): Bitmap? {
-    val safeEdge = maxLongEdge.coerceAtLeast(512)
+    val safeEdge = maxLongEdge.coerceAtLeast(1)
+    val bitmapBudgetBytes = bitmapDecodeBudgetBytes(Runtime.getRuntime().maxMemory())
 
     // ImageDecoder (API 28+) handles EXIF automatically
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -42,13 +44,14 @@ fun decodeBitmapConstrained(
         ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
             val srcWidth = info.size.width.coerceAtLeast(1)
             val srcHeight = info.size.height.coerceAtLeast(1)
-            val longest = max(srcWidth, srcHeight)
-            if (longest > safeEdge) {
-                val scale = safeEdge.toFloat() / longest.toFloat()
-                decoder.setTargetSize(
-                    (srcWidth * scale).roundToInt().coerceAtLeast(1),
-                    (srcHeight * scale).roundToInt().coerceAtLeast(1)
-                )
+            val target = boundedBitmapDecodeTargetSize(
+                sourceWidth = srcWidth,
+                sourceHeight = srcHeight,
+                requestedLongEdge = safeEdge,
+                maxBitmapBytes = bitmapBudgetBytes
+            )
+            if (target.width != srcWidth || target.height != srcHeight) {
+                decoder.setTargetSize(target.width, target.height)
             }
             decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
             decoder.isMutableRequired = false
@@ -68,7 +71,14 @@ fun decodeBitmapConstrained(
             return null
         }
 
-        val sampleSize = computeSampleSize(srcWidth, srcHeight, safeEdge)
+        val target = boundedBitmapDecodeTargetSize(
+            sourceWidth = srcWidth,
+            sourceHeight = srcHeight,
+            requestedLongEdge = safeEdge,
+            maxBitmapBytes = bitmapBudgetBytes
+        )
+        val effectiveLongEdge = max(target.width, target.height)
+        val sampleSize = computeSampleSize(srcWidth, srcHeight, effectiveLongEdge)
         val decodeOptions = BitmapFactory.Options().apply {
             inSampleSize = sampleSize
             inPreferredConfig = Bitmap.Config.ARGB_8888
@@ -126,4 +136,67 @@ private fun computeSampleSize(width: Int, height: Int, maxLongEdge: Int): Int {
         sampleSize *= 2
     }
     return sampleSize.coerceAtLeast(1)
+}
+
+
+internal data class BitmapDecodeTargetSize(
+    val width: Int,
+    val height: Int
+)
+
+private const val BITMAP_DECODE_BYTES_PER_PIXEL = 4L
+private const val BITMAP_DECODE_MIN_BUDGET_BYTES = 4L * 1024L * 1024L
+private const val BITMAP_DECODE_MAX_BUDGET_BYTES = 16L * 1024L * 1024L
+private const val BITMAP_DECODE_HEAP_DIVISOR = 12L
+
+internal fun bitmapDecodeBudgetBytes(maxHeapBytes: Long): Long {
+    val heapAwareBudget = (maxHeapBytes / BITMAP_DECODE_HEAP_DIVISOR).coerceAtLeast(1L)
+    return heapAwareBudget.coerceIn(
+        BITMAP_DECODE_MIN_BUDGET_BYTES,
+        BITMAP_DECODE_MAX_BUDGET_BYTES
+    )
+}
+
+internal fun boundedBitmapDecodeTargetSize(
+    sourceWidth: Int,
+    sourceHeight: Int,
+    requestedLongEdge: Int,
+    maxBitmapBytes: Long
+): BitmapDecodeTargetSize {
+    require(sourceWidth > 0 && sourceHeight > 0) { "Image dimensions must be positive." }
+    require(requestedLongEdge > 0) { "Requested long edge must be positive." }
+    require(maxBitmapBytes >= BITMAP_DECODE_BYTES_PER_PIXEL) { "Bitmap budget is too small." }
+
+    val largestSide = max(sourceWidth, sourceHeight).toDouble().coerceAtLeast(1.0)
+    val requestedScale = (requestedLongEdge.toDouble() / largestSide).coerceAtMost(1.0)
+    val desiredWidth = (sourceWidth.toDouble() * requestedScale)
+        .roundToInt()
+        .coerceAtLeast(1)
+    val desiredHeight = (sourceHeight.toDouble() * requestedScale)
+        .roundToInt()
+        .coerceAtLeast(1)
+
+    val maxPixels = (maxBitmapBytes / BITMAP_DECODE_BYTES_PER_PIXEL).coerceAtLeast(1L)
+    val desiredPixels = desiredWidth.toDouble() * desiredHeight.toDouble()
+    if (desiredPixels <= maxPixels.toDouble()) {
+        return BitmapDecodeTargetSize(desiredWidth, desiredHeight)
+    }
+
+    val budgetScale = sqrt(maxPixels.toDouble() / desiredPixels)
+    var width = (desiredWidth.toDouble() * budgetScale).toInt().coerceAtLeast(1)
+    var height = (desiredHeight.toDouble() * budgetScale).toInt().coerceAtLeast(1)
+
+    if (width.toLong() * height.toLong() > maxPixels) {
+        if (width >= height) {
+            width = minOf(width.toLong(), (maxPixels / height.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
+        } else {
+            height = minOf(height.toLong(), (maxPixels / width.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
+        }
+    }
+
+    return BitmapDecodeTargetSize(width.coerceAtLeast(1), height.coerceAtLeast(1))
 }
