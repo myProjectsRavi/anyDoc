@@ -149,7 +149,7 @@ private const val BITMAP_DECODE_MIN_BUDGET_BYTES = 4L * 1024L * 1024L
 private const val BITMAP_DECODE_MAX_BUDGET_BYTES = 16L * 1024L * 1024L
 private const val BITMAP_DECODE_HEAP_DIVISOR = 12L
 
-internal fun bitmapDecodeBudgetBytes(maxHeapBytes: Long): Long {
+fun bitmapDecodeBudgetBytes(maxHeapBytes: Long): Long {
     val heapAwareBudget = (maxHeapBytes / BITMAP_DECODE_HEAP_DIVISOR).coerceAtLeast(1L)
     return heapAwareBudget.coerceIn(
         BITMAP_DECODE_MIN_BUDGET_BYTES,
@@ -202,7 +202,7 @@ internal fun boundedBitmapDecodeTargetSize(
 }
 
 
-internal fun boundedBitmapRegionSampleSize(
+fun boundedBitmapRegionSampleSize(
     width: Int,
     height: Int,
     requestedLongEdge: Int,
