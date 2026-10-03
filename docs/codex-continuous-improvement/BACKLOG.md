@@ -219,4 +219,4 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ## Cycle 024 active
 ### Epic E024 — Heap-safe PDF OCR rasterization
 #### Feature F026 — Heap-aware OCR bitmap budget
-- [ACTIVE] `US-R024-P2-01A` — Add heap-aware OCR raster sizing and focused regression coverage.
+- [COMPLETE / CI #345] `US-R024-P2-01A` — Add heap-aware OCR raster sizing and focused regression coverage. Exact candidate `31e2ff40cc58f4a80ad1d278daed2d7314be1661` passed run #345 / API `37135882621`.
