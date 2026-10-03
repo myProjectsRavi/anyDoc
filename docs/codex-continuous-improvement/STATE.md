@@ -3,25 +3,25 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-03_cycle-028`
+**Current report:** `2026-10-03_cycle-029`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 028
-**Current Epic:** `E028` — Failure-safe PDF text extraction
-**Current Feature:** `F030` — Transactional extracted-text publication
-**Current User Story:** `US-R028-P1-01A` — Stage PdfTextExtractor TXT publication (ACTIVE)
-**Last completed cycle:** Cycle 027
+**Cycle:** 029
+**Current Epic:** `E029` — Failure-safe document-to-PDF conversion
+**Current Feature:** `F031` — Transactional document PDF publication
+**Current User Story:** `US-R029-P1-01A` — Stage DocumentPdfConverter output and guarantee PdfDocument cleanup (ACTIVE)
+**Last completed cycle:** Cycle 028
 **State checkpoint timestamp:** 2026-10-03 UTC
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Cycle 027 validated code/test SHA: `bdaf63302abe83978a99a68f2d0c6cdb4d21eb8e`
-- Cycle 027 CI: run #373 / API `37139896501` — SUCCESS
+- Cycle 028 validated code/test SHA: `9a623321759316f02205342bf4d3b67e05f07b82`
+- Cycle 028 CI: run #379 / API `37140903238` — SUCCESS
 
-## Cycle 027 completion evidence
-`ImageFormatConverter` now derives scaled dimensions from the requested scale and heap-aware ARGB_8888 budget, preserving the requested scale when safe and proportionally reducing oversized upscales. Exact candidate `bdaf63302abe83978a99a68f2d0c6cdb4d21eb8e` passed all configured workflow gates.
+## Cycle 028 completion evidence
+`PdfTextExtractor.extractToTxt()` now publishes through same-directory staging and focused tests cover writer failure/cancellation cleanup. Exact candidate `9a623321759316f02205342bf4d3b67e05f07b82` passed all configured workflow gates.
 
-## Cycle 028 source evidence
-`PdfTextExtractor.extractToTxt()` allocates a collision-safe final `.txt` path and writes bytes directly with `FileOutputStream(output)`. A writer failure or cancellation can therefore leave a partial user-visible extracted-text file.
+## Cycle 029 source evidence
+`DocumentPdfConverter.convertToPdf()` allocates a collision-safe final PDF path and passes it to `writeLinesAsPdf()`, which serializes directly with `FileOutputStream(outputFile)`. The Android `PdfDocument` is closed only after successful write, so serialization/render failure can expose a partial final PDF and skip cleanup.
 
 ## Next executable step
-Route TXT serialization through `withStagedOutputFile`, preserve extraction/page-count/naming semantics, add focused failure/cancellation publication tests, and validate the exact candidate.
+Stage the final PDF with `withStagedOutputFile`, make `PdfDocument.close()` unconditional via `finally`, preserve parsing/layout/page counts, add publication-safety regression coverage, and validate the exact candidate.
