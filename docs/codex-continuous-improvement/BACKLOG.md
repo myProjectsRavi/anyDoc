@@ -220,3 +220,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E024 — Heap-safe PDF OCR rasterization
 #### Feature F026 — Heap-aware OCR bitmap budget
 - [COMPLETE / CI #345] `US-R024-P2-01A` — Add heap-aware OCR raster sizing and focused regression coverage. Exact candidate `31e2ff40cc58f4a80ad1d278daed2d7314be1661` passed run #345 / API `37135882621`.
+
+
+## Cycle 024 closure — 2026-10-03
+- [COMPLETE / CI #345] `US-R024-P2-01A` — Heap-aware PdfOcrTool page raster allocation. Exact candidate `31e2ff40cc58f4a80ad1d278daed2d7314be1661` passed run #345 / API `37135882621`.
+- [NEXT / P2] `US-R025-P2-01A` — Bound shared constrained image decoding by runtime heap.
+
+## Cycle 025 active
+### Epic E025 — Heap-safe shared image decoding
+#### Feature F027 — Runtime-heap-aware constrained bitmap decode
+- [ACTIVE] `US-R025-P2-01A` — Bound `decodeBitmapConstrained()` allocations and add focused budget tests.
