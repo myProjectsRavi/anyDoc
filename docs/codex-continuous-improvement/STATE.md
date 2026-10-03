@@ -3,12 +3,12 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-03_cycle-025`
-**Report status:** COMPLETE
-**Cycle:** 025
-**Current Epic:** `E025` — Heap-safe shared image decoding
-**Current Feature:** `F027` — Runtime-heap-aware constrained bitmap decode
-**Current User Story:** `US-R025-P2-01A` — Bound decodeBitmapConstrained allocation by runtime heap (COMPLETE)
+**Current report:** `2026-10-03_cycle-026`
+**Report status:** ACTIVE / INCOMPLETE
+**Cycle:** 026
+**Current Epic:** `E026` — Heap-safe scanner perspective correction
+**Current Feature:** `F028` — Bounded document-region decode before OpenCV warp
+**Current User Story:** `US-R026-P2-01A` — Bound scanner perspective region decode by heap and output ceiling (ACTIVE)
 **Last completed cycle:** Cycle 025
 **State checkpoint timestamp:** 2026-10-03 UTC
 
@@ -17,8 +17,8 @@
 - Cycle 025 validated code/test SHA: `9760f56e7067cf169a7336be06c01f7b3495ab83`
 - Cycle 025 CI: run #352 / API `37137314847` — SUCCESS
 
-## Completion evidence
-Shared constrained image decoding now honors caller quality ceilings while enforcing a conservative runtime-heap-derived ARGB_8888 budget with headroom for transformed-bitmap duplication. Exact candidate `9760f56e7067cf169a7336be06c01f7b3495ab83` passed all configured CI gates in run #352.
+## Cycle 026 source evidence
+`ScannerScreen.decodeDocumentRegionForPerspective()` region-decodes with a fixed 3600 px long edge in ARGB_8888. A square decode can approach 49.4 MiB before OpenCV creates source/transformed native Mats and an output bitmap. `DocumentEdgeDetector.perspectiveCorrect()` already caps corrected output at 2000 px, so the 3600 px source ceiling is unnecessarily expensive.
 
 ## Next executable step
-Continue the evidence-backed P2 allocation/large-input audit and durably activate the next cycle before its first production mutation.
+Derive a conservative heap-aware region-decode ceiling no larger than the 2000 px perspective output ceiling, keep aspect ratio/corner mapping intact, add pure unit tests for sizing/sample selection, and validate the exact candidate.
