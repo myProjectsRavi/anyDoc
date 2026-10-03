@@ -346,3 +346,13 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 
 ## Cycle 020 starting evidence
 `PdfHeaderFooterTool.addHeaderFooter()` calls `document.save(outputFile)` directly on the final collision-safe path. Next mutation: stage serialization with `withStagedOutputFile`, preserve overlays/page numbers/naming, add focused failure/cancellation tests, and validate.
+
+
+## Cycle 024 completion evidence
+- Story: `US-R024-P2-01A` — heap-aware PDF OCR raster allocation.
+- Production SHA: `aea7c1f4361903dfda5f7c3a911b4be3a28d7f4d`.
+- Exact test-inclusive candidate: `31e2ff40cc58f4a80ad1d278daed2d7314be1661`.
+- GitHub Actions run #345 / API `37135882621`: **SUCCESS**.
+- Core PDF unit tests, converter tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- Focused tests cover quality ceiling, constrained heap budget, aspect-ratio preservation, heap clamp, pathological dimensions, and extreme aspect ratio.
+- No emulator, benchmark, or physical-device evidence is claimed.
