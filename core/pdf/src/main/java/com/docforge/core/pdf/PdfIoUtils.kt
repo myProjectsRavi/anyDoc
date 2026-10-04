@@ -60,7 +60,7 @@ internal suspend fun Context.copyUriToCacheFile(
     }
 }
 
-internal inline fun <T> Context.withUriCopiedToCacheFile(
+internal suspend inline fun <T> Context.withUriCopiedToCacheFile(
     uri: Uri,
     prefix: String,
     suffix: String = guessTempSuffix(uri, defaultSuffix = ".bin"),
