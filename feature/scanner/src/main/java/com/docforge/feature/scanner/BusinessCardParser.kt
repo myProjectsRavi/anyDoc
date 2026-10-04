@@ -6,7 +6,7 @@ import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
 import com.docforge.core.pdf.decodeBitmapConstrained
-import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -75,10 +75,16 @@ class BusinessCardParser(
                 ?: "contact_${System.currentTimeMillis()}"
         }.replace(Regex("[^a-zA-Z0-9_-]"), "_")
 
-        val vcfFile = resolveNonConflictingFile(outputDir, sanitized, "vcf")
-        FileOutputStream(vcfFile).use { stream ->
-            stream.write(vcfContent.toByteArray(Charsets.UTF_8))
+        val staged = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "vcf"
+        ) { stagedFile ->
+            FileOutputStream(stagedFile).use { stream ->
+                stream.write(vcfContent.toByteArray(Charsets.UTF_8))
+            }
         }
+        val vcfFile = staged.outputFile
 
         BusinessCardResult(
             contact = contact,
