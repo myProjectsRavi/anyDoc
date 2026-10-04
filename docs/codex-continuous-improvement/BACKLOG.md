@@ -290,3 +290,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E031 — Failure-safe text-to-PDF conversion
 #### Feature F033 — Transactional text PDF publication
 - [ACTIVE] `US-R031-P1-01A` — Stage TextPdfConverter final serialization and add focused failure/cancellation coverage.
+
+
+## Cycle 031 closure — 2026-10-04
+- [COMPLETE / CI #399] `US-R031-P1-01A` — Transactional TextPdfConverter publication plus failure-safe PdfDocument cleanup. Exact candidate `7870da321a9f6d865e8728ba636bee737272c9a7` passed run #399 / API `37166290751`.
+- [NEXT / P1] `US-R032-P1-01A` — Stage BusinessCardParser final vCard publication.
+
+## Cycle 032 active
+### Epic E032 — Failure-safe business-card vCard export
+#### Feature F034 — Transactional vCard publication
+- [ACTIVE] `US-R032-P1-01A` — Stage final vCard bytes and add focused failure/cancellation coverage.
