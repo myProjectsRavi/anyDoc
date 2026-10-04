@@ -20,7 +20,7 @@ internal const val CACHE_COPY_FREE_SPACE_RESERVE_BYTES = 32L * 1024L * 1024L
 internal const val CACHE_COPY_SPACE_MULTIPLIER = 2L
 private val SAFE_EXTENSION_REGEX = Regex("[a-z0-9]{1,8}")
 
-internal fun Context.copyUriToCacheFile(
+internal suspend fun Context.copyUriToCacheFile(
     uri: Uri,
     prefix: String,
     suffix: String = guessTempSuffix(uri, defaultSuffix = ".bin"),
