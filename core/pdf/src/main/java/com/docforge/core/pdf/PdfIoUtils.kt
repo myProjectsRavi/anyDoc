@@ -43,6 +43,7 @@ internal fun Context.copyUriToCacheFile(
                         )
                         if (transferred <= 0L) break
                         position += transferred
+                        require(canContinueUnknownSizeCacheCopy(StatFs(cacheDir.absolutePath).availableBytes))
                     }
                 }
             }
