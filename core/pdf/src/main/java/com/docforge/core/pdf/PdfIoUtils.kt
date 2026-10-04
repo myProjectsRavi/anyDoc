@@ -79,6 +79,8 @@ internal inline fun <T> Context.withUriCopiedToCacheFile(
     }
 }
 
+internal fun canContinueUnknownSizeCacheCopy(availableBytes: Long): Boolean = availableBytes >= CACHE_COPY_FREE_SPACE_RESERVE_BYTES
+
 internal fun requiredCacheBytesForKnownInput(inputSizeBytes: Long): Long {
     if (inputSizeBytes <= 0L) return CACHE_COPY_FREE_SPACE_RESERVE_BYTES
     return if (inputSizeBytes > (Long.MAX_VALUE - CACHE_COPY_FREE_SPACE_RESERVE_BYTES) / CACHE_COPY_SPACE_MULTIPLIER) {
