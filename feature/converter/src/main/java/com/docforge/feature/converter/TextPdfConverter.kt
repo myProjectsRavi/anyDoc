@@ -7,7 +7,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
-import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import com.docforge.core.pdf.PdfCreationResult
 import com.docforge.core.pdf.PdfPageSize
 import kotlinx.coroutines.Dispatchers
@@ -52,23 +52,28 @@ class TextPdfConverter(
         )
         val sanitized = outputName.ifBlank { "text_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
         val blocks = buildBlocks(
             title = options.title.trim(),
             text = normalizedText,
             formatMode = options.formatMode
         )
-        val pageCount = writeBlocksAsPdf(
-            blocks = blocks,
-            pageSize = options.pageSize,
-            outputFile = outputFile
-        )
+        val staged = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "pdf"
+        ) { stagedFile ->
+            writeBlocksAsPdf(
+                blocks = blocks,
+                pageSize = options.pageSize,
+                outputFile = stagedFile
+            )
+        }
+        val outputFile = staged.outputFile
 
         TextPdfConversionResult(
             pdfResult = PdfCreationResult(
                 outputFile = outputFile,
-                pageCount = pageCount,
+                pageCount = staged.value,
                 outputSizeBytes = outputFile.length()
             ),
             paragraphCount = normalizedText.lineSequence().count { it.isNotBlank() },
@@ -153,23 +158,24 @@ class TextPdfConverter(
         val titlePaint = basePaint(textSize = 22f, bold = true)
 
         val pdf = PdfDocument()
-        var pageNumber = 1
-        var page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
-        var canvas = page.canvas
-        canvas.drawColor(Color.WHITE)
-        var y = margin
-
-        fun startNewPageIfNeeded(minHeight: Float) {
-            if (y + minHeight <= pageHeight - margin) return
-            pdf.finishPage(page)
-            pageNumber += 1
-            page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
-            canvas = page.canvas
+        try {
+            var pageNumber = 1
+            var page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+            var canvas = page.canvas
             canvas.drawColor(Color.WHITE)
-            y = margin
-        }
+            var y = margin
 
-        blocks.forEach { block ->
+            fun startNewPageIfNeeded(minHeight: Float) {
+                if (y + minHeight <= pageHeight - margin) return
+                pdf.finishPage(page)
+                pageNumber += 1
+                page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+                canvas = page.canvas
+                canvas.drawColor(Color.WHITE)
+                y = margin
+            }
+
+            blocks.forEach { block ->
             when (block) {
                 is TextBlock.Spacer -> {
                     val gap = bodyPaint.textSize * 0.9f
@@ -238,18 +244,20 @@ class TextPdfConverter(
                     }
                 }
             }
-        }
+            }
 
-        if (blocks.isEmpty()) {
-            canvas.drawText("[No text provided]", margin, y + bodyPaint.textSize, bodyPaint)
-        }
+            if (blocks.isEmpty()) {
+                canvas.drawText("[No text provided]", margin, y + bodyPaint.textSize, bodyPaint)
+            }
 
-        pdf.finishPage(page)
-        FileOutputStream(outputFile).use { stream ->
-            pdf.writeTo(stream)
+            pdf.finishPage(page)
+            FileOutputStream(outputFile).use { stream ->
+                pdf.writeTo(stream)
+            }
+            return pageNumber
+        } finally {
+            pdf.close()
         }
-        pdf.close()
-        return pageNumber
     }
 
     private fun resolvePageSize(pageSize: PdfPageSize): Pair<Int, Int> {
