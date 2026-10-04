@@ -379,3 +379,17 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - `ImageFormatConverter` constrains source decode memory but allows `scaleFactor` through 3.0.
 - Direct width/height multiplication means a 3× linear upscale can require 9× pixel area while the source remains resident.
 - Next change: derive bounded scaled dimensions from requested scale and a conservative heap-aware ARGB_8888 budget, add converter-module JVM coverage, and validate.
+
+
+## Cycle 031 completion evidence
+- Story: `US-R031-P1-01A` — transactional text-to-PDF publication.
+- Production SHA: `65a24665b442b61588b91b0542110cd1afbf38f6`.
+- Exact test-inclusive candidate: `7870da321a9f6d865e8728ba636bee737272c9a7`.
+- GitHub Actions run #399 / API `37166290751`: **SUCCESS**.
+- Core PDF tests, converter tests (including text PDF failure/cancellation publication safety), app lifecycle tests, debug APK, unsigned release/R8, and Android lint: SUCCESS.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 032 starting evidence
+- `BusinessCardParser.scanAndExport()` currently writes directly to a collision-safe final `.vcf` destination.
+- Writer failure/cancellation can expose a partial final contact file.
+- Next change: same-directory staged publication with focused scanner-module failure/cancellation tests.
