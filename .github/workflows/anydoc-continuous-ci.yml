@@ -49,6 +49,9 @@ jobs:
       - name: Converter unit tests
         run: ./gradlew --no-daemon :feature:converter:testDebugUnitTest
 
+      - name: Scanner unit tests
+        run: ./gradlew --no-daemon :feature:scanner:testDebugUnitTest
+
       - name: App lifecycle unit tests
         run: ./gradlew --no-daemon :app:testDebugUnitTest
 
