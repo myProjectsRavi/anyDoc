@@ -3,25 +3,22 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-04_cycle-032`
+**Current report:** `2026-10-04_cycle-033`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 032
-**Current Epic:** `E032` — Failure-safe business-card vCard export
-**Current Feature:** `F034` — Transactional vCard publication
-**Current User Story:** `US-R032-P1-01A` — Stage BusinessCardParser final vCard publication (ACTIVE)
-**Last completed cycle:** Cycle 031
+**Cycle:** 033
+**Current Epic:** `E033` — Failure-safe unknown-size cache imports
+**Current Feature:** `F035` — Streaming cache free-space protection
+**Current User Story:** `US-R033-P2-01A` — Guard unknown-size URI cache copies against exhausting temporary storage (ACTIVE)
+**Last completed cycle:** Cycle 032
 **State checkpoint timestamp:** 2026-10-04 UTC
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Cycle 031 validated code/test SHA: `7870da321a9f6d865e8728ba636bee737272c9a7`
-- Cycle 031 CI: run #399 / API `37166290751` — SUCCESS
+- Cycle 032 validated code/test SHA: `277bf31849dea5564e7dae99fbaf0c6af0e88270`
+- Cycle 032 CI: run #410 / API `37167149258` — SUCCESS
 
-## Cycle 031 completion evidence
-`TextPdfConverter` now serializes only into a same-directory staged PDF and guarantees `PdfDocument.close()` in `finally`. Focused converter tests verify writer failure and cancellation publish no partial PDF and leave no staging residue. Exact candidate `7870da321a9f6d865e8728ba636bee737272c9a7` passed all configured workflow gates.
-
-## Cycle 032 source evidence
-`BusinessCardParser.scanAndExport()` resolves a collision-safe final `.vcf` path and writes bytes directly through `FileOutputStream(vcfFile)`. A writer failure or cancellation can therefore expose a partial user-visible contact file.
+## Cycle 032 completion evidence
+`copyUriToCacheFile()` preflights storage only when a provider reports a known input size. Unknown-size streams can otherwise continue to EOF without another free-space check.
 
 ## Next executable step
-Route vCard bytes through `withStagedOutputFile`, preserve OCR/contact parsing/naming/result metadata, add focused writer-failure/cancellation publication tests in the scanner module, and validate the exact candidate.
+Add bounded streaming free-space checks for unknown-size cache copies while preserving known-size preflight and cleanup semantics; add focused deterministic tests and validate the exact candidate.
