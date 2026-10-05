@@ -15,7 +15,12 @@ import java.nio.channels.Channels
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 
-private const val FILE_CHANNEL_COPY_CHUNK_BYTES = 8L * 1024L * 1024L
+internal const val FILE_CHANNEL_COPY_CHUNK_BYTES = 8L * 1024L * 1024L
+
+internal suspend fun copyChunkWithCancellation(copyChunk: () -> Long): Long {
+    currentCoroutineContext().ensureActive()
+    return copyChunk()
+}
 internal const val CACHE_COPY_FREE_SPACE_RESERVE_BYTES = 32L * 1024L * 1024L
 internal const val CACHE_COPY_SPACE_MULTIPLIER = 2L
 private val SAFE_EXTENSION_REGEX = Regex("[a-z0-9]{1,8}")
@@ -36,12 +41,13 @@ internal suspend fun Context.copyUriToCacheFile(
                 FileOutputStream(tempFile).channel.use { targetChannel ->
                     var position = 0L
                     while (true) {
-                        currentCoroutineContext().ensureActive()
-                        val transferred = targetChannel.transferFrom(
-                            sourceChannel,
-                            position,
-                            FILE_CHANNEL_COPY_CHUNK_BYTES
-                        )
+                        val transferred = copyChunkWithCancellation {
+                            targetChannel.transferFrom(
+                                sourceChannel,
+                                position,
+                                FILE_CHANNEL_COPY_CHUNK_BYTES
+                            )
+                        }
                         if (transferred <= 0L) break
                         position += transferred
                         require(canContinueUnknownSizeCacheCopy(StatFs(cacheDir.absolutePath).availableBytes))
