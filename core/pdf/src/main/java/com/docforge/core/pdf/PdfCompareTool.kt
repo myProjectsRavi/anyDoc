@@ -242,7 +242,7 @@ class PdfCompareTool(
      * - Changed pixels → red overlay
      * - Missing page → entire page marked as red
      */
-    private fun diffBitmaps(left: Bitmap?, right: Bitmap?, threshold: Int): Pair<Bitmap, Float> {
+    private fun diffBitmaps(left: Bitmap?, right: Bitmap?, threshold: Int, checkCancelled: () -> Unit): Pair<Bitmap, Float> {
         if (left == null && right == null) {
             val blank = Bitmap.createBitmap(595, 842, Bitmap.Config.ARGB_8888)
             blank.eraseColor(Color.LTGRAY)
