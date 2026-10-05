@@ -260,6 +260,31 @@ class PdfCoreSafetyTest {
     }
 
     @Test
+    fun diffRowsStopBeforeProcessingNextRowAfterCancellation() {
+        val checks = AtomicInteger(0)
+        val processedRows = mutableListOf<Int>()
+
+        try {
+            forEachDiffRow(
+                height = 8,
+                checkCancelled = {
+                    if (checks.incrementAndGet() == 4) {
+                        throw CancellationException("synthetic compare cancellation")
+                    }
+                }
+            ) { row ->
+                processedRows += row
+            }
+            fail("Expected row-boundary cancellation")
+        } catch (_: CancellationException) {
+            // Expected.
+        }
+
+        assertEquals(listOf(0, 1, 2), processedRows)
+        assertEquals(4, checks.get())
+    }
+
+    @Test
     fun largeInputCachePreflightRequiresWorkingSpaceAndReserve() {
         val inputBytes = 600L * 1024L * 1024L
         val expected = (2L * inputBytes) + (32L * 1024L * 1024L)
