@@ -259,8 +259,7 @@ class PdfCompareTool(
         var diffPixels = 0L
         val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
 
-        for (y in 0 until h) {
-            checkCancelled()
+        forEachDiffRow(h, checkCancelled) { y ->
             for (x in 0 until w) {
                 val lPixel = if (x < left.width && y < left.height) left.getPixel(x, y) else Color.WHITE
                 val rPixel = if (x < right.width && y < right.height) right.getPixel(x, y) else Color.WHITE
@@ -282,5 +281,16 @@ class PdfCompareTool(
 
         val pct = if (totalPixels > 0) (diffPixels.toFloat() / totalPixels * 100f) else 0f
         return output to pct
+    }
+}
+
+internal inline fun forEachDiffRow(
+    height: Int,
+    checkCancelled: () -> Unit,
+    block: (Int) -> Unit
+) {
+    for (y in 0 until height) {
+        checkCancelled()
+        block(y)
     }
 }
