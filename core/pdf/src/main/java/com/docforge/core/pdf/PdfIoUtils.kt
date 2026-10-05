@@ -36,6 +36,7 @@ internal suspend fun Context.copyUriToCacheFile(
                 FileOutputStream(tempFile).channel.use { targetChannel ->
                     var position = 0L
                     while (true) {
+                        currentCoroutineContext().ensureActive()
                         val transferred = targetChannel.transferFrom(
                             sourceChannel,
                             position,
