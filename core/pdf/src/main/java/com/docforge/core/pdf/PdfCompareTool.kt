@@ -171,7 +171,7 @@ class PdfCompareTool(
                                                 leftBmp = renderPage(leftRenderer, pageIndex, leftSize)
                                                 rightBmp = renderPage(rightRenderer, pageIndex, rightSize)
 
-                                                val diff = diffBitmaps(leftBmp, rightBmp, threshold)
+                                                val diff = diffBitmaps(leftBmp, rightBmp, threshold, checkCancelled)
                                                 diffBmp = diff.first
                                                 diffPcts += diff.second
 
@@ -260,6 +260,7 @@ class PdfCompareTool(
         val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
 
         for (y in 0 until h) {
+            checkCancelled()
             for (x in 0 until w) {
                 val lPixel = if (x < left.width && y < left.height) left.getPixel(x, y) else Color.WHITE
                 val rPixel = if (x < right.width && y < right.height) right.getPixel(x, y) else Color.WHITE
