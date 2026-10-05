@@ -3,22 +3,25 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-04_cycle-034`
+**Current report:** `2026-10-05_cycle-035`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 034
-**Current Epic:** `E034` — Cancellation-safe large URI cache imports
-**Current Feature:** `F036` — Cooperative streaming-copy cancellation
-**Current User Story:** `US-R034-P2-01A` — Add cooperative cancellation checkpoints to large URI cache copies (ACTIVE)
-**Last completed cycle:** Cycle 033
-**State checkpoint timestamp:** 2026-10-04 UTC
+**Cycle:** 035
+**Current Epic:** `E035` — Responsive PDF comparison cancellation
+**Current Feature:** `F037` — Cooperative pixel-diff cancellation
+**Current User Story:** `US-R035-P2-01A` — Add bounded cancellation checkpoints inside large PDF pixel-diff loops (ACTIVE)
+**Last completed cycle:** Cycle 034
+**State checkpoint timestamp:** 2026-10-05 UTC
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
-- Cycle 033 validated code/test SHA: `cd760318974228448155558621805463dc001b8f`
-- Cycle 033 CI: run #415 / API `37174200094` — SUCCESS
+- Cycle 034 validated code/test SHA: `11686b02c2ec28eba2f303ec39f17cd1b829ed95`
+- Cycle 034 CI: run #428 / API `37340759055` — SUCCESS
 
-## Cycle 033 completion evidence
-Unknown-size URI cache copies now re-check the 32 MiB temporary-storage reserve after every bounded 8 MiB transfer. Exact candidate `cd760318974228448155558621805463dc001b8f` passed all configured authoritative CI gates in run #415.
+## Cycle 034 completion evidence
+Large URI cache imports now check coroutine cancellation before every bounded 8 MiB transfer. Focused regression coverage proves an already-cancelled coroutine does not invoke the next transfer callback. Exact candidate `11686b02c2ec28eba2f303ec39f17cd1b829ed95` passed all configured authoritative CI gates in run #428.
+
+## Cycle 035 source evidence
+`PdfCompareTool.diffBitmaps()` performs a potentially large width × height per-pixel loop without a cancellation checkpoint. The surrounding page loop checks cancellation only between pages, so cancellation can be delayed for a large rendered page.
 
 ## Next executable step
-Make the URI cache-copy path suspend/cancellation-aware and check coroutine cancellation between bounded transfer chunks while preserving known-size preflight, storage-reserve checks, active-temp registration, and failure/cancellation cleanup. Add focused deterministic regression coverage and validate the exact candidate.
+Make the pixel-diff loop cooperatively cancellable with bounded row checkpoints, preserve comparison output semantics, add deterministic regression coverage, and validate the exact candidate.
