@@ -11,7 +11,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class PdfCoreSafetyTest {
 
@@ -234,6 +237,26 @@ class PdfCoreSafetyTest {
         } finally {
             directory.deleteRecursively()
         }
+    }
+
+    @Test
+    fun cancelledCacheCopyChunkDoesNotInvokeTransfer() = runBlocking {
+        val transfers = AtomicInteger(0)
+        val cancelledJob = Job().apply { cancel() }
+
+        try {
+            withContext(cancelledJob) {
+                copyChunkWithCancellation {
+                    transfers.incrementAndGet()
+                    1L
+                }
+            }
+            fail("Expected cancellation before transfer")
+        } catch (_: CancellationException) {
+            // Expected.
+        }
+
+        assertEquals(0, transfers.get())
     }
 
     @Test
