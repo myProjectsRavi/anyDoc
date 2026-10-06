@@ -285,6 +285,14 @@ class PdfCoreSafetyTest {
     }
 
     @Test
+    fun unknownSizeCacheCopyRequiresReservePlusNextChunk() {
+        val threshold = (32L * 1024L * 1024L) + (8L * 1024L * 1024L)
+
+        assertFalse(canStartUnknownSizeCacheCopy(threshold - 1L))
+        assertTrue(canStartUnknownSizeCacheCopy(threshold))
+    }
+
+    @Test
     fun largeInputCachePreflightRequiresWorkingSpaceAndReserve() {
         val inputBytes = 600L * 1024L * 1024L
         val expected = (2L * inputBytes) + (32L * 1024L * 1024L)
