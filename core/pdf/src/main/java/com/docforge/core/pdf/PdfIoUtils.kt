@@ -41,6 +41,9 @@ internal suspend fun Context.copyUriToCacheFile(
                 FileOutputStream(tempFile).channel.use { targetChannel ->
                     var position = 0L
                     while (true) {
+                        require(canStartUnknownSizeCacheCopy(StatFs(cacheDir.absolutePath).availableBytes)) {
+                            "Not enough temporary storage to safely continue copying this file."
+                        }
                         val transferred = copyChunkWithCancellation {
                             targetChannel.transferFrom(
                                 sourceChannel,
@@ -86,6 +89,9 @@ internal suspend inline fun <T> Context.withUriCopiedToCacheFile(
         tempFile.delete()
     }
 }
+
+internal fun canStartUnknownSizeCacheCopy(availableBytes: Long): Boolean =
+    availableBytes >= CACHE_COPY_FREE_SPACE_RESERVE_BYTES + FILE_CHANNEL_COPY_CHUNK_BYTES
 
 internal fun canContinueUnknownSizeCacheCopy(availableBytes: Long): Boolean = availableBytes >= CACHE_COPY_FREE_SPACE_RESERVE_BYTES
 
