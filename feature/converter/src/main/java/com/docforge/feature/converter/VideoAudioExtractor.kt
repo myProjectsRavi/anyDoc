@@ -182,17 +182,12 @@ class VideoAudioExtractor(
     }
 
     internal fun selectBufferSize(trackFormat: MediaFormat): Int {
-        val fallback = 256 * 1024
-        val maximum = 8 * 1024 * 1024
-        if (!trackFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
-            return fallback
+        val requested = if (trackFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+            trackFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
+        } else {
+            null
         }
-
-        val requested = trackFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
-        require(requested <= maximum) {
-            "Audio sample buffer demand exceeds the supported 8 MiB limit."
-        }
-        return requested.coerceAtLeast(fallback)
+        return selectExtractorBufferSize(requested)
     }
 
     private inline fun <T> withAudioTrack(
@@ -237,4 +232,14 @@ class VideoAudioExtractor(
             null
         }
     }
+}
+
+internal fun selectExtractorBufferSize(requested: Int?): Int {
+    val fallback = 256 * 1024
+    val maximum = 8 * 1024 * 1024
+    if (requested == null) return fallback
+    require(requested <= maximum) {
+        "Audio sample buffer demand exceeds the supported 8 MiB limit."
+    }
+    return requested.coerceAtLeast(fallback)
 }
