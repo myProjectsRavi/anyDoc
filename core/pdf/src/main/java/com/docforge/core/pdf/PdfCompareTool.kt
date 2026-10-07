@@ -91,7 +91,12 @@ internal object CompareRasterBudget {
 
     fun workingSetBytes(left: CompareRasterSize?, right: CompareRasterSize?): Long {
         fun pixels(size: CompareRasterSize?): Long = size?.let {
-            Math.multiplyExact(it.width.toLong(), it.height.toLong())
+            require(it.width > 0 && it.height > 0) { "Raster dimensions must be positive." }
+            try {
+                Math.multiplyExact(it.width.toLong(), it.height.toLong())
+            } catch (_: ArithmeticException) {
+                Long.MAX_VALUE
+            }
         } ?: 0L
         val leftPixels = pixels(left)
         val rightPixels = pixels(right)
