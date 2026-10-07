@@ -6,9 +6,9 @@
 **Current report:** `2026-10-07_cycle-039`
 **Report status:** ACTIVE / INCOMPLETE
 **Cycle:** 039
-**Current Epic:** `E038` — Heap-safe video audio extraction
-**Current Feature:** `F040` — Bounded extractor sample buffer allocation
-**Current User Story:** `US-R038-P2-01A` — Reject unreasonable MediaExtractor sample-buffer demands before allocation (COMPLETE)
+**Current Epic:** `E039` — Heap-safe typed signature rendering
+**Current Feature:** `F041` — Bounded typed-signature raster allocation
+**Current User Story:** `US-R039-P2-01A` — Bound typed-signature bitmap dimensions before allocation (ACTIVE)
 **Last completed cycle:** Cycle 038
 **State checkpoint timestamp:** 2026-10-06 UTC
 
