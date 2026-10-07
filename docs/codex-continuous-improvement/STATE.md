@@ -3,12 +3,12 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-07_cycle-039`
-**Report status:** COMPLETE
-**Cycle:** 039
-**Current Epic:** `E039` — Heap-safe typed signature rendering
-**Current Feature:** `F041` — Bounded typed-signature raster allocation
-**Current User Story:** `US-R039-P2-01A` — Bound typed-signature bitmap dimensions before allocation (COMPLETE)
+**Current report:** `2026-10-07_cycle-040`
+**Report status:** ACTIVE / INCOMPLETE
+**Cycle:** 040
+**Current Epic:** `E040` — Large-input document conversion safety
+**Current Feature:** `F042` — Bounded text document ingestion
+**Current User Story:** `US-R040-P2-01A` — Bound TXT/CSV/RTF ingestion before full in-memory materialization (ACTIVE)
 **Last completed cycle:** Cycle 039
 **State checkpoint timestamp:** 2026-10-06 UTC
 
