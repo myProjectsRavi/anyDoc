@@ -61,8 +61,9 @@ class TypedSignatureRenderer {
         val metrics = paint.fontMetrics
         val textHeight = metrics.descent - metrics.ascent
 
-        val bitmapWidth = (textWidth + padding * 2).toInt().coerceAtLeast(1)
-        val bitmapHeight = (textHeight + padding * 2).toInt().coerceAtLeast(1)
+        require(padding in 0..1024) { "Signature padding is out of range." }
+        val bitmapWidth = (textWidth + padding * 2L).toDouble().also { require(it.isFinite() && it <= 4096.0) { "Signature is too wide to render safely." } }.toInt().coerceAtLeast(1)
+        val bitmapHeight = (textHeight + padding * 2L).toDouble().also { require(it.isFinite() && it <= 1024.0) { "Signature is too tall to render safely." } }.toInt().coerceAtLeast(1)
 
         val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
