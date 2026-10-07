@@ -413,3 +413,24 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - `HtmlPdfConverter.convertToPdf()` uses unbounded `readText()` for HTML content URIs.
 - `convertHtmlStringToPdf()` accepts arbitrarily large raw HTML before WebView construction/rendering.
 - Next mutation: apply the shared bounded text policy to both entry paths and add focused boundary tests before authoritative CI.
+
+
+## Cycle 041 completion evidence
+- Story: `US-R041-P2-01A` — bounded HTML URI/raw-string ingestion.
+- Exact validated code/test SHA: `45e9f3bffcc50d7458629ec332c550c2eaab1011`.
+- GitHub Actions PR run #483 / API `37644316676`, attempt 2: **SUCCESS**.
+- Attempt 1 failed in `:core:domain:compileDebugKotlin` because `org.jetbrains.kotlin:kotlin-script-runtime:2.1.0` could not be resolved from external repositories; no Cycle 041 code had compiled and no repair commit was warranted.
+- Core PDF tests: SUCCESS.
+- Converter tests, including HTML limit regressions: SUCCESS.
+- Scanner tests: SUCCESS.
+- App lifecycle tests: SUCCESS.
+- Debug APK: SUCCESS.
+- Unsigned release/R8: SUCCESS.
+- Android lint: SUCCESS.
+- Sol 5.6 review: LGTM.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 042 starting evidence
+- Redaction auto-detect currently materializes all PDF text with one `PDFTextStripper().getText(document)`.
+- Irreversible verification repeats the same whole-document materialization on the staged output.
+- Next mutation: page-bound both scans and add deterministic helper tests before authoritative CI.

@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-07_cycle-041`
+**Current report:** `2026-10-07_cycle-042`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 041
-**Current Epic:** `E041` — Large-input HTML conversion safety
-**Current Feature:** `F043` — Bounded HTML ingestion
-**Current User Story:** `US-R041-P2-01A` — Bound HTML URI and raw-string ingestion before WebView rendering (ACTIVE)
-**Last completed cycle:** Cycle 040
+**Cycle:** 042
+**Current Epic:** `E042` — Large-PDF redaction memory safety
+**Current Feature:** `F044` — Page-bounded redaction text scanning
+**Current User Story:** `US-R042-P2-01A` — Eliminate whole-document redaction text materialization (ACTIVE)
+**Last completed cycle:** Cycle 041
 **State checkpoint timestamp:** 2026-10-07 UTC
 
 ## Git checkpoint
@@ -61,3 +61,20 @@ Select the highest-priority remaining evidence-backed P2 large-input/full-file-c
 
 ## Next executable step
 Reuse the bounded text reader for HTML URI ingestion, enforce the same conservative character ceiling on raw HTML before WebView rendering, add focused converter-module boundary tests, and validate the exact candidate through authoritative GitHub Actions.
+
+
+## Cycle 041 completion evidence
+- Exact validated code/test SHA: `45e9f3bffcc50d7458629ec332c550c2eaab1011`.
+- GitHub Actions PR run #483 / API `37644316676`, attempt 2: **SUCCESS**.
+- Attempt 1 failed before Cycle 041 code compiled because Maven dependency resolution could not fetch `org.jetbrains.kotlin:kotlin-script-runtime:2.1.0`; no code change was made for that infrastructure failure.
+- HTML content URI reads now use the shared 4 Mi-character bounded reader.
+- Raw HTML is rejected above the same ceiling before dispatching to Main or creating a WebView.
+- Focused JVM tests cover below-limit, exact-limit, one-over, and invalid-limit behavior.
+- Sol 5.6 review: LGTM.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 042 starting evidence
+`PdfRedactionTool` calls `PDFTextStripper().getText(document)` across the entire PDF for auto-detect PII, then materializes the entire output text again during irreversible verification. This duplicates avoidable whole-document text heap pressure even though redaction itself is page-oriented.
+
+## Next executable step
+Refactor auto-detect and irreversible verification to extract and inspect one PDF page at a time, preserve term detection and annotation verification semantics, add focused pure-JVM paging/early-exit regression coverage, and validate the exact candidate through authoritative GitHub Actions.

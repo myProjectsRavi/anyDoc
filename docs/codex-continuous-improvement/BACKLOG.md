@@ -311,3 +311,14 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E041 — Large-input HTML conversion safety
 #### Feature F043 — Bounded HTML ingestion
 - [ACTIVE] `US-R041-P2-01A` — Reuse bounded URI ingestion and enforce the same limit on raw HTML before WebView rendering.
+
+
+## Cycle 041 closure — 2026-10-07
+- [COMPLETE / CI #483] `US-R041-P2-01A` — Bound HTML URI and raw-string ingestion before WebView rendering. Exact code/test SHA `45e9f3bffcc50d7458629ec332c550c2eaab1011` passed run #483 / API `37644316676` on attempt 2.
+- Attempt 1 was an external Kotlin/Maven dependency-resolution failure before Cycle 041 code compiled.
+- [NEXT / P2] `US-R042-P2-01A` — Eliminate whole-document redaction text materialization.
+
+## Cycle 042 active
+### Epic E042 — Large-PDF redaction memory safety
+#### Feature F044 — Page-bounded redaction text scanning
+- [ACTIVE] `US-R042-P2-01A` — Scan redaction auto-detect and irreversible verification text page-by-page instead of materializing all document text.
