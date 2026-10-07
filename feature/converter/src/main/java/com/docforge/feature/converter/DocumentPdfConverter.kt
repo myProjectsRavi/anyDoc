@@ -213,7 +213,7 @@ class DocumentPdfConverter(
 
         return rows.lineSequence().map { row ->
             parseCsvRow(row).joinToString(separator = " | ") { cell -> cell.trim() }
-        }
+        }.toList()
     }
 
     private fun parseCsvRow(row: String): List<String> {
