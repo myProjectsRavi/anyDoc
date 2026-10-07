@@ -25,6 +25,20 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 
+
+internal inline fun <T> scanPagesUntil(
+    pageCount: Int,
+    readPage: (Int) -> T,
+    stopWhen: (T) -> Boolean
+): T? {
+    require(pageCount >= 0) { "Page count must not be negative." }
+    for (pageIndex in 0 until pageCount) {
+        val value = readPage(pageIndex)
+        if (stopWhen(value)) return value
+    }
+    return null
+}
+
 data class PdfRedactionOptions(
     val terms: List<String>,
     val caseSensitive: Boolean = false,
@@ -78,10 +92,11 @@ class PdfRedactionTool(
                 // Build effective terms list (user-provided + auto-detected PII).
                 val terms: List<String> = if (options.autoDetectPii) {
                     onProgress?.invoke(PdfRedactionProgress(stage = "Detecting sensitive data", current = 0, total = pageCount))
-                    val extractedText = runCatching {
-                        PDFTextStripper().getText(document)
-                    }.getOrDefault("")
-                    val auto = detectPiiTerms(extractedText)
+                    val auto = LinkedHashSet<String>()
+                    scanPdfPages(document) { pageText ->
+                        auto.addAll(detectPiiTerms(pageText))
+                        false
+                    }
                     (userTerms + auto).distinct()
                 } else {
                     userTerms
@@ -345,21 +360,45 @@ class PdfRedactionTool(
         }
     }
 
+
+    private fun scanPdfPages(
+        document: PDDocument,
+        stopWhen: (String) -> Boolean
+    ): String? {
+        return scanPagesUntil(
+            pageCount = document.numberOfPages,
+            readPage = { pageIndex ->
+                PDFTextStripper().apply {
+                    val pageNumber = pageIndex + 1
+                    setStartPage(pageNumber)
+                    setEndPage(pageNumber)
+                }.getText(document)
+            },
+            stopWhen = stopWhen
+        )
+    }
+
     private fun verifyTermsRemoved(
         outputFile: File,
         terms: List<String>,
         caseSensitive: Boolean
     ) {
         loadPdfDocument(outputFile).use { verificationDoc ->
-            val text = PDFTextStripper().getText(verificationDoc)
-            val remaining = findFirstRemainingTerm(
-                text = text,
-                terms = terms,
-                caseSensitive = caseSensitive
-            )
+            val remaining = scanPdfPages(verificationDoc) { pageText ->
+                findFirstRemainingTerm(
+                    text = pageText,
+                    terms = terms,
+                    caseSensitive = caseSensitive
+                ) != null
+            }
             if (remaining != null) {
+                val remainingTerm = findFirstRemainingTerm(
+                    text = remaining,
+                    terms = terms,
+                    caseSensitive = caseSensitive
+                )
                 error(
-                    "Redaction verification failed. Term '$remaining' is still discoverable in output text."
+                    "Redaction verification failed. Term '$remainingTerm' is still discoverable in output text."
                 )
             }
             // Also verify annotations are clean
