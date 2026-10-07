@@ -3,14 +3,14 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-07_cycle-040`
+**Current report:** `2026-10-07_cycle-041`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 040
-**Current Epic:** `E040` — Large-input document conversion safety
-**Current Feature:** `F042` — Bounded text document ingestion
-**Current User Story:** `US-R040-P2-01A` — Bound TXT/CSV/RTF ingestion before full in-memory materialization (ACTIVE)
-**Last completed cycle:** Cycle 039
-**State checkpoint timestamp:** 2026-10-06 UTC
+**Cycle:** 041
+**Current Epic:** `E041` — Large-input HTML conversion safety
+**Current Feature:** `F043` — Bounded HTML ingestion
+**Current User Story:** `US-R041-P2-01A` — Bound HTML URI and raw-string ingestion before WebView rendering (ACTIVE)
+**Last completed cycle:** Cycle 040
+**State checkpoint timestamp:** 2026-10-07 UTC
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -46,3 +46,18 @@ Select the highest-priority remaining evidence-backed P2 allocation/large-input 
 
 ## Next executable step
 Select the highest-priority remaining evidence-backed P2 large-input/full-file-copy story and activate Cycle 040 durably before production mutation.
+
+
+## Cycle 040 completion evidence
+- Exact validated code/test SHA: `74f24148f5268744debc7158388af4bf38081283`.
+- GitHub Actions PR run #480 / API `37639874324`: **SUCCESS**.
+- TXT, RTF, and CSV ingestion now use a shared 4 Mi-character bounded reader before full in-memory materialization.
+- Focused converter JVM regressions cover below-limit and exact-limit reads, one-character-over rejection, invalid limits, Int.MAX_VALUE arithmetic safety, and CSV empty/trailing-newline semantics.
+- Sol 5.6 review found and repaired CSV return-type semantics, trailing-line behavior, and bounded-reader integer-overflow risk before closure.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 041 starting evidence
+`HtmlPdfConverter.convertToPdf()` still reads an HTML content URI with unbounded `readText()`. The public/raw `convertHtmlStringToPdf()` entry point also accepts arbitrarily large strings before WebView creation, so URI-only hardening would leave a bypass.
+
+## Next executable step
+Reuse the bounded text reader for HTML URI ingestion, enforce the same conservative character ceiling on raw HTML before WebView rendering, add focused converter-module boundary tests, and validate the exact candidate through authoritative GitHub Actions.

@@ -393,3 +393,23 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - `BusinessCardParser.scanAndExport()` currently writes directly to a collision-safe final `.vcf` destination.
 - Writer failure/cancellation can expose a partial final contact file.
 - Next change: same-directory staged publication with focused scanner-module failure/cancellation tests.
+
+
+## Cycle 040 completion evidence
+- Story: `US-R040-P2-01A` — bounded TXT/CSV/RTF ingestion.
+- Exact validated code/test SHA: `74f24148f5268744debc7158388af4bf38081283`.
+- GitHub Actions PR run #480 / API `37639874324`: **SUCCESS**.
+- Core PDF unit tests: SUCCESS.
+- Converter unit tests: SUCCESS, including bounded-reader edge regressions.
+- Scanner unit tests: SUCCESS.
+- App lifecycle/unit tests: SUCCESS.
+- Debug APK assembly: SUCCESS.
+- Unsigned release/R8 assembly: SUCCESS.
+- Android lint: SUCCESS.
+- Sol 5.6 review: LGTM after fixes for CSV type/line semantics and Int.MAX_VALUE remaining-count overflow.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Cycle 041 starting evidence
+- `HtmlPdfConverter.convertToPdf()` uses unbounded `readText()` for HTML content URIs.
+- `convertHtmlStringToPdf()` accepts arbitrarily large raw HTML before WebView construction/rendering.
+- Next mutation: apply the shared bounded text policy to both entry paths and add focused boundary tests before authoritative CI.

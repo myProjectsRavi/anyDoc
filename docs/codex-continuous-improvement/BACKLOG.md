@@ -300,3 +300,14 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E032 — Failure-safe business-card vCard export
 #### Feature F034 — Transactional vCard publication
 - [ACTIVE] `US-R032-P1-01A` — Stage final vCard bytes and add focused failure/cancellation coverage.
+
+
+## Cycle 040 closure — 2026-10-07
+- [COMPLETE / CI #480] `US-R040-P2-01A` — Bound TXT/CSV/RTF ingestion before unrestricted in-memory materialization. Exact code/test SHA `74f24148f5268744debc7158388af4bf38081283` passed PR run #480 / API `37639874324`.
+- Focused tests lock boundary, overflow, and CSV line-semantics behavior.
+- [NEXT / P2] `US-R041-P2-01A` — Bound HTML URI and raw-string ingestion before WebView rendering.
+
+## Cycle 041 active
+### Epic E041 — Large-input HTML conversion safety
+#### Feature F043 — Bounded HTML ingestion
+- [ACTIVE] `US-R041-P2-01A` — Reuse bounded URI ingestion and enforce the same limit on raw HTML before WebView rendering.
