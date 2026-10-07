@@ -19,3 +19,6 @@ internal fun Reader.readTextBounded(maxChars: Int = MAX_TEXT_DOCUMENT_CHARS): St
     }
     return result.toString()
 }
+
+internal fun Reader.readLinesBounded(maxChars: Int = MAX_TEXT_DOCUMENT_CHARS): List<String> =
+    readTextBounded(maxChars).reader().readLines()

@@ -25,4 +25,22 @@ class BoundedTextReaderTest {
             StringReader("").readTextBounded(0)
         }
     }
+
+    @Test fun boundedLinesPreserveEmptyInput() {
+        assertEquals(emptyList<String>(), StringReader("").readLinesBounded(8))
+    }
+
+    @Test fun boundedLinesDoNotInventTrailingRow() {
+        assertEquals(listOf("a"), StringReader("a\n").readLinesBounded(8))
+    }
+
+    @Test fun boundedLinesPreserveRealBlankTrailingRow() {
+        assertEquals(listOf("a", ""), StringReader("a\n\n").readLinesBounded(8))
+    }
+
+    @Test fun boundedLinesRejectOversizeInput() {
+        assertThrows(IllegalArgumentException::class.java) {
+            StringReader("123456").readLinesBounded(5)
+        }
+    }
 }

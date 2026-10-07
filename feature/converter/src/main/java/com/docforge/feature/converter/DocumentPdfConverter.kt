@@ -208,7 +208,7 @@ class DocumentPdfConverter(
 
     private fun extractCsvLines(inputUri: Uri): List<String> {
         val rows = context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { reader ->
-            reader.readTextBounded().reader().readLines()
+            reader.readLinesBounded()
         } ?: error("Unable to read CSV file.")
 
         return rows.map { row ->
