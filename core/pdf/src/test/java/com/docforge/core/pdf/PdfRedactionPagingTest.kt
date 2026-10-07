@@ -60,6 +60,23 @@ class PdfRedactionPagingTest {
     }
 
     @Test
+    fun scanPagesUntil_invokesBeforePageInOrderAndStopsWithMatch() {
+        val checked = mutableListOf<Int>()
+        val read = mutableListOf<Int>()
+
+        val result = scanPagesUntil(
+            pageCount = 5,
+            beforePage = { checked += it },
+            readPage = { page -> read += page; "page-$page" },
+            stopWhen = { it == "page-2" }
+        )
+
+        assertEquals("page-2", result)
+        assertEquals(listOf(0, 1, 2), checked)
+        assertEquals(listOf(0, 1, 2), read)
+    }
+
+    @Test
     fun scanPagesUntil_rejectsNegativePageCount() {
         assertThrows(IllegalArgumentException::class.java) {
             scanPagesUntil(
