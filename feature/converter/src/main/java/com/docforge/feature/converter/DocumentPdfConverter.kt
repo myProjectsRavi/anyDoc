@@ -208,12 +208,12 @@ class DocumentPdfConverter(
 
     private fun extractCsvLines(inputUri: Uri): List<String> {
         val rows = context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { reader ->
-            reader.readTextBounded()
+            reader.readTextBounded().reader().readLines()
         } ?: error("Unable to read CSV file.")
 
-        return rows.lineSequence().map { row ->
+        return rows.map { row ->
             parseCsvRow(row).joinToString(separator = " | ") { cell -> cell.trim() }
-        }.toList()
+        }
     }
 
     private fun parseCsvRow(row: String): List<String> {
