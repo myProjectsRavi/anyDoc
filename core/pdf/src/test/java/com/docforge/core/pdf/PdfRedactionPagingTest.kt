@@ -49,6 +49,17 @@ class PdfRedactionPagingTest {
     }
 
     @Test
+    fun scanPagesUntil_deduplicatesCollectedPageValuesInFirstSeenOrder() {
+        val unique = linkedSetOf<String>()
+        scanPagesUntil(
+            pageCount = 3,
+            readPage = { index -> if (index == 0) listOf("first", "shared") else listOf("shared", "page-$index") },
+            stopWhen = { values -> unique.addAll(values); false }
+        )
+        assertEquals(listOf("first", "shared", "page-1", "page-2"), unique.toList())
+    }
+
+    @Test
     fun scanPagesUntil_rejectsNegativePageCount() {
         assertThrows(IllegalArgumentException::class.java) {
             scanPagesUntil(
