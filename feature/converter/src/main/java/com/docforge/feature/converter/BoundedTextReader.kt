@@ -10,7 +10,9 @@ internal fun Reader.readTextBounded(maxChars: Int = MAX_TEXT_DOCUMENT_CHARS): St
     val buffer = CharArray(8192)
     var total = 0
     while (true) {
-        val read = read(buffer, 0, minOf(buffer.size, maxChars - total + 1))
+        val remaining = maxChars - total
+        val charsToRead = if (remaining >= buffer.size) buffer.size else remaining + 1
+        val read = read(buffer, 0, charsToRead)
         if (read < 0) break
         if (read == 0) continue
         total += read

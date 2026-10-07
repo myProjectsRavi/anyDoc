@@ -20,6 +20,10 @@ class BoundedTextReaderTest {
         }
     }
 
+    @Test fun supportsMaximumIntLimitWithoutOverflow() {
+        assertEquals("ok", StringReader("ok").readTextBounded(Int.MAX_VALUE))
+    }
+
     @Test fun rejectsNonPositiveLimit() {
         assertThrows(IllegalArgumentException::class.java) {
             StringReader("").readTextBounded(0)
