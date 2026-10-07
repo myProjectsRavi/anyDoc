@@ -4,12 +4,12 @@
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
 **Current report:** `2026-10-06_cycle-038`
-**Report status:** ACTIVE / INCOMPLETE
+**Report status:** COMPLETE
 **Cycle:** 038
 **Current Epic:** `E038` — Heap-safe video audio extraction
 **Current Feature:** `F040` — Bounded extractor sample buffer allocation
-**Current User Story:** `US-R038-P2-01A` — Reject unreasonable MediaExtractor sample-buffer demands before allocation (ACTIVE)
-**Last completed cycle:** Cycle 037
+**Current User Story:** `US-R038-P2-01A` — Reject unreasonable MediaExtractor sample-buffer demands before allocation (COMPLETE)
+**Last completed cycle:** Cycle 038
 **State checkpoint timestamp:** 2026-10-06 UTC
 
 ## Git checkpoint
@@ -26,3 +26,13 @@ Unknown-size URI cache copies preflight the 32 MiB reserve plus one 8 MiB maximu
 
 ## Next executable step
 Introduce a deterministic conservative sample-buffer ceiling, reject metadata above that ceiling before allocation, preserve the existing 256 KiB fallback/minimum behavior, add converter-module boundary tests, and validate the exact candidate through authoritative GitHub Actions.
+
+## Cycle 038 completion evidence
+- Exact validated code/test SHA: `a1caa7451a21b2df7744b2f481d357630c1e886d`.
+- GitHub Actions PR run #453 / API `37541238001`: **SUCCESS**.
+- `VideoAudioExtractor` preserves the 256 KiB fallback/minimum and rejects sample-buffer metadata above the conservative 8 MiB ceiling before allocation.
+- Pure-JVM boundary coverage includes absent metadata, 64 KiB, 1 MiB, exact 8 MiB, and 8 MiB + 1 rejection.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Next executable step
+Select the highest-priority remaining evidence-backed P2 allocation/large-input story, activate Cycle 039 durably, then mutate production code only after that checkpoint exists.
