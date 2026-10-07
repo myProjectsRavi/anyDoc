@@ -28,11 +28,13 @@ import java.util.Locale
 
 internal inline fun <T> scanPagesUntil(
     pageCount: Int,
+    beforePage: (Int) -> Unit = {},
     readPage: (Int) -> T,
     stopWhen: (T) -> Boolean
 ): T? {
     require(pageCount >= 0) { "Page count must not be negative." }
     for (pageIndex in 0 until pageCount) {
+        beforePage(pageIndex)
         val value = readPage(pageIndex)
         if (stopWhen(value)) return value
     }
@@ -93,7 +95,10 @@ class PdfRedactionTool(
                 val terms: List<String> = if (options.autoDetectPii) {
                     onProgress?.invoke(PdfRedactionProgress(stage = "Detecting sensitive data", current = 0, total = pageCount))
                     val auto = LinkedHashSet<String>()
-                    scanPdfPages(document) { pageText ->
+                    scanPdfPages(
+                        document = document,
+                        beforePage = { coroutineCtx.ensureActive() }
+                    ) { pageText ->
                         auto.addAll(detectPiiTerms(pageText))
                         false
                     }
@@ -178,7 +183,8 @@ class PdfRedactionTool(
                         verifyTermsRemoved(
                             outputFile = stagedFile,
                             terms = terms,
-                            caseSensitive = options.caseSensitive
+                            caseSensitive = options.caseSensitive,
+                            beforePage = { coroutineCtx.ensureActive() }
                         )
                         onProgress?.invoke(
                             PdfRedactionProgress(
@@ -363,10 +369,12 @@ class PdfRedactionTool(
 
     private fun scanPdfPages(
         document: PDDocument,
+        beforePage: (Int) -> Unit = {},
         stopWhen: (String) -> Boolean
     ): String? {
         return scanPagesUntil(
             pageCount = document.numberOfPages,
+            beforePage = beforePage,
             readPage = { pageIndex ->
                 PDFTextStripper().apply {
                     val pageNumber = pageIndex + 1
@@ -381,10 +389,14 @@ class PdfRedactionTool(
     private fun verifyTermsRemoved(
         outputFile: File,
         terms: List<String>,
-        caseSensitive: Boolean
+        caseSensitive: Boolean,
+        beforePage: (Int) -> Unit = {}
     ) {
         loadPdfDocument(outputFile).use { verificationDoc ->
-            val remaining = scanPdfPages(verificationDoc) { pageText ->
+            val remaining = scanPdfPages(
+                document = verificationDoc,
+                beforePage = beforePage
+            ) { pageText ->
                 findFirstRemainingTerm(
                     text = pageText,
                     terms = terms,
