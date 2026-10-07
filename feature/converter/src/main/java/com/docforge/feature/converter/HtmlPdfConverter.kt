@@ -18,6 +18,16 @@ import java.io.FileOutputStream
 import kotlin.coroutines.resume
 import kotlin.math.ceil
 
+internal fun requireHtmlContentWithinLimit(
+    htmlContent: String,
+    maxChars: Int = MAX_TEXT_DOCUMENT_CHARS
+) {
+    require(maxChars > 0) { "HTML content character limit must be positive." }
+    require(htmlContent.length <= maxChars) {
+        "HTML content exceeds the $maxChars character safety limit."
+    }
+}
+
 /**
  * Converts HTML content (from a file URI or raw string) to PDF
  * using Android's [WebView] rendered onto [PdfDocument] pages.
@@ -50,7 +60,7 @@ class HtmlPdfConverter(
         outputName: String
     ): HtmlPdfConversionResult {
         val htmlContent = withContext(Dispatchers.IO) {
-            context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { it.readText() }
+            context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { it.readTextBounded() }
                 ?: error("Unable to read HTML file.")
         }
         return convertHtmlStringToPdf(htmlContent, outputName)
@@ -62,79 +72,83 @@ class HtmlPdfConverter(
     suspend fun convertHtmlStringToPdf(
         htmlContent: String,
         outputName: String
-    ): HtmlPdfConversionResult = withContext(Dispatchers.Main) {
-        require(htmlContent.isNotBlank()) { "HTML content is empty." }
+    ): HtmlPdfConversionResult {
+        requireHtmlContentWithinLimit(htmlContent)
 
-        val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
-            context = context,
-            bucket = DocForgeOutputBucket.DOCUMENTS
-        )
-        val sanitized = outputName.ifBlank { "html_${System.currentTimeMillis()}" }
-            .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val webView = WebView(context).apply {
-            settings.javaScriptEnabled = false
-            settings.allowFileAccess = false
-        }
+        return withContext(Dispatchers.Main) {
+            require(htmlContent.isNotBlank()) { "HTML content is empty." }
 
-        try {
-            // Wait for WebView to finish loading
-            suspendCancellableCoroutine { cont ->
-                webView.webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        cont.resume(Unit)
-                    }
-                }
-                webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+            val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
+                context = context,
+                bucket = DocForgeOutputBucket.DOCUMENTS
+            )
+            val sanitized = outputName.ifBlank { "html_${System.currentTimeMillis()}" }
+                .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+            val webView = WebView(context).apply {
+                settings.javaScriptEnabled = false
+                settings.allowFileAccess = false
             }
 
-            // Let WebView finish layout
-            delay(200)
-
-            // Measure content
-            webView.measure(
-                android.view.View.MeasureSpec.makeMeasureSpec(PAGE_WIDTH, android.view.View.MeasureSpec.EXACTLY),
-                android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED)
-            )
-            webView.layout(0, 0, PAGE_WIDTH, webView.measuredHeight)
-
-            val totalHeight = webView.measuredHeight.coerceAtLeast(1)
-            val pageCount = ceil(totalHeight.toFloat() / PAGE_HEIGHT).toInt().coerceAtLeast(1)
-
-            val pdfDocument = PdfDocument()
             try {
-                for (i in 0 until pageCount) {
-                    val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, i + 1).create()
-                    val page = pdfDocument.startPage(pageInfo)
-                    val canvas = page.canvas
-                    canvas.translate(0f, -(i * PAGE_HEIGHT).toFloat())
-                    webView.draw(canvas)
-                    pdfDocument.finishPage(page)
-                }
-
-                val staged = withStagedOutputFile(
-                    directory = outputDir,
-                    baseName = sanitized,
-                    extension = "pdf"
-                ) { stagedFile ->
-                    withContext(Dispatchers.IO) {
-                        FileOutputStream(stagedFile).use { out ->
-                            pdfDocument.writeTo(out)
+                // Wait for WebView to finish loading
+                suspendCancellableCoroutine { cont ->
+                    webView.webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            cont.resume(Unit)
                         }
                     }
+                    webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
                 }
 
-                HtmlPdfConversionResult(
-                    pdfResult = PdfCreationResult(
-                        outputFile = staged.outputFile,
-                        pageCount = pageCount,
-                        outputSizeBytes = staged.outputFile.length()
-                    )
+                // Let WebView finish layout
+                delay(200)
+
+                // Measure content
+                webView.measure(
+                    android.view.View.MeasureSpec.makeMeasureSpec(PAGE_WIDTH, android.view.View.MeasureSpec.EXACTLY),
+                    android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED)
                 )
+                webView.layout(0, 0, PAGE_WIDTH, webView.measuredHeight)
+
+                val totalHeight = webView.measuredHeight.coerceAtLeast(1)
+                val pageCount = ceil(totalHeight.toFloat() / PAGE_HEIGHT).toInt().coerceAtLeast(1)
+
+                val pdfDocument = PdfDocument()
+                try {
+                    for (i in 0 until pageCount) {
+                        val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, i + 1).create()
+                        val page = pdfDocument.startPage(pageInfo)
+                        val canvas = page.canvas
+                        canvas.translate(0f, -(i * PAGE_HEIGHT).toFloat())
+                        webView.draw(canvas)
+                        pdfDocument.finishPage(page)
+                    }
+
+                    val staged = withStagedOutputFile(
+                        directory = outputDir,
+                        baseName = sanitized,
+                        extension = "pdf"
+                    ) { stagedFile ->
+                        withContext(Dispatchers.IO) {
+                            FileOutputStream(stagedFile).use { out ->
+                                pdfDocument.writeTo(out)
+                            }
+                        }
+                    }
+
+                    HtmlPdfConversionResult(
+                        pdfResult = PdfCreationResult(
+                            outputFile = staged.outputFile,
+                            pageCount = pageCount,
+                            outputSizeBytes = staged.outputFile.length()
+                        )
+                    )
+                } finally {
+                    pdfDocument.close()
+                }
             } finally {
-                pdfDocument.close()
+                webView.destroy()
             }
-        } finally {
-            webView.destroy()
         }
     }
 }
