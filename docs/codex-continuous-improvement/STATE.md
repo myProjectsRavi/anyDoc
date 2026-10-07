@@ -4,12 +4,12 @@
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
 **Current report:** `2026-10-07_cycle-039`
-**Report status:** ACTIVE / INCOMPLETE
+**Report status:** COMPLETE
 **Cycle:** 039
 **Current Epic:** `E039` — Heap-safe typed signature rendering
 **Current Feature:** `F041` — Bounded typed-signature raster allocation
-**Current User Story:** `US-R039-P2-01A` — Bound typed-signature bitmap dimensions before allocation (ACTIVE)
-**Last completed cycle:** Cycle 038
+**Current User Story:** `US-R039-P2-01A` — Bound typed-signature bitmap dimensions before allocation (COMPLETE)
+**Last completed cycle:** Cycle 039
 **State checkpoint timestamp:** 2026-10-06 UTC
 
 ## Git checkpoint
@@ -36,3 +36,13 @@ Introduce a deterministic conservative sample-buffer ceiling, reject metadata ab
 
 ## Next executable step
 Select the highest-priority remaining evidence-backed P2 allocation/large-input story, activate Cycle 039 durably, then mutate production code only after that checkpoint exists.
+
+
+## Cycle 039 completion evidence
+- Exact validated code/test SHA: `810fc18675cf22f14620c78a1ac0745afe346e59`.
+- GitHub Actions PR run #464 / API `37587816150`: **SUCCESS**.
+- Typed-signature raster sizing is bounded before allocation and focused JVM boundary regressions cover safe dimensions, exact limits, overflow, invalid padding, and non-finite measurements.
+- No emulator, benchmark, or physical-device evidence is claimed.
+
+## Next executable step
+Select the highest-priority remaining evidence-backed P2 large-input/full-file-copy story and activate Cycle 040 durably before production mutation.
