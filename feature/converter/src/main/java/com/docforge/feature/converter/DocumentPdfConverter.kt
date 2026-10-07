@@ -173,7 +173,7 @@ class DocumentPdfConverter(
 
     private fun extractRtfLines(inputUri: Uri): List<String> {
         val raw = context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { reader ->
-            reader.readText()
+            reader.readTextBounded()
         } ?: error("Unable to read RTF file.")
 
         var plain = raw
@@ -208,10 +208,10 @@ class DocumentPdfConverter(
 
     private fun extractCsvLines(inputUri: Uri): List<String> {
         val rows = context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { reader ->
-            reader.readLines()
+            reader.readTextBounded()
         } ?: error("Unable to read CSV file.")
 
-        return rows.map { row ->
+        return rows.lineSequence().map { row ->
             parseCsvRow(row).joinToString(separator = " | ") { cell -> cell.trim() }
         }
     }
@@ -245,7 +245,7 @@ class DocumentPdfConverter(
 
     private fun extractTextLines(inputUri: Uri): List<String> {
         val text = context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { reader ->
-            reader.readText()
+            reader.readTextBounded()
         } ?: error("Unable to read text file.")
 
         return text
