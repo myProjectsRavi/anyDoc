@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-07_cycle-042`
+**Current report:** `2026-10-07_cycle-043`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 042
-**Current Epic:** `E042` — Large-PDF redaction memory safety
-**Current Feature:** `F044` — Page-bounded redaction text scanning
-**Current User Story:** `US-R042-P2-01A` — Eliminate whole-document redaction text materialization (ACTIVE)
-**Last completed cycle:** Cycle 041
+**Cycle:** 043
+**Current Epic:** `E043` — PDF comparison raster memory safety
+**Current Feature:** `F045` — Combined comparison raster budget
+**Current User Story:** `US-R043-P2-01A` — Bound PdfCompareTool combined raster memory (ACTIVE)
+**Last completed cycle:** Cycle 042
 **State checkpoint timestamp:** 2026-10-07 UTC
 
 ## Git checkpoint
@@ -78,3 +78,15 @@ Reuse the bounded text reader for HTML URI ingestion, enforce the same conservat
 
 ## Next executable step
 Refactor auto-detect and irreversible verification to extract and inspect one PDF page at a time, preserve term detection and annotation verification semantics, add focused pure-JVM paging/early-exit regression coverage, and validate the exact candidate through authoritative GitHub Actions.
+
+
+## Cycle 042 completion evidence
+- Exact validated code/test SHA: `6e0fa61975c01fddea83f0b78b726e4f689d9808`.
+- GitHub Actions PR run #492 / API `37665821129`: **SUCCESS**.
+- Page-bounded redaction scans and focused paging regressions validated.
+
+## Cycle 043 starting evidence
+The durable backlog identifies `PdfCompareTool` combined left/right/diff ARGB_8888 raster memory as unresolved P2 work.
+
+## Next executable step
+Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-memory ceiling with focused tests, then validate the exact candidate through authoritative GitHub Actions.
