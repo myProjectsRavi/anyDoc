@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,7 @@ class BatchQueueViewModel(
 
     init {
         viewModelScope.launch {
-            _presets.value = presetStore.readPresets()
+            refreshPresets()
         }
         viewModelScope.launch {
             runCatching { persistenceStore.readRecoverableTasks() }
@@ -38,7 +39,9 @@ class BatchQueueViewModel(
                 }
 
             BatchQueueRuntimeStore.state.collect { runtimeState ->
-                _uiState.value = runtimeState
+                _uiState.update { current ->
+                    runtimeState.copy(errorMessage = current.errorMessage ?: runtimeState.errorMessage)
+                }
                 runCatching {
                     persistenceStore.replaceSnapshot(runtimeState.tasks)
                 }.onFailure { error ->
@@ -86,6 +89,7 @@ class BatchQueueViewModel(
 
     fun clearError() {
         BatchQueueRuntimeStore.clearError()
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     fun saveQueuedTasksAsPreset(name: String) {
@@ -100,14 +104,21 @@ class BatchQueueViewModel(
         }
 
         viewModelScope.launch {
-            presetStore.savePreset(name, presetTasks)
-                .onSuccess { preset ->
-                    _presets.value = presetStore.readPresets()
-                    BatchQueueRuntimeStore.setStatusMessage("Saved preset: ${preset.name}")
-                }
-                .onFailure { err ->
-                    setError(err.message ?: "Failed to save preset")
-                }
+            try {
+                presetStore.savePreset(name, presetTasks)
+                    .onSuccess { preset ->
+                        if (refreshPresets()) {
+                            BatchQueueRuntimeStore.setStatusMessage("Saved preset: ${preset.name}")
+                        }
+                    }
+                    .onFailure { err ->
+                        setError(err.message ?: "Failed to save preset")
+                    }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                setError(error.message ?: "Failed to save preset")
+            }
         }
     }
 
@@ -127,13 +138,20 @@ class BatchQueueViewModel(
 
     fun deletePreset(presetId: Long) {
         viewModelScope.launch {
-            val deleted = presetStore.deletePreset(presetId)
-            if (!deleted) {
-                setError("Preset not found.")
-                return@launch
+            try {
+                val deleted = presetStore.deletePreset(presetId)
+                if (!deleted) {
+                    setError("Preset not found.")
+                    return@launch
+                }
+                if (refreshPresets()) {
+                    BatchQueueRuntimeStore.setStatusMessage("Deleted preset #$presetId")
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                setError(error.message ?: "Failed to delete preset")
             }
-            _presets.value = presetStore.readPresets()
-            BatchQueueRuntimeStore.setStatusMessage("Deleted preset #$presetId")
         }
     }
 
@@ -174,6 +192,18 @@ class BatchQueueViewModel(
     fun onInputAccessRetentionFailed(error: Throwable) {
         setError(error.message ?: "Unable to retain access to the selected file.")
     }
+
+    private suspend fun refreshPresets(): Boolean =
+        loadBatchPresets { presetStore.readPresets() }.fold(
+            onSuccess = { loaded ->
+                _presets.value = loaded
+                true
+            },
+            onFailure = { error ->
+                setError("Unable to load saved presets: ${error.message ?: "storage error"}")
+                false
+            }
+        )
 
     private fun setError(message: String) {
         _uiState.update { it.copy(errorMessage = message) }
