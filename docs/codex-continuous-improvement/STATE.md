@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-050`
+**Current report:** `2026-10-08_cycle-051`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 050
-**Current Epic:** `E050` — Durable batch queue recovery safety
-**Current Feature:** `F052` — No destructive writes after failed recovery
-**Current User Story:** `US-R050-P1-01A` — Preserve persisted queue when recovery fails (ACTIVE)
-**Last completed cycle:** Cycle 049
+**Cycle:** 051
+**Current Epic:** `E051` — Batch cancellation crash safety
+**Current Feature:** `F053` — Failure-safe cancellation service launch
+**Current User Story:** `US-R051-P1-01A` — Report cancellation launch failures without crashing (ACTIVE)
+**Last completed cycle:** Cycle 050
 **State checkpoint timestamp:** 2026-10-08 UTC
 
 ## Current next executable step
-Cycle 050 `E050 / F052 / US-R050-P1-01A` ACTIVE: protect persisted batch queue when recovery read fails. Source: `BatchQueueViewModel.init` handles `readRecoverableTasks()` failure using `runCatching().onFailure` but still subscribes to `BatchQueueRuntimeStore.state`; the first empty state is persisted by `replaceSnapshot(runtimeState.tasks)`, which invokes `BatchQueueTaskDao.replaceAll` and can erase previously persisted queue rows after a transient DAO read failure. Next exact mutation: gate persistence subscription on successful recovery, preserve coroutine cancellation, add deterministic JVM tests verifying no destructive snapshot write after recovery failure and normal persistence after success, validate exact candidate SHA with CI. PR #1 remains draft/unmerged; main untouched.
+Cycle 051 `E051 / F053 / US-R051-P1-01A` ACTIVE / INCOMPLETE: `BatchQueueViewModel.cancelQueue()` invokes `context.startService(intent)` directly without handling `IllegalStateException`, `SecurityException`, or other service-start exceptions. A rejected cancel request can crash the UI rather than report failure. Next exact mutation: introduce a small testable cancellation-launch wrapper that catches non-cancellation exceptions, propagates coroutine cancellation, surfaces a visible error and preserves existing service intent/action. Add app JVM tests for successful launch and failure/cancellation paths, then validate exact candidate SHA with authoritative CI. PR #1 stays draft/unmerged; main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -148,3 +148,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 049 completion / Cycle 050 activation — 2026-10-08 UTC
 - Cycle 049 `E049 / F051 / US-R049-P1-01A`: COMPLETE. Exact code/test SHA `7db88fa477614d34e6a54c50b0c0c031d76a724d`; authoritative PR CI #527 / API `37824852307`: SUCCESS on 2026-10-08 UTC, all eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Push #526 was cancelled by shared concurrency, not used as completion evidence. Thirteen app JVM regressions cover valid, malformed, empty, unknown-type and DAO/cancellation paths. No emulator, physical-device, benchmark or crash-free guarantee.
 - Cycle 050 `E050 / F052 / US-R050-P1-01A` ACTIVE: protect persisted batch queue when recovery read fails. Source: `BatchQueueViewModel.init` handles `readRecoverableTasks()` failure using `runCatching().onFailure` but still subscribes to `BatchQueueRuntimeStore.state`; the first empty state is persisted by `replaceSnapshot(runtimeState.tasks)`, which invokes `BatchQueueTaskDao.replaceAll` and can erase previously persisted queue rows after a transient DAO read failure. Next exact mutation: gate persistence subscription on successful recovery, preserve coroutine cancellation, add deterministic JVM tests verifying no destructive snapshot write after recovery failure and normal persistence after success, validate exact candidate SHA with CI. PR #1 remains draft/unmerged; main untouched.
+
+
+## Cycle 050 completion / Cycle 051 activation — 2026-10-08 UTC
+- Cycle 050 `E050 / F052 / US-R050-P1-01A` COMPLETE: exact code/test SHA `b318a37cc68bab3c34ddaee4c6deac52017e6a15` passed authoritative PR run #530 / API `37853941252` (SUCCESS; core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8, Android lint). Push #529 was cancelled by concurrency and is not completion evidence. Eight app JVM regressions cover failure/no-write, restoration order, empty recovery, retries and cancellation. No emulator, physical-device, benchmark or crash-free claim.
+- Cycle 051 `E051 / F053 / US-R051-P1-01A` ACTIVE / INCOMPLETE: `BatchQueueViewModel.cancelQueue()` invokes `context.startService(intent)` directly without handling `IllegalStateException`, `SecurityException`, or other service-start exceptions. A rejected cancel request can crash the UI rather than report failure. Next exact mutation: introduce a small testable cancellation-launch wrapper that catches non-cancellation exceptions, propagates coroutine cancellation, surfaces a visible error and preserves existing service intent/action. Add app JVM tests for successful launch and failure/cancellation paths, then validate exact candidate SHA with authoritative CI. PR #1 stays draft/unmerged; main untouched.

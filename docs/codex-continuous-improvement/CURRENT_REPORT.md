@@ -1,23 +1,23 @@
 # Current Report
 
-**ID:** `2026-10-08_cycle-050`
+**ID:** `2026-10-08_cycle-051`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E050` — Durable batch queue recovery safety
-**Feature:** `F052` — No destructive writes after failed recovery
-**User Story:** `US-R050-P1-01A` — Preserve persisted queue when recovery fails
+**Epic:** `E051` — Batch cancellation crash safety
+**Feature:** `F053` — Failure-safe cancellation service launch
+**User Story:** `US-R051-P1-01A` — Report cancellation launch failures without crashing
 
 ## Prior validated cycle
-Cycle 049 `E049 / F051 / US-R049-P1-01A`: COMPLETE. Exact code/test SHA `7db88fa477614d34e6a54c50b0c0c031d76a724d`; authoritative PR CI #527 / API `37824852307`: SUCCESS on 2026-10-08 UTC, all eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Push #526 was cancelled by shared concurrency, not used as completion evidence. Thirteen app JVM regressions cover valid, malformed, empty, unknown-type and DAO/cancellation paths. No emulator, physical-device, benchmark or crash-free guarantee.
+Cycle 050 `E050 / F052 / US-R050-P1-01A` COMPLETE: exact code/test SHA `b318a37cc68bab3c34ddaee4c6deac52017e6a15` passed authoritative PR run #530 / API `37853941252` (SUCCESS; core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8, Android lint). Push #529 was cancelled by concurrency and is not completion evidence. Eight app JVM regressions cover failure/no-write, restoration order, empty recovery, retries and cancellation. No emulator, physical-device, benchmark or crash-free claim.
 
 ## P1 source evidence
-`BatchQueueViewModel.init` catches recovery read failures but continues collecting `BatchQueueRuntimeStore.state`. The initial empty runtime snapshot is then written with `BatchQueuePersistenceStore.replaceSnapshot()`, which calls the DAO's replace-all operation and can delete existing persisted queue rows after a transient read failure.
+`BatchQueueViewModel.cancelQueue()` calls `context.startService(intent)` without exception handling, unlike `runQueue()` which catches foreground-service launch failures. Android may reject service starts, leaving an uncaught exception on the UI thread.
 
 ## Acceptance
-- Recovery-read failure must prevent the initial empty runtime snapshot from overwriting stored queue rows.
-- Coroutine cancellation must propagate, not become a recoverable error.
-- Successful recovery must restore tasks before starting snapshot observation/persistence.
-- Deterministic app JVM tests and authoritative exact-SHA CI, followed by terminal-CI document synchronization.
+- Successful cancel launches preserve the existing intent and service action.
+- Service-start failure is surfaced as an actionable UI error, without crashing the caller.
+- CancellationException is not swallowed.
+- Focused app JVM regressions and exact-SHA authoritative GitHub Actions must pass.
 
 ## Next exact action
-Implement a recovery-success gate before subscribing to queue state and writing snapshots. Add tests for failure/no-write, success/restore-and-write, and cancellation. Validate authoritative CI. This active checkpoint precedes Cycle 050 production/test mutation. PR #1 draft/unmerged; main untouched.
+Cycle 051 `E051 / F053 / US-R051-P1-01A` ACTIVE / INCOMPLETE: `BatchQueueViewModel.cancelQueue()` invokes `context.startService(intent)` directly without handling `IllegalStateException`, `SecurityException`, or other service-start exceptions. A rejected cancel request can crash the UI rather than report failure. Next exact mutation: introduce a small testable cancellation-launch wrapper that catches non-cancellation exceptions, propagates coroutine cancellation, surfaces a visible error and preserves existing service intent/action. Add app JVM tests for successful launch and failure/cancellation paths, then validate exact candidate SHA with authoritative CI. PR #1 stays draft/unmerged; main untouched.

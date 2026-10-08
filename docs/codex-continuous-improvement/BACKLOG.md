@@ -392,3 +392,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E050 — Durable batch queue recovery safety
 #### Feature F052 — No destructive writes after failed recovery
 - [ACTIVE / P1] `US-R050-P1-01A` — Gate runtime snapshot persistence on successful recovery, preserve cancellation, add focused JVM regressions and exact-SHA CI.
+
+## Cycle 050 closure — 2026-10-08
+- [COMPLETE / CI #530] `US-R050-P1-01A` — Recovery-gated batch queue persistence. Exact SHA `b318a37cc68bab3c34ddaee4c6deac52017e6a15` passed PR run #530 / API `37853941252`, all eight gates. Eight focused app JVM regressions.
+- [NEXT / P1] `US-R051-P1-01A` — Catch batch cancellation service-start failures and report them to the UI instead of crashing.
+
+## Cycle 051 active
+### Epic E051 — Batch cancellation crash safety
+#### Feature F053 — Failure-safe cancellation service launch
+- [ACTIVE / P1] `US-R051-P1-01A` — Testable cancellation-launch error handling with app JVM regression coverage and exact-SHA CI.
