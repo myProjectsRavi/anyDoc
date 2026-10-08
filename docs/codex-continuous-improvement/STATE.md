@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-047`
+**Current report:** `2026-10-08_cycle-048`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 047
-**Current Epic:** `E047` — Saved signature integrity
-**Current Feature:** `F049` — Atomic saved signature replacement
-**Current User Story:** `US-R047-P1-01A` — Preserve saved signature on failed replacement (ACTIVE)
-**Last completed cycle:** Cycle 046
+**Cycle:** 048
+**Current Epic:** `E048` — Signature placement template integrity
+**Current Feature:** `F050` — Failure-safe placement template persistence
+**Current User Story:** `US-R048-P1-01A` — Preserve saved templates on failed update (ACTIVE)
+**Last completed cycle:** Cycle 047
 **State checkpoint timestamp:** 2026-10-07 UTC
 
 ## Current next executable step
-Replace destructive SavedSignatureStore slot writes with atomic same-directory publication and check PNG compression success. Add feature-module regression tests and authoritative CI coverage before closure. This checkpoint precedes Cycle 047 production mutation.
+Harden `SignaturePlacementTemplateStore.writeTemplates()`: it writes to a fixed `.tmp` path and calls `renameTo(templatesFile)` without checking success, so failed publication can silently report success and leave old or incomplete state. Implement unique same-directory staging and checked atomic replacement, with failure-preservation JVM regressions and feature-module CI. Also prevent unreadable/corrupt template data from silently being treated as an empty set before mutation. This checkpoint precedes Cycle 048 production/test mutation.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -129,3 +129,10 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 - Source evidence: `SavedSignatureStore.save()` opens the existing slot with `FileOutputStream(file)`, truncating the old PNG before compression, and ignores the Boolean result of `bitmap.compress`. A false return or exception can destroy the previously saved signature.
 - Next: implement same-directory atomic replacement preserving the prior slot on failure, reject failed PNG compression, add focused deterministic tests, include feature-module test task in authoritative CI, and validate exact code/test SHA. No Cycle 047 production/test mutation is claimed at activation.
 - PR #1 remains draft/unmerged; main untouched.
+
+
+## Cycle 047 completion / Cycle 048 activation — 2026-10-08 UTC
+- Cycle 047 `E047 / F049 / US-R047-P1-01A`: COMPLETE. Exact code/test SHA `a38e779267f7300e8ebc86197e8ce25137a99326`; authoritative PR run #519 / API `37793452165`: SUCCESS, all eight gates (core PDF, converter, scanner, PDF tools signature, app unit tests, debug APK, unsigned release/R8, Android lint). The paired push run #518 was cancelled by the shared concurrency group and is not completion evidence.
+- `SavedSignatureStore.save()` now stages PNG bytes in the same directory, rejects `Bitmap.compress()` failure, checks interruption, syncs staged bytes and atomically replaces the final slot. Seven focused feature JVM regressions cover success, failure preservation, first-save cleanup and interruption. Independent sandbox Kotlin smoke covered eight scenarios; no Android device, emulator, benchmark or power-loss durability claim.
+- Cycle 048 ACTIVE / INCOMPLETE: `E048 / F050 / US-R048-P1-01A` — failure-safe saved placement template persistence. Source: `SignaturePlacementTemplateStore.writeTemplates()` uses a shared fixed `.tmp` file and unchecked `renameTo`; `readTemplates()` silently returns an empty list on malformed stored JSON, risking data loss on the next mutation.
+- Next exact action: implement unique same-directory staged JSON publication with checked atomic replacement; reject unreadable/corrupt prior state before save/delete; add deterministic feature JVM tests and validate exact code/test SHA. No Cycle 048 production/test mutation at activation. PR #1 draft/unmerged; main untouched.

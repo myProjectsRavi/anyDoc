@@ -362,3 +362,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E047 — Saved signature integrity
 #### Feature F049 — Atomic saved signature replacement
 - [ACTIVE / P1] `US-R047-P1-01A` — Atomic replacement preserving old slot on encoding/write failure, deterministic regression tests, feature test CI gate, exact-SHA validation.
+
+
+## Cycle 047 closure — 2026-10-08
+- [COMPLETE / CI #519] `US-R047-P1-01A` — Atomic saved-signature PNG replacement with seven focused feature JVM tests. Exact code/test SHA `a38e779267f7300e8ebc86197e8ce25137a99326` passed PR run #519 / API `37793452165`, all eight gates.
+- [NEXT / P1] `US-R048-P1-01A` — Prevent silent saved placement-template corruption/loss from fixed staging name, unchecked `renameTo`, and malformed-state fallback.
+
+## Cycle 048 active
+### Epic E048 — Signature placement template integrity
+#### Feature F050 — Failure-safe placement template persistence
+- [ACTIVE / P1] `US-R048-P1-01A` — Unique same-directory atomic JSON replacement, reject unreadable prior state, deterministic JVM failure tests, exact-SHA CI.

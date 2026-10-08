@@ -463,3 +463,12 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - No emulator, physical-device or benchmark evidence.
 - Cycle 047 ACTIVE: `US-R047-P1-01A`. Source inspection: `SavedSignatureStore.save()` truncates existing slot PNG using `FileOutputStream(file)` and ignores `Bitmap.compress` Boolean failure.
 - Next: same-directory atomic signature replacement, deterministic failure/success tests, add feature-module test task to CI, validate exact candidate. No Cycle 047 code/test mutation yet at activation.
+
+
+## Cycle 047 completion / Cycle 048 activation — 2026-10-08 UTC
+- Exact Cycle 047 code/test SHA: `a38e779267f7300e8ebc86197e8ce25137a99326`.
+- Authoritative PR run #519 / API `37793452165`: SUCCESS. Core PDF tests, converter tests, scanner tests, new PDF tools signature JVM tests, app lifecycle tests, debug APK, unsigned release/R8 and Android lint: all SUCCESS. Push run #518 was cancelled by concurrency and is not used as validation.
+- Seven feature JVM tests cover initial save, successful replacement, false PNG encoder return, thrown write, failed first save, pre-encoding interruption, and interruption during encoding.
+- Independent sandbox Kotlin smoke test passed eight scenarios, including failed publication to a directory and temporary-file cleanup. Not Android CI or device evidence.
+- No emulator, physical-device, benchmark or crash-free guarantee is claimed.
+- Cycle 048 ACTIVE: `US-R048-P1-01A`. Source evidence: fixed `.tmp` file and unchecked `renameTo` in `SignaturePlacementTemplateStore.writeTemplates`; corrupt stored JSON silently read as empty, risking destructive replacement. Next: unique atomic staged write, error propagation, corrupt-state protection, deterministic tests and exact-SHA CI. No Cycle 048 production/test mutation at activation.
