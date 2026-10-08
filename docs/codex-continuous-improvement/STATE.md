@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-046`
+**Current report:** `2026-10-08_cycle-047`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 046
-**Current Epic:** `E046` — Bates numbering integrity
-**Current Feature:** `F048` — Overflow-safe Bates sequence
-**Current User Story:** `US-R046-P1-01A` — Prevent Bates counter rollover (ACTIVE)
-**Last completed cycle:** Cycle 045
+**Cycle:** 047
+**Current Epic:** `E047` — Saved signature integrity
+**Current Feature:** `F049` — Atomic saved signature replacement
+**Current User Story:** `US-R047-P1-01A` — Preserve saved signature on failed replacement (ACTIVE)
+**Last completed cycle:** Cycle 046
 **State checkpoint timestamp:** 2026-10-07 UTC
 
 ## Current next executable step
-Harden `PdfBatchStampTool` Bates sequence overflow by using a checked Long counter; add focused JVM boundary tests, validate exact code/test SHA through GitHub Actions, and reconcile all cycle documents. This checkpoint precedes production mutation.
+Replace destructive SavedSignatureStore slot writes with atomic same-directory publication and check PNG compression success. Add feature-module regression tests and authoritative CI coverage before closure. This checkpoint precedes Cycle 047 production mutation.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -120,3 +120,12 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 - Source evidence: `PdfBatchStampTool` increments an Int Bates counter; after Int.MAX_VALUE it wraps negative, and the formatter coerces the label to zero. This silently corrupts document numbering.
 - Next: checked Long counter, deterministic boundary tests, exact-SHA CI, then synchronize CURRENT_REPORT/BACKLOG/VALIDATION and cycle reports.
 - PR #1 draft/unmerged; main untouched. No device/benchmark evidence claimed.
+
+
+## Cycle 046 completion / Cycle 047 activation — 2026-10-08 UTC
+- Cycle 046 `E046 / F048 / US-R046-P1-01A`: COMPLETE. Exact production/test SHA `d87426a1d042d571eb72f8b43313bedad63205e7`; authoritative PR run #516 / API `37750707619` SUCCESS on this SHA, all seven gates (core PDF, converter, scanner, app tests, debug assembly, unsigned release/R8, lint).
+- Checked Long Bates sequence rejects rollover beyond Int.MAX_VALUE, including across pages/files; six core PDF JVM regressions cover maximum, overflow, consecutive pages, multi-file continuity, nonpositive start, and repeated rollover rejection. No emulator, benchmark or physical-device evidence.
+- Cycle 047 ACTIVE / INCOMPLETE: `E047 / F049 / US-R047-P1-01A` — prevent saved signature data loss on failed PNG replacement.
+- Source evidence: `SavedSignatureStore.save()` opens the existing slot with `FileOutputStream(file)`, truncating the old PNG before compression, and ignores the Boolean result of `bitmap.compress`. A false return or exception can destroy the previously saved signature.
+- Next: implement same-directory atomic replacement preserving the prior slot on failure, reject failed PNG compression, add focused deterministic tests, include feature-module test task in authoritative CI, and validate exact code/test SHA. No Cycle 047 production/test mutation is claimed at activation.
+- PR #1 remains draft/unmerged; main untouched.

@@ -1,25 +1,26 @@
 # Current Report
 
-**ID:** `2026-10-08_cycle-046`
+**ID:** `2026-10-08_cycle-047`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E046` — Bates numbering integrity
-**Feature:** `F048` — Overflow-safe Bates sequence
-**User Story:** `US-R046-P1-01A` — Prevent Bates counter rollover
+**Epic:** `E047` — Saved signature integrity
+**Feature:** `F049` — Atomic saved signature replacement
+**User Story:** `US-R047-P1-01A` — Preserve saved signature on failed replacement
 
-## Prior validation
-Cycle 045 exact code/test SHA `c57c522549f79216623981d0d85a60fdcf48e823` passed authoritative PR run #506 / API `37733161386` on 2026-10-08 UTC. All seven gates passed: core PDF, converter, scanner and app unit tests, debug APK, unsigned release/R8 and Android lint. No emulator, device, benchmark or independent PDF/A compliance certification is claimed.
+## Prior validated cycle
+Cycle 046 code/test SHA `d87426a1d042d571eb72f8b43313bedad63205e7` passed authoritative PR CI #516 / API `37750707619` on 2026-10-08 UTC, all seven configured gates. Six Bates numbering JVM tests cover rollover, boundaries, page/file continuity and start clamp. No device, emulator, benchmark or physical-device evidence.
 
-## P1 evidence
-`PdfBatchStampTool.stampBatch()` uses an Int Bates counter with post-increment. If the first Bates value is Int.MAX_VALUE and more than one page is stamped, the next value wraps negative; the formatter clamps it to zero, silently corrupting the Bates sequence.
+## P1 source evidence
+`SavedSignatureStore.save()` opens an existing slot using `FileOutputStream(file)` before calling `bitmap.compress(PNG,...)`. This truncates the prior signature immediately and ignores `compress()` returning false. Failed or interrupted replacement can destroy the user's existing saved signature.
 
 ## Acceptance
-- Preserve existing `batesStart` minimum clamp, prefix, padding, per-file ranges and ordinary numbering.
-- Use a Long counter and reject any next sequence value outside 1..Int.MAX_VALUE before drawing.
-- Preserve transactional multi-output publication so failure leaves no partial final files.
-- Add pure-JVM boundary, consecutive-sequence and rollover regressions.
-- Validate exact code/test SHA with authoritative GitHub Actions and synchronize checkpoint after terminal CI.
-- Keep PR #1 draft/unmerged; do not modify main.
+- Preserve previous valid slot PNG if new encoding returns false, throws, or writing fails.
+- Publish a complete replacement atomically in the same directory; no partially encoded PNG exposed at the final slot path.
+- Reject failed PNG encoding instead of treating it as success.
+- Preserve slot numbering, load/list/delete semantics, and successful replacement.
+- Add focused JVM tests for successful replacement, writer failure/false return, and first-write cleanup; ensure authoritative CI runs the feature tests.
+- Validate exact code/test SHA through GitHub Actions; synchronize all canonical documents and cycle report only after terminal CI.
+- Keep PR #1 draft/unmerged; never modify main.
 
 ## Next exact action
-Implement checked Long Bates numbering in `PdfBatchStampTool` and add focused core PDF tests. No Cycle 046 code/test mutation is claimed at activation.
+Implement atomic saved signature write helper and regression tests on the feature branch. No Cycle 047 production/test mutation has occurred at this checkpoint.

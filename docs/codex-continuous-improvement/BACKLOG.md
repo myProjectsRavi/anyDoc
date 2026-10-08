@@ -352,3 +352,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E046 — Bates numbering integrity
 #### Feature F048 — Overflow-safe Bates sequence
 - [ACTIVE / P1] `US-R046-P1-01A` — Checked Long counter, deterministic boundary tests, exact-SHA CI, staged output preserved.
+
+
+## Cycle 046 closure — 2026-10-08
+- [COMPLETE / CI #516] `US-R046-P1-01A` — Checked Long Bates counter across pages/files with six focused JVM tests. Exact code/test SHA `d87426a1d042d571eb72f8b43313bedad63205e7` passed PR run #516 / API `37750707619`, all seven gates.
+- [NEXT / P1] `US-R047-P1-01A` — Preserve saved signatures on failed replacement; source: `SavedSignatureStore.save()` truncates existing PNG before encode and ignores `bitmap.compress()` failure.
+
+## Cycle 047 active
+### Epic E047 — Saved signature integrity
+#### Feature F049 — Atomic saved signature replacement
+- [ACTIVE / P1] `US-R047-P1-01A` — Atomic replacement preserving old slot on encoding/write failure, deterministic regression tests, feature test CI gate, exact-SHA validation.

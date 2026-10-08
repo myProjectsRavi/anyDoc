@@ -454,3 +454,12 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - Authoritative PR run #506 / API `37733161386`: SUCCESS, all seven gates (PDF, converter, scanner, app tests, debug, unsigned release/R8, lint).
 - Six XMP XML escaping/round-trip JVM regressions included. No emulator, physical-device, benchmark or independent PDF/A conformance certification evidence.
 - Cycle 046 ACTIVE: `US-R046-P1-01A`. Source evidence: Bates Int post-increment rolls over at Int.MAX_VALUE and formatter coerces negative to zero. Next: checked Long counter and focused tests, exact-SHA CI, then checkpoint sync.
+
+
+## Cycle 046 completion / Cycle 047 activation — 2026-10-08 UTC
+- Exact Cycle 046 production/test SHA: `d87426a1d042d571eb72f8b43313bedad63205e7`.
+- Authoritative PR run #516 / API `37750707619`: SUCCESS. Core PDF, converter, scanner, app tests, debug assembly, unsigned release/R8 assembly, and Android lint all succeeded.
+- Six focused Bates numbering tests cover max value, rollover rejection, consecutive pages, multi-file continuity, nonpositive start clamp, and repeated rejection after exhaustion.
+- No emulator, physical-device or benchmark evidence.
+- Cycle 047 ACTIVE: `US-R047-P1-01A`. Source inspection: `SavedSignatureStore.save()` truncates existing slot PNG using `FileOutputStream(file)` and ignores `Bitmap.compress` Boolean failure.
+- Next: same-directory atomic signature replacement, deterministic failure/success tests, add feature-module test task to CI, validate exact candidate. No Cycle 047 code/test mutation yet at activation.
