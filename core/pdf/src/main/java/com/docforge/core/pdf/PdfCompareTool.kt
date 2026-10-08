@@ -259,33 +259,53 @@ class PdfCompareTool(
         val w = max(left.width, right.width)
         val h = max(left.height, right.height)
         val output = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        output.eraseColor(Color.WHITE)
-
-        var diffPixels = 0L
-        val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
-
-        forEachDiffRow(h, checkCancelled) { y ->
-            for (x in 0 until w) {
-                val lPixel = if (x < left.width && y < left.height) left.getPixel(x, y) else Color.WHITE
-                val rPixel = if (x < right.width && y < right.height) right.getPixel(x, y) else Color.WHITE
-
-                val dr = abs(Color.red(lPixel) - Color.red(rPixel))
-                val dg = abs(Color.green(lPixel) - Color.green(rPixel))
-                val db = abs(Color.blue(lPixel) - Color.blue(rPixel))
-
-                if (dr > threshold || dg > threshold || db > threshold) {
-                    output.setPixel(x, y, Color.argb(200, 255, 50, 50))
-                    diffPixels++
-                } else {
-                    // Greyed-out version of original
-                    val grey = (Color.red(lPixel) * 0.3f + Color.green(lPixel) * 0.59f + Color.blue(lPixel) * 0.11f).toInt()
-                    output.setPixel(x, y, Color.rgb(grey, grey, grey))
+        return withCleanupOnFailure(output, Bitmap::recycle) {
+            output.eraseColor(Color.WHITE)
+    
+            var diffPixels = 0L
+            val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
+    
+            forEachDiffRow(h, checkCancelled) { y ->
+                for (x in 0 until w) {
+                    val lPixel = if (x < left.width && y < left.height) left.getPixel(x, y) else Color.WHITE
+                    val rPixel = if (x < right.width && y < right.height) right.getPixel(x, y) else Color.WHITE
+    
+                    val dr = abs(Color.red(lPixel) - Color.red(rPixel))
+                    val dg = abs(Color.green(lPixel) - Color.green(rPixel))
+                    val db = abs(Color.blue(lPixel) - Color.blue(rPixel))
+    
+                    if (dr > threshold || dg > threshold || db > threshold) {
+                        output.setPixel(x, y, Color.argb(200, 255, 50, 50))
+                        diffPixels++
+                    } else {
+                        // Greyed-out version of original
+                        val grey = (Color.red(lPixel) * 0.3f + Color.green(lPixel) * 0.59f + Color.blue(lPixel) * 0.11f).toInt()
+                        output.setPixel(x, y, Color.rgb(grey, grey, grey))
+                    }
                 }
             }
+    
+            val pct = if (totalPixels > 0) (diffPixels.toFloat() / totalPixels * 100f) else 0f
+            output to pct
         }
+    }
+}
 
-        val pct = if (totalPixels > 0) (diffPixels.toFloat() / totalPixels * 100f) else 0f
-        return output to pct
+/** The caller owns [resource] only after [block] returns successfully. */
+internal inline fun <T, R> withCleanupOnFailure(
+    resource: T,
+    cleanup: (T) -> Unit,
+    block: () -> R
+): R {
+    try {
+        return block()
+    } catch (failure: Throwable) {
+        try {
+            cleanup(resource)
+        } catch (cleanupFailure: Throwable) {
+            failure.addSuppressed(cleanupFailure)
+        }
+        throw failure
     }
 }
 
