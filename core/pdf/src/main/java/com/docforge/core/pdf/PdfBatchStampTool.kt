@@ -72,7 +72,7 @@ class PdfBatchStampTool(
         )
         val base = outputBaseName.ifBlank { "batch_stamped_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        var batesCounter = options.batesStart.coerceAtLeast(1)
+        var batesCounter = options.batesStart.coerceAtLeast(1).toLong()
 
         val stagedOutputs = withStagedOutputFiles(
             directory = outputDir,
@@ -110,7 +110,8 @@ class PdfBatchStampTool(
                                         }
 
                                         if (options.batesEnabled) {
-                                            val current = batesCounter++
+                                            val current = checkedBatesSequenceNumber(batesCounter)
+                                            batesCounter += 1L
                                             if (batesStartForFile == null) batesStartForFile = current
                                             batesEndForFile = current
                                             drawBatesLabel(stream, importedPage, options, current)
@@ -230,4 +231,12 @@ class PdfBatchStampTool(
     private fun sanitizePdfText(raw: String): String {
         return raw.replace('\u0000', ' ').replace(Regex("\\s+"), " ").trim()
     }
+}
+
+/** Prevent silent Bates sequence rollover in multi-page or multi-file stamping. */
+internal fun checkedBatesSequenceNumber(next: Long): Int {
+    require(next in 1L..Int.MAX_VALUE.toLong()) {
+        "Bates numbering exceeds the supported 32-bit positive range."
+    }
+    return next.toInt()
 }
