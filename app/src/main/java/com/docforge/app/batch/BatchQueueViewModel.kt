@@ -30,26 +30,30 @@ class BatchQueueViewModel(
             refreshPresets()
         }
         viewModelScope.launch {
-            runCatching { persistenceStore.readRecoverableTasks() }
-                .onSuccess { recovered ->
+            collectBatchQueueAfterRecovery(
+                recover = { persistenceStore.readRecoverableTasks() },
+                restore = { recovered ->
                     BatchQueueRuntimeStore.restoreRecoverableTasksIfEmpty(recovered)
-                }
-                .onFailure { error ->
+                },
+                states = BatchQueueRuntimeStore.state,
+                onRecoveryFailure = { error ->
                     setError(error.message ?: "Unable to restore the saved batch queue.")
-                }
-
-            BatchQueueRuntimeStore.state.collect { runtimeState ->
-                _uiState.update { current ->
-                    runtimeState.copy(errorMessage = current.errorMessage ?: runtimeState.errorMessage)
-                }
-                runCatching {
-                    persistenceStore.replaceSnapshot(runtimeState.tasks)
-                }.onFailure { error ->
-                    _uiState.update {
-                        it.copy(errorMessage = error.message ?: "Unable to save the batch queue.")
+                },
+                onState = { runtimeState ->
+                    _uiState.update { current ->
+                        runtimeState.copy(errorMessage = current.errorMessage ?: runtimeState.errorMessage)
+                    }
+                    try {
+                        persistenceStore.replaceSnapshot(runtimeState.tasks)
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        _uiState.update {
+                            it.copy(errorMessage = error.message ?: "Unable to save the batch queue.")
+                        }
                     }
                 }
-            }
+            )
         }
     }
 
