@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import java.io.File
-import java.io.FileOutputStream
 
 data class SavedSignatureSlot(
     val slot: Int,
@@ -31,8 +30,7 @@ class SavedSignatureStore(
 
     fun save(slot: Int, bitmap: Bitmap) {
         require(slot in 1..MAX_SLOTS) { "Slot must be between 1 and $MAX_SLOTS." }
-        val file = slotFile(slot)
-        FileOutputStream(file).use { stream ->
+        writePngAtomically(slotFile(slot)) { stream ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         }
     }

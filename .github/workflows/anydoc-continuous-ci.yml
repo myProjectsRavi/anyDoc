@@ -52,6 +52,9 @@ jobs:
       - name: Scanner unit tests
         run: ./gradlew --no-daemon :feature:scanner:testDebugUnitTest
 
+      - name: PDF tools signature unit tests
+        run: ./gradlew --no-daemon :feature:pdf-tools:testDebugUnitTest
+
       - name: App lifecycle unit tests
         run: ./gradlew --no-daemon :app:testDebugUnitTest
 
