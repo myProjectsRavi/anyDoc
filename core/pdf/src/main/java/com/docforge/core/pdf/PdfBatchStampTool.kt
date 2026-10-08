@@ -72,7 +72,7 @@ class PdfBatchStampTool(
         )
         val base = outputBaseName.ifBlank { "batch_stamped_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        var batesCounter = options.batesStart.coerceAtLeast(1).toLong()
+        val batesCounter = CheckedBatesCounter(options.batesStart)
 
         val stagedOutputs = withStagedOutputFiles(
             directory = outputDir,
@@ -110,8 +110,7 @@ class PdfBatchStampTool(
                                         }
 
                                         if (options.batesEnabled) {
-                                            val current = checkedBatesSequenceNumber(batesCounter)
-                                            batesCounter += 1L
+                                            val current = batesCounter.takeNext()
                                             if (batesStartForFile == null) batesStartForFile = current
                                             batesEndForFile = current
                                             drawBatesLabel(stream, importedPage, options, current)
@@ -239,4 +238,16 @@ internal fun checkedBatesSequenceNumber(next: Long): Int {
         "Bates numbering exceeds the supported 32-bit positive range."
     }
     return next.toInt()
+}
+
+
+/** Maintains one checked sequence across pages and input files. */
+internal class CheckedBatesCounter(start: Int) {
+    private var next = start.coerceAtLeast(1).toLong()
+
+    fun takeNext(): Int {
+        val current = checkedBatesSequenceNumber(next)
+        next += 1L
+        return current
+    }
 }
