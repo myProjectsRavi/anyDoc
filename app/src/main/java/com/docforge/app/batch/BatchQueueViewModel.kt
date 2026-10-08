@@ -186,7 +186,15 @@ class BatchQueueViewModel(
         val intent = Intent(context, BatchQueueForegroundService::class.java).apply {
             action = BatchQueueServiceContract.ACTION_CANCEL_QUEUE
         }
-        context.startService(intent)
+        launchBatchQueueCancellation(
+            launch = {
+                context.startService(intent)
+                    ?: throw IllegalStateException("Batch queue service is unavailable.")
+            },
+            onFailure = { error ->
+                setError("Unable to cancel the batch queue: ${error.message ?: "service unavailable"}")
+            }
+        )
     }
 
     fun onNotificationPermissionDenied() {
