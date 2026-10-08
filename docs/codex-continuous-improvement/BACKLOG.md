@@ -342,3 +342,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E045 — PDF/A metadata XML correctness
 #### Feature F047 — Well-formed XMP metadata serialization
 - [ACTIVE / P1] `US-R045-P1-01A` — XML-safe title/author/producer serialization, invalid-code-point handling, JVM XML parsing/round-trip regressions, exact-SHA CI.
+
+
+## Cycle 045 closure — 2026-10-08
+- [COMPLETE / CI #506] `US-R045-P1-01A` — XML-safe PDF/A XMP metadata, six JVM regressions. Exact SHA `c57c522549f79216623981d0d85a60fdcf48e823` passed PR run #506 / API `37733161386` (all seven gates).
+- [NEXT / P1] `US-R046-P1-01A` — Prevent silent Bates numbering rollover in batch stamping.
+
+## Cycle 046 active
+### Epic E046 — Bates numbering integrity
+#### Feature F048 — Overflow-safe Bates sequence
+- [ACTIVE / P1] `US-R046-P1-01A` — Checked Long counter, deterministic boundary tests, exact-SHA CI, staged output preserved.
