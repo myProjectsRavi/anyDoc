@@ -1,25 +1,25 @@
 # Current Report
 
-**ID:** `2026-10-08_cycle-044`
+**ID:** `2026-10-08_cycle-045`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E044` — Memory-safe PDF text extraction
-**Feature:** `F046` — Streamed PDF-to-TXT publication
-**User Story:** `US-R044-P2-01A` — Stream PDF text directly into staged TXT
+**Epic:** `E045` — PDF/A metadata XML correctness
+**Feature:** `F047` — Well-formed XMP metadata serialization
+**User Story:** `US-R045-P1-01A` — Escape PDF/A XMP metadata element text
 
-## Prior cycle validation
-Cycle 043 exact code/test SHA `ed6d500546c883108e15c722c0a2ce98b1b2f256` passed PR run #499 / API `37713745007`. Completion report commit `867585e4684f6a353f1fd5a400ccc39a6fb8ab9d` passed PR run #500 / API `37718067659`. All seven configured gates succeeded in both runs.
+## Prior validation
+Cycle 044 exact code/test SHA `2f6561ad5014b8aa96a9384c3fbe0ca588079c6f` passed PR run #503 / API `37728082557` on 2026-10-08 UTC: core PDF, converter, scanner, app unit tests, debug APK, unsigned release/R8 and lint all succeeded. Seven focused PDF text streaming regressions are included. No emulator, device or benchmark evidence.
 
-## Source finding
-`PdfTextExtractor.extractToTxt` calls `PDFTextStripper.getText(document)` across all pages, holds that String, and then allocates a second full `toByteArray(Charsets.UTF_8)`. Large extracted PDFs can transiently duplicate full-output memory.
+## Evidence-backed P1 correctness defect
+`PdfAComplianceTool.buildPdfAXmpMetadata` interpolates unescaped title/author/producer into XMP XML text nodes. Common legal metadata like `A & B` or `<Draft>` can produce malformed XMP.
 
 ## Acceptance criteria
-- Stream `PDFTextStripper.writeText(document, Writer)` directly into the same-directory staged TXT, without full-document String or UTF-8 byte-array materialization.
-- Preserve `sortByPosition`, full-page range, UTF-8 encoding, output filename policy, and transactional no-partial-final semantics.
-- Preserve fallback `[No extractable text found in this PDF.]` for empty or whitespace-only extracted text.
-- Preserve `extractedChars` semantics (UTF-16 character units of published text), safely handle overflow.
-- Add focused pure JVM tests for chunked output, whitespace-only, nonblank, Unicode/surrogates, writer errors, and staged cleanup.
-- Pass authoritative GitHub Actions on the exact code/test candidate; keep PR #1 draft/unmerged; never modify main.
+- XML-escape legal special characters and preserve their values after XML parsing.
+- Deterministically sanitize/reject XML 1.0-invalid control characters and unpaired UTF-16 surrogates.
+- Preserve existing PDF/A identifier fields, staged output, filename policy and valid Unicode.
+- Add focused pure JVM XML parsing/round-trip tests for all three fields and edge cases.
+- Pass authoritative CI on exact code/test SHA; synchronize checkpoint after terminal CI.
+- Keep PR #1 draft/unmerged; never modify main.
 
 ## Next exact action
-Implement a small testable streaming Writer/character-count helper, wire `PdfTextExtractor` to PDFTextStripper's streaming API inside `withStagedOutputFile`, add JVM regressions, and validate exact SHA. No device or benchmark evidence is claimed.
+Implement small XML-safe text serialization helper and JVM tests in the PDF module. No Cycle 045 production/test mutation has occurred at activation.

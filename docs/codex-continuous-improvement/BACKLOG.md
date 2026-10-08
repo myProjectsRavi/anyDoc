@@ -331,4 +331,14 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ## Cycle 044 active
 ### Epic E044 — Memory-safe PDF text extraction
 #### Feature F046 — Streamed PDF-to-TXT publication
-- [ACTIVE / P2] `US-R044-P2-01A` — Replace whole-document PDF text/UTF-8 byte-array materialization with streaming UTF-8 output while preserving sorted text, empty-text fallback, accurate character count, and failure-safe staged publication. Add focused JVM regressions and validate exact code/test SHA via GitHub Actions.
+- [COMPLETE / CI #503] `US-R044-P2-01A` — Replace whole-document PDF text/UTF-8 byte-array materialization with streaming UTF-8 output while preserving sorted text, empty-text fallback, accurate character count, and failure-safe staged publication. Add focused JVM regressions and validate exact code/test SHA via GitHub Actions.
+
+
+## Cycle 044 closure — 2026-10-08
+- [COMPLETE / CI #503] `US-R044-P2-01A` — Stream PDF text to staged UTF-8 TXT with character counting and whitespace fallback. Exact SHA `2f6561ad5014b8aa96a9384c3fbe0ca588079c6f` passed PR run #503 / API `37728082557` (all seven gates).
+- [NEXT / P1] `US-R045-P1-01A` — Correct unescaped XMP metadata text in PdfAComplianceTool.
+
+## Cycle 045 active
+### Epic E045 — PDF/A metadata XML correctness
+#### Feature F047 — Well-formed XMP metadata serialization
+- [ACTIVE / P1] `US-R045-P1-01A` — XML-safe title/author/producer serialization, invalid-code-point handling, JVM XML parsing/round-trip regressions, exact-SHA CI.

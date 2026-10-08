@@ -3,14 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-044`
+**Current report:** `2026-10-08_cycle-045`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 044
-**Current Epic:** `E044` — Memory-safe PDF text extraction
-**Current Feature:** `F046` — Streamed PDF-to-TXT publication
-**Current User Story:** `US-R044-P2-01A` — Stream PDF text directly into staged TXT (ACTIVE)
-**Last completed cycle:** Cycle 043
+**Cycle:** 045
+**Current Epic:** `E045` — PDF/A metadata XML correctness
+**Current Feature:** `F047` — Well-formed XMP metadata serialization
+**Current User Story:** `US-R045-P1-01A` — Escape PDF/A XMP metadata element text (ACTIVE)
+**Last completed cycle:** Cycle 044
 **State checkpoint timestamp:** 2026-10-07 UTC
+
+## Current next executable step
+Implement XML-safe XMP element text in `PdfAComplianceTool` for title/author/producer, add JVM XML parse and round-trip regressions including invalid code points, validate exact code/test SHA with GitHub Actions, then synchronize durable documents. This active checkpoint must precede production mutation.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -100,3 +103,12 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 - **Cycle 044 is ACTIVE / INCOMPLETE**: Epic `E044`, Feature `F046`, Story `US-R044-P2-01A`.
 - Source evidence: `PdfTextExtractor.extractToTxt` uses `PDFTextStripper.getText(document)` to materialize entire PDF text, then `toByteArray(UTF_8)` before writing staged TXT, duplicating large output memory.
 - **Next exact mutation:** replace whole-document `getText()`/UTF-8 byte-array materialization with `PDFTextStripper.writeText(document, Writer)` directly into the staged file. Preserve sorted extraction, blank/whitespace fallback text, `extractedChars`, UTF-8 encoding, and staged publication; add pure JVM streaming/whitespace/count/failure regressions; run authoritative CI on exact code/test SHA. No device/benchmark evidence claimed.
+
+
+## Cycle 044 completion and Cycle 045 activation — 2026-10-08 UTC
+- Cycle 044 validated code/test SHA: `2f6561ad5014b8aa96a9384c3fbe0ca588079c6f`. Authoritative PR run #503 / API `37728082557`: SUCCESS, all seven gates (core PDF, converter, scanner, app tests, debug APK, unsigned release/R8, Android lint).
+- PDF text streams directly to staged UTF-8 output with fallback and character counting. Seven focused JVM regressions included. No emulator, physical-device or benchmark evidence.
+- Cycle 044 COMPLETE; Cycle 045 ACTIVE / INCOMPLETE: `E045` → `F047` → `US-R045-P1-01A`.
+- Source evidence: `PdfAComplianceTool.buildPdfAXmpMetadata` inserts raw title, author and producer in XML text nodes, corrupting XMP for ampersands, angle brackets or XML-invalid code points.
+- Next exact mutation: XML-safe text escaping/sanitization and focused JVM XML parsing/round-trip tests, followed by exact-SHA CI.
+- Blockers: none at activation. PR #1 remains draft; main must remain untouched.

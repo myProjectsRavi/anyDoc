@@ -440,3 +440,10 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - Cycle 043 exact code/test SHA `ed6d500546c883108e15c722c0a2ce98b1b2f256`: PR run #499 / API `37713745007` SUCCESS across core PDF, converter, scanner, app lifecycle, debug APK, unsigned release/R8, and Android lint.
 - Cycle 043 completion-report commit `867585e4684f6a353f1fd5a400ccc39a6fb8ab9d`: PR run #500 / API `37718067659` SUCCESS across the same seven gates.
 - Cycle 044 active story `US-R044-P2-01A`: `PdfTextExtractor` currently accumulates all extracted text in a String, then duplicates it in UTF-8 bytes. Next: direct PDFTextStripper Writer streaming to staged TXT, preserving fallback/count/ordering, with JVM regression tests. No code/test changes or CI for Cycle 044 claimed at activation.
+
+
+## Cycle 044 completion / Cycle 045 activation — 2026-10-08 UTC
+- Exact Cycle 044 code/test SHA `2f6561ad5014b8aa96a9384c3fbe0ca588079c6f`: authoritative PR run #503 / API `37728082557` SUCCESS.
+- Core PDF, converter, scanner, app lifecycle tests, debug APK, unsigned release/R8 and Android lint all passed; seven streaming JVM tests included.
+- No emulator, physical-device or benchmark evidence.
+- Cycle 045 `US-R045-P1-01A` ACTIVE. Source evidence: unescaped PDF/A XMP title/author/producer interpolation. Next: XML-safe helper + focused JVM tests + exact-SHA CI; no production mutation yet at activation.
