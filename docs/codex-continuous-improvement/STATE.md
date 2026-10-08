@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-045`
+**Current report:** `2026-10-08_cycle-046`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 045
-**Current Epic:** `E045` — PDF/A metadata XML correctness
-**Current Feature:** `F047` — Well-formed XMP metadata serialization
-**Current User Story:** `US-R045-P1-01A` — Escape PDF/A XMP metadata element text (ACTIVE)
-**Last completed cycle:** Cycle 044
+**Cycle:** 046
+**Current Epic:** `E046` — Bates numbering integrity
+**Current Feature:** `F048` — Overflow-safe Bates sequence
+**Current User Story:** `US-R046-P1-01A` — Prevent Bates counter rollover (ACTIVE)
+**Last completed cycle:** Cycle 045
 **State checkpoint timestamp:** 2026-10-07 UTC
 
 ## Current next executable step
-Implement XML-safe XMP element text in `PdfAComplianceTool` for title/author/producer, add JVM XML parse and round-trip regressions including invalid code points, validate exact code/test SHA with GitHub Actions, then synchronize durable documents. This active checkpoint must precede production mutation.
+Harden `PdfBatchStampTool` Bates sequence overflow by using a checked Long counter; add focused JVM boundary tests, validate exact code/test SHA through GitHub Actions, and reconcile all cycle documents. This checkpoint precedes production mutation.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -112,3 +112,11 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 - Source evidence: `PdfAComplianceTool.buildPdfAXmpMetadata` inserts raw title, author and producer in XML text nodes, corrupting XMP for ampersands, angle brackets or XML-invalid code points.
 - Next exact mutation: XML-safe text escaping/sanitization and focused JVM XML parsing/round-trip tests, followed by exact-SHA CI.
 - Blockers: none at activation. PR #1 remains draft; main must remain untouched.
+
+
+## Cycle 045 completion and Cycle 046 activation — 2026-10-08 UTC
+- Cycle 045 exact code/test SHA `c57c522549f79216623981d0d85a60fdcf48e823`: authoritative PR run #506 / API `37733161386` SUCCESS (all seven gates).
+- Cycle 045 COMPLETE. Cycle 046 ACTIVE: `E046` / `F048` / `US-R046-P1-01A`.
+- Source evidence: `PdfBatchStampTool` increments an Int Bates counter; after Int.MAX_VALUE it wraps negative, and the formatter coerces the label to zero. This silently corrupts document numbering.
+- Next: checked Long counter, deterministic boundary tests, exact-SHA CI, then synchronize CURRENT_REPORT/BACKLOG/VALIDATION and cycle reports.
+- PR #1 draft/unmerged; main untouched. No device/benchmark evidence claimed.
