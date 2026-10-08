@@ -211,7 +211,12 @@ class PdfSignViewModel(
 
     fun loadPlacementTemplate(name: String) {
         val placements = runCatching { placementTemplateStore.loadTemplate(name) }
-            .getOrNull()
+            .getOrElse { err ->
+                _uiState.update {
+                    it.copy(errorMessage = err.message ?: "Failed to read saved placement templates.")
+                }
+                return
+            }
             .orEmpty()
         if (placements.isEmpty()) {
             _uiState.update { it.copy(errorMessage = "Template \"$name\" has no placements or does not exist.") }
@@ -423,15 +428,24 @@ class PdfSignViewModel(
     }
 
     private fun refreshPlacementTemplates() {
-        val templates = placementTemplateStore.listTemplates()
-            .map { template ->
+        runCatching {
+            placementTemplateStore.listTemplates().map { template ->
                 PdfPlacementTemplateUi(
                     name = template.name,
                     placementCount = template.placementCount,
                     updatedAtMillis = template.updatedAtMillis
                 )
             }
-        _uiState.update { it.copy(placementTemplates = templates) }
+        }.onSuccess { templates ->
+            _uiState.update { it.copy(placementTemplates = templates) }
+        }.onFailure { err ->
+            _uiState.update {
+                it.copy(
+                    placementTemplates = emptyList(),
+                    errorMessage = err.message ?: "Failed to read saved placement templates."
+                )
+            }
+        }
     }
 
     private fun parsePlacementFromInputs(state: PdfSignUiState): PdfSignaturePlacementUi? {

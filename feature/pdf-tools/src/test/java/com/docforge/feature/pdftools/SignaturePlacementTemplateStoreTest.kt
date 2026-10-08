@@ -35,6 +35,17 @@ class SignaturePlacementTemplateStoreTest {
         assertTrue(store().listTemplates().isEmpty())
     }
 
+    @Test fun corruptJsonCannotBeOverwrittenBySave() {
+        file.writeText("{broken")
+        assertThrows(IOException::class.java) {
+            store().saveTemplate(
+                "New",
+                listOf(PdfSignaturePlacementUi(1, 0.2f, 0.3f, 0.4f))
+            )
+        }
+        assertEquals("{broken", file.readText())
+    }
+
     @Test fun malformedJsonCannotBeOverwrittenByDelete() {
         file.writeText("{broken")
         assertThrows(IOException::class.java) { store().deleteTemplate("Old") }
