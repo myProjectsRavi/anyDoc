@@ -322,3 +322,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E042 — Large-PDF redaction memory safety
 #### Feature F044 — Page-bounded redaction text scanning
 - [ACTIVE] `US-R042-P2-01A` — Scan redaction auto-detect and irreversible verification text page-by-page instead of materializing all document text.
+
+
+## Cycle 043 closure — 2026-10-08
+- [COMPLETE / CI #499] `US-R043-P2-01A` — Combined PdfCompareTool raster budget, invalid-dimension hardening, deterministic budget tests, and cancellation/failure-safe diff bitmap ownership. Exact code/test SHA `ed6d500546c883108e15c722c0a2ce98b1b2f256` passed run #499 / API `37713745007`.
+- Completion documentation HEAD `867585e4684f6a353f1fd5a400ccc39a6fb8ab9d` passed run #500 / API `37718067659`.
+
+## Cycle 044 active
+### Epic E044 — Memory-safe PDF text extraction
+#### Feature F046 — Streamed PDF-to-TXT publication
+- [ACTIVE / P2] `US-R044-P2-01A` — Replace whole-document PDF text/UTF-8 byte-array materialization with streaming UTF-8 output while preserving sorted text, empty-text fallback, accurate character count, and failure-safe staged publication. Add focused JVM regressions and validate exact code/test SHA via GitHub Actions.

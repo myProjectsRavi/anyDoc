@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-07_cycle-043`
+**Current report:** `2026-10-08_cycle-044`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 043
-**Current Epic:** `E043` — PDF comparison raster memory safety
-**Current Feature:** `F045` — Combined comparison raster budget
-**Current User Story:** `US-R043-P2-01A` — Bound PdfCompareTool combined raster memory (ACTIVE)
-**Last completed cycle:** Cycle 042
+**Cycle:** 044
+**Current Epic:** `E044` — Memory-safe PDF text extraction
+**Current Feature:** `F046` — Streamed PDF-to-TXT publication
+**Current User Story:** `US-R044-P2-01A` — Stream PDF text directly into staged TXT (ACTIVE)
+**Last completed cycle:** Cycle 043
 **State checkpoint timestamp:** 2026-10-07 UTC
 
 ## Git checkpoint
@@ -90,3 +90,13 @@ The durable backlog identifies `PdfCompareTool` combined left/right/diff ARGB_88
 
 ## Next executable step
 Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-memory ceiling with focused tests, then validate the exact candidate through authoritative GitHub Actions.
+
+
+## Cycle 043 completion and Cycle 044 activation — 2026-10-08 UTC
+- Cycle 043 validated code/test SHA: `ed6d500546c883108e15c722c0a2ce98b1b2f256`.
+- Authoritative PR run #499 / API `37713745007`: SUCCESS across all seven configured gates.
+- Cycle 043 completion report committed at `867585e4684f6a353f1fd5a400ccc39a6fb8ab9d` and its exact docs HEAD passed PR run #500 / API `37718067659` (all seven gates SUCCESS).
+- Cycle 043 is COMPLETE; do not restart it absent contradictory evidence.
+- **Cycle 044 is ACTIVE / INCOMPLETE**: Epic `E044`, Feature `F046`, Story `US-R044-P2-01A`.
+- Source evidence: `PdfTextExtractor.extractToTxt` uses `PDFTextStripper.getText(document)` to materialize entire PDF text, then `toByteArray(UTF_8)` before writing staged TXT, duplicating large output memory.
+- **Next exact mutation:** replace whole-document `getText()`/UTF-8 byte-array materialization with `PDFTextStripper.writeText(document, Writer)` directly into the staged file. Preserve sorted extraction, blank/whitespace fallback text, `extractedChars`, UTF-8 encoding, and staged publication; add pure JVM streaming/whitespace/count/failure regressions; run authoritative CI on exact code/test SHA. No device/benchmark evidence claimed.

@@ -1,25 +1,25 @@
 # Current Report
 
-**ID:** `2026-10-07_cycle-042`
+**ID:** `2026-10-08_cycle-044`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E042` — Large-PDF redaction memory safety
-**Feature:** `F044` — Page-bounded redaction text scanning
-**User Story:** `US-R042-P2-01A` — Eliminate whole-document redaction text materialization
+**Epic:** `E044` — Memory-safe PDF text extraction
+**Feature:** `F046` — Streamed PDF-to-TXT publication
+**User Story:** `US-R044-P2-01A` — Stream PDF text directly into staged TXT
 
-## Starting evidence
-Cycle 041 exact code/test SHA `45e9f3bffcc50d7458629ec332c550c2eaab1011` passed GitHub Actions PR run #483 / API `37644316676` on attempt 2 across core PDF tests, converter tests, scanner tests, app lifecycle tests, debug APK, unsigned release/R8, and Android lint. Attempt 1 was an external Maven dependency-resolution failure before converter code compiled. Sol 5.6 review is LGTM.
+## Prior cycle validation
+Cycle 043 exact code/test SHA `ed6d500546c883108e15c722c0a2ce98b1b2f256` passed PR run #499 / API `37713745007`. Completion report commit `867585e4684f6a353f1fd5a400ccc39a6fb8ab9d` passed PR run #500 / API `37718067659`. All seven configured gates succeeded in both runs.
 
 ## Source finding
-`PdfRedactionTool` currently uses `PDFTextStripper().getText(document)` over the entire document when auto-detecting PII and again when verifying irreversible redaction. For large PDFs, both paths create avoidable whole-document text materialization on top of the PDFBox document itself.
+`PdfTextExtractor.extractToTxt` calls `PDFTextStripper.getText(document)` across all pages, holds that String, and then allocates a second full `toByteArray(Charsets.UTF_8)`. Large extracted PDFs can transiently duplicate full-output memory.
 
 ## Acceptance criteria
-- Extract redaction auto-detect text one page at a time.
-- Verify removed terms one page at a time and stop at the first failure.
-- Preserve PII detection semantics, metadata/form/annotation scrubbing, progress behavior, staged publication, and cancellation checks.
-- Add deterministic pure-JVM coverage for page iteration, deduplication, and early exit.
-- Pass authoritative GitHub Actions on the exact candidate.
-- Do not modify or merge `main`.
+- Stream `PDFTextStripper.writeText(document, Writer)` directly into the same-directory staged TXT, without full-document String or UTF-8 byte-array materialization.
+- Preserve `sortByPosition`, full-page range, UTF-8 encoding, output filename policy, and transactional no-partial-final semantics.
+- Preserve fallback `[No extractable text found in this PDF.]` for empty or whitespace-only extracted text.
+- Preserve `extractedChars` semantics (UTF-16 character units of published text), safely handle overflow.
+- Add focused pure JVM tests for chunked output, whitespace-only, nonblank, Unicode/surrogates, writer errors, and staged cleanup.
+- Pass authoritative GitHub Actions on the exact code/test candidate; keep PR #1 draft/unmerged; never modify main.
 
 ## Next exact action
-Introduce a small page-scanning helper seam, wire auto-detect and verification through per-page PDFTextStripper ranges, add focused tests, then validate the exact feature-branch candidate.
+Implement a small testable streaming Writer/character-count helper, wire `PdfTextExtractor` to PDFTextStripper's streaming API inside `withStagedOutputFile`, add JVM regressions, and validate exact SHA. No device or benchmark evidence is claimed.

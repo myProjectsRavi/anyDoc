@@ -434,3 +434,9 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - Redaction auto-detect currently materializes all PDF text with one `PDFTextStripper().getText(document)`.
 - Irreversible verification repeats the same whole-document materialization on the staged output.
 - Next mutation: page-bound both scans and add deterministic helper tests before authoritative CI.
+
+
+## Cycle 043 closure / Cycle 044 starting checkpoint — 2026-10-08 UTC
+- Cycle 043 exact code/test SHA `ed6d500546c883108e15c722c0a2ce98b1b2f256`: PR run #499 / API `37713745007` SUCCESS across core PDF, converter, scanner, app lifecycle, debug APK, unsigned release/R8, and Android lint.
+- Cycle 043 completion-report commit `867585e4684f6a353f1fd5a400ccc39a6fb8ab9d`: PR run #500 / API `37718067659` SUCCESS across the same seven gates.
+- Cycle 044 active story `US-R044-P2-01A`: `PdfTextExtractor` currently accumulates all extracted text in a String, then duplicates it in UTF-8 bytes. Next: direct PDFTextStripper Writer streaming to staged TXT, preserving fallback/count/ordering, with JVM regression tests. No code/test changes or CI for Cycle 044 claimed at activation.
