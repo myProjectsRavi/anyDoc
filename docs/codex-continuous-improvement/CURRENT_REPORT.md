@@ -1,23 +1,23 @@
 # Current Report
 
-**ID:** `2026-10-08_cycle-049`
+**ID:** `2026-10-08_cycle-050`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E049` — Saved batch preset integrity
-**Feature:** `F051` — Visible preset read/corruption errors
-**User Story:** `US-R049-P1-01A` — Surface unreadable saved batch presets
+**Epic:** `E050` — Durable batch queue recovery safety
+**Feature:** `F052` — No destructive writes after failed recovery
+**User Story:** `US-R050-P1-01A` — Preserve persisted queue when recovery fails
 
 ## Prior validated cycle
-Cycle 048 exact code/test SHA `0f576dc1029af2f79f3a73ce726d162d716442a1` passed PR run #524 / API `37809062234` on 2026-10-08 UTC; all eight gates passed (core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8, lint). Prior candidate `76f3ad84001b580e6f19e9e9ff688a9dc27413f3` passed PR run #522. Push runs #521/#523 were cancelled and are not used as completion evidence.
+Cycle 049 `E049 / F051 / US-R049-P1-01A`: COMPLETE. Exact code/test SHA `7db88fa477614d34e6a54c50b0c0c031d76a724d`; authoritative PR CI #527 / API `37824852307`: SUCCESS on 2026-10-08 UTC, all eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Push #526 was cancelled by shared concurrency, not used as completion evidence. Thirteen app JVM regressions cover valid, malformed, empty, unknown-type and DAO/cancellation paths. No emulator, physical-device, benchmark or crash-free guarantee.
 
 ## P1 source evidence
-`BatchQueuePresetStore.readPresets()` catches DAO and JSON errors and returns `emptyList()`; `decodeTasks()` also silently converts malformed JSON to an empty list, causing saved presets to disappear from the UI without an error. `BatchQueueViewModel` reads and refreshes presets without error handling.
+`BatchQueueViewModel.init` catches recovery read failures but continues collecting `BatchQueueRuntimeStore.state`. The initial empty runtime snapshot is then written with `BatchQueuePersistenceStore.replaceSnapshot()`, which calls the DAO's replace-all operation and can delete existing persisted queue rows after a transient read failure.
 
 ## Acceptance
-- Valid saved presets continue to load, save and delete normally.
-- DAO failures and malformed stored JSON are not misrepresented as an empty preset list.
-- ViewModel surfaces read and refresh errors, preserving prior UI list where appropriate.
-- Focused app JVM regression tests, exact code/test SHA CI, and terminal-CI documentation synchronization.
+- Recovery-read failure must prevent the initial empty runtime snapshot from overwriting stored queue rows.
+- Coroutine cancellation must propagate, not become a recoverable error.
+- Successful recovery must restore tasks before starting snapshot observation/persistence.
+- Deterministic app JVM tests and authoritative exact-SHA CI, followed by terminal-CI document synchronization.
 
 ## Next exact action
-Implement read/decode error handling and ViewModel propagation with focused tests, then validate authoritative CI. This checkpoint precedes Cycle 049 production/test mutations. PR #1 draft/unmerged; main untouched.
+Implement a recovery-success gate before subscribing to queue state and writing snapshots. Add tests for failure/no-write, success/restore-and-write, and cancellation. Validate authoritative CI. This active checkpoint precedes Cycle 050 production/test mutation. PR #1 draft/unmerged; main untouched.

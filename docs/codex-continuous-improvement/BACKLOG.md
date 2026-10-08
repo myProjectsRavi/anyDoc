@@ -382,3 +382,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E049 — Saved batch preset integrity
 #### Feature F051 — Visible preset read/corruption errors
 - [ACTIVE / P1] `US-R049-P1-01A` — Explicit stored preset decode/DAO errors, ViewModel error handling, app JVM regressions, exact-SHA CI.
+
+
+## Cycle 049 closure — 2026-10-08
+- [COMPLETE / CI #527] `US-R049-P1-01A` — Explicit errors for corrupt saved batch presets and DAO failures; preserves prior UI data. Exact code/test SHA `7db88fa477614d34e6a54c50b0c0c031d76a724d` passed PR run #527 / API `37824852307`, all eight gates; 13 focused app JVM regressions.
+- [NEXT / P1] `US-R050-P1-01A` — Prevent destructive batch queue snapshot replacement after recovery read failure.
+
+## Cycle 050 active
+### Epic E050 — Durable batch queue recovery safety
+#### Feature F052 — No destructive writes after failed recovery
+- [ACTIVE / P1] `US-R050-P1-01A` — Gate runtime snapshot persistence on successful recovery, preserve cancellation, add focused JVM regressions and exact-SHA CI.

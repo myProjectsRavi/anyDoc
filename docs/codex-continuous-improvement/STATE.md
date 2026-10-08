@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-049`
+**Current report:** `2026-10-08_cycle-050`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 049
-**Current Epic:** `E049` — Saved batch preset integrity
-**Current Feature:** `F051` — Visible preset read/corruption errors
-**Current User Story:** `US-R049-P1-01A` — Surface unreadable saved batch presets (ACTIVE)
-**Last completed cycle:** Cycle 048
+**Cycle:** 050
+**Current Epic:** `E050` — Durable batch queue recovery safety
+**Current Feature:** `F052` — No destructive writes after failed recovery
+**Current User Story:** `US-R050-P1-01A` — Preserve persisted queue when recovery fails (ACTIVE)
+**Last completed cycle:** Cycle 049
 **State checkpoint timestamp:** 2026-10-08 UTC
 
 ## Current next executable step
-`BatchQueuePresetStore.readPresets()` catches DAO and JSON errors and returns `emptyList()`; `decodeTasks()` also silently converts malformed JSON to an empty list, causing saved presets to disappear from the UI without an error. `BatchQueueViewModel` reads and refreshes presets without error handling. Implement explicit decode/read failures, surface errors through the ViewModel, add focused app JVM tests, and validate exact SHA via authoritative CI. This Cycle 049 checkpoint precedes production/test mutations.
+Cycle 050 `E050 / F052 / US-R050-P1-01A` ACTIVE: protect persisted batch queue when recovery read fails. Source: `BatchQueueViewModel.init` handles `readRecoverableTasks()` failure using `runCatching().onFailure` but still subscribes to `BatchQueueRuntimeStore.state`; the first empty state is persisted by `replaceSnapshot(runtimeState.tasks)`, which invokes `BatchQueueTaskDao.replaceAll` and can erase previously persisted queue rows after a transient DAO read failure. Next exact mutation: gate persistence subscription on successful recovery, preserve coroutine cancellation, add deterministic JVM tests verifying no destructive snapshot write after recovery failure and normal persistence after success, validate exact candidate SHA with CI. PR #1 remains draft/unmerged; main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -143,3 +143,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 - Atomic JSON replacement, corruption-preserving reads and ViewModel error handling validated with 15 focused feature JVM tests. No emulator/device/benchmark/power-loss evidence.
 - Cycle 049 E049/F051/US-R049-P1-01A: ACTIVE / INCOMPLETE. `BatchQueuePresetStore.readPresets()` catches DAO and JSON errors and returns `emptyList()`; `decodeTasks()` also silently converts malformed JSON to an empty list, causing saved presets to disappear from the UI without an error. `BatchQueueViewModel` reads and refreshes presets without error handling.
 - Next exact action: implement explicit errors for malformed persisted preset rows/DAO failures; propagate to UI, add app JVM regressions and exact-SHA CI. PR #1 remains draft/unmerged; main untouched.
+
+
+## Cycle 049 completion / Cycle 050 activation — 2026-10-08 UTC
+- Cycle 049 `E049 / F051 / US-R049-P1-01A`: COMPLETE. Exact code/test SHA `7db88fa477614d34e6a54c50b0c0c031d76a724d`; authoritative PR CI #527 / API `37824852307`: SUCCESS on 2026-10-08 UTC, all eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Push #526 was cancelled by shared concurrency, not used as completion evidence. Thirteen app JVM regressions cover valid, malformed, empty, unknown-type and DAO/cancellation paths. No emulator, physical-device, benchmark or crash-free guarantee.
+- Cycle 050 `E050 / F052 / US-R050-P1-01A` ACTIVE: protect persisted batch queue when recovery read fails. Source: `BatchQueueViewModel.init` handles `readRecoverableTasks()` failure using `runCatching().onFailure` but still subscribes to `BatchQueueRuntimeStore.state`; the first empty state is persisted by `replaceSnapshot(runtimeState.tasks)`, which invokes `BatchQueueTaskDao.replaceAll` and can erase previously persisted queue rows after a transient DAO read failure. Next exact mutation: gate persistence subscription on successful recovery, preserve coroutine cancellation, add deterministic JVM tests verifying no destructive snapshot write after recovery failure and normal persistence after success, validate exact candidate SHA with CI. PR #1 remains draft/unmerged; main untouched.
