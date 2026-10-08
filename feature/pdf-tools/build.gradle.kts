@@ -58,4 +58,5 @@ dependencies {
     implementation(libs.androidx.documentfile)
 
     testImplementation(libs.junit4)
+    testImplementation(libs.robolectric)
 }
