@@ -90,26 +90,8 @@ class PdfAComplianceTool(
         }
     }
 
-    private fun buildPdfAXmpMetadata(title: String, author: String, producer: String): String {
-        return """<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
-<x:xmpmeta xmlns:x="adobe:ns:meta/">
-  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-    <rdf:Description rdf:about=""
-        xmlns:dc="http://purl.org/dc/elements/1.1/"
-        xmlns:xmp="http://ns.adobe.com/xap/1.0/"
-        xmlns:pdf="http://ns.adobe.com/pdf/1.3/"
-        xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
-      <dc:title><rdf:Alt><rdf:li xml:lang="x-default">$title</rdf:li></rdf:Alt></dc:title>
-      <dc:creator><rdf:Seq><rdf:li>$author</rdf:li></rdf:Seq></dc:creator>
-      <xmp:CreatorTool>DocForge</xmp:CreatorTool>
-      <pdf:Producer>$producer</pdf:Producer>
-      <pdfaid:part>1</pdfaid:part>
-      <pdfaid:conformance>B</pdfaid:conformance>
-    </rdf:Description>
-  </rdf:RDF>
-</x:xmpmeta>
-<?xpacket end="w"?>"""
-    }
+    private fun buildPdfAXmpMetadata(title: String, author: String, producer: String): String =
+        buildPdfAXmpMetadataXml(title, author, producer)
 
     private fun outputDirectory(): File {
         return DocForgeSettingsStore.resolveOutputDirectory(
@@ -121,5 +103,55 @@ class PdfAComplianceTool(
     private fun outputBaseName(outputName: String, fallback: String): String {
         return outputName.ifBlank { "${fallback}_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+    }
+}
+
+
+internal fun buildPdfAXmpMetadataXml(title: String, author: String, producer: String): String {
+        return """<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+        xmlns:pdf="http://ns.adobe.com/pdf/1.3/"
+        xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">
+      <dc:title><rdf:Alt><rdf:li xml:lang="x-default">${escapePdfAXmpText(title)}</rdf:li></rdf:Alt></dc:title>
+      <dc:creator><rdf:Seq><rdf:li>${escapePdfAXmpText(author)}</rdf:li></rdf:Seq></dc:creator>
+      <xmp:CreatorTool>DocForge</xmp:CreatorTool>
+      <pdf:Producer>${escapePdfAXmpText(producer)}</pdf:Producer>
+      <pdfaid:part>1</pdfaid:part>
+      <pdfaid:conformance>B</pdfaid:conformance>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>"""
+    }
+
+
+/**
+ * Encode XMP XML 1.0 element text without allowing user metadata to alter XML structure.
+ * Illegal XML code points (including lone surrogates) are replaced with U+FFFD.
+ */
+internal fun escapePdfAXmpText(value: String): String = buildString(value.length) {
+    var index = 0
+    while (index < value.length) {
+        val codePoint = Character.codePointAt(value, index)
+        when (codePoint) {
+            '&'.code -> append("&amp;")
+            '<'.code -> append("&lt;")
+            '>'.code -> append("&gt;")
+            '"'.code -> append("&quot;")
+            '\''.code -> append("&apos;")
+            '\r'.code -> append("&#xD;") // Preserve CR across XML line-end normalization.
+            else -> {
+                val validXml10 = codePoint == 0x9 || codePoint == 0xA ||
+                    codePoint in 0x20..0xD7FF ||
+                    codePoint in 0xE000..0xFFFD ||
+                    codePoint in 0x10000..0x10FFFF
+                if (validXml10) appendCodePoint(codePoint) else append('\uFFFD')
+            }
+        }
+        index += Character.charCount(codePoint)
     }
 }
