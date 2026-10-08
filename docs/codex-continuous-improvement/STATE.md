@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-048`
+**Current report:** `2026-10-08_cycle-049`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 048
-**Current Epic:** `E048` — Signature placement template integrity
-**Current Feature:** `F050` — Failure-safe placement template persistence
-**Current User Story:** `US-R048-P1-01A` — Preserve saved templates on failed update (ACTIVE)
-**Last completed cycle:** Cycle 047
-**State checkpoint timestamp:** 2026-10-07 UTC
+**Cycle:** 049
+**Current Epic:** `E049` — Saved batch preset integrity
+**Current Feature:** `F051` — Visible preset read/corruption errors
+**Current User Story:** `US-R049-P1-01A` — Surface unreadable saved batch presets (ACTIVE)
+**Last completed cycle:** Cycle 048
+**State checkpoint timestamp:** 2026-10-08 UTC
 
 ## Current next executable step
-Harden `SignaturePlacementTemplateStore.writeTemplates()`: it writes to a fixed `.tmp` path and calls `renameTo(templatesFile)` without checking success, so failed publication can silently report success and leave old or incomplete state. Implement unique same-directory staging and checked atomic replacement, with failure-preservation JVM regressions and feature-module CI. Also prevent unreadable/corrupt template data from silently being treated as an empty set before mutation. This checkpoint precedes Cycle 048 production/test mutation.
+`BatchQueuePresetStore.readPresets()` catches DAO and JSON errors and returns `emptyList()`; `decodeTasks()` also silently converts malformed JSON to an empty list, causing saved presets to disappear from the UI without an error. `BatchQueueViewModel` reads and refreshes presets without error handling. Implement explicit decode/read failures, surface errors through the ViewModel, add focused app JVM tests, and validate exact SHA via authoritative CI. This Cycle 049 checkpoint precedes production/test mutations.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -136,3 +136,10 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 - `SavedSignatureStore.save()` now stages PNG bytes in the same directory, rejects `Bitmap.compress()` failure, checks interruption, syncs staged bytes and atomically replaces the final slot. Seven focused feature JVM regressions cover success, failure preservation, first-save cleanup and interruption. Independent sandbox Kotlin smoke covered eight scenarios; no Android device, emulator, benchmark or power-loss durability claim.
 - Cycle 048 ACTIVE / INCOMPLETE: `E048 / F050 / US-R048-P1-01A` — failure-safe saved placement template persistence. Source: `SignaturePlacementTemplateStore.writeTemplates()` uses a shared fixed `.tmp` file and unchecked `renameTo`; `readTemplates()` silently returns an empty list on malformed stored JSON, risking data loss on the next mutation.
 - Next exact action: implement unique same-directory staged JSON publication with checked atomic replacement; reject unreadable/corrupt prior state before save/delete; add deterministic feature JVM tests and validate exact code/test SHA. No Cycle 048 production/test mutation at activation. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 048 completion / Cycle 049 activation — 2026-10-08 UTC
+- Cycle 048 E048/F050/US-R048-P1-01A: COMPLETE. Cycle 048 exact code/test SHA `0f576dc1029af2f79f3a73ce726d162d716442a1` passed PR run #524 / API `37809062234` on 2026-10-08 UTC; all eight gates passed (core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8, lint). Prior candidate `76f3ad84001b580e6f19e9e9ff688a9dc27413f3` passed PR run #522. Push runs #521/#523 were cancelled and are not used as completion evidence.
+- Atomic JSON replacement, corruption-preserving reads and ViewModel error handling validated with 15 focused feature JVM tests. No emulator/device/benchmark/power-loss evidence.
+- Cycle 049 E049/F051/US-R049-P1-01A: ACTIVE / INCOMPLETE. `BatchQueuePresetStore.readPresets()` catches DAO and JSON errors and returns `emptyList()`; `decodeTasks()` also silently converts malformed JSON to an empty list, causing saved presets to disappear from the UI without an error. `BatchQueueViewModel` reads and refreshes presets without error handling.
+- Next exact action: implement explicit errors for malformed persisted preset rows/DAO failures; propagate to UI, add app JVM regressions and exact-SHA CI. PR #1 remains draft/unmerged; main untouched.

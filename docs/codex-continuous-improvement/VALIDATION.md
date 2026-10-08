@@ -472,3 +472,10 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - Independent sandbox Kotlin smoke test passed eight scenarios, including failed publication to a directory and temporary-file cleanup. Not Android CI or device evidence.
 - No emulator, physical-device, benchmark or crash-free guarantee is claimed.
 - Cycle 048 ACTIVE: `US-R048-P1-01A`. Source evidence: fixed `.tmp` file and unchecked `renameTo` in `SignaturePlacementTemplateStore.writeTemplates`; corrupt stored JSON silently read as empty, risking destructive replacement. Next: unique atomic staged write, error propagation, corrupt-state protection, deterministic tests and exact-SHA CI. No Cycle 048 production/test mutation at activation.
+
+
+## Cycle 048 completion / Cycle 049 activation — 2026-10-08 UTC
+- Cycle 048 exact code/test SHA `0f576dc1029af2f79f3a73ce726d162d716442a1` passed PR run #524 / API `37809062234` on 2026-10-08 UTC; all eight gates passed (core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8, lint). Prior candidate `76f3ad84001b580e6f19e9e9ff688a9dc27413f3` passed PR run #522. Push runs #521/#523 were cancelled and are not used as completion evidence.
+- Initial 11 feature tests plus 4 follow-up ViewModel/store corruption tests included. No device/emulator/benchmark/power-loss claim.
+- Cycle 049 source evidence: `BatchQueuePresetStore.readPresets()` catches DAO and JSON errors and returns `emptyList()`; `decodeTasks()` also silently converts malformed JSON to an empty list, causing saved presets to disappear from the UI without an error. `BatchQueueViewModel` reads and refreshes presets without error handling.
+- No Cycle 049 code/test or CI success claimed at activation.

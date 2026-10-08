@@ -372,3 +372,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E048 — Signature placement template integrity
 #### Feature F050 — Failure-safe placement template persistence
 - [ACTIVE / P1] `US-R048-P1-01A` — Unique same-directory atomic JSON replacement, reject unreadable prior state, deterministic JVM failure tests, exact-SHA CI.
+
+
+## Cycle 048 closure — 2026-10-08
+- [COMPLETE / CI #524] `US-R048-P1-01A` — Atomic placement-template JSON persistence and corruption-safe ViewModel. Exact SHA `0f576dc1029af2f79f3a73ce726d162d716442a1`, PR run #524 / API `37809062234` SUCCESS, eight gates.
+- [NEXT / P1] `US-R049-P1-01A` — Surface unreadable saved batch presets and DAO failures.
+
+## Cycle 049 active
+### Epic E049 — Saved batch preset integrity
+#### Feature F051 — Visible preset read/corruption errors
+- [ACTIVE / P1] `US-R049-P1-01A` — Explicit stored preset decode/DAO errors, ViewModel error handling, app JVM regressions, exact-SHA CI.
