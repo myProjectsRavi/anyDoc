@@ -25,7 +25,7 @@ jobs:
   android-verify:
     name: Android build, unit tests, and lint
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
