@@ -430,3 +430,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E054 — Concurrent batch queue persistence integrity
 #### Feature F056 — Current-state snapshot writes under shared mutex
 - [ACTIVE / P1] `US-R054-P1-01A` — Capture latest tasks inside shared persistence lock, migrate service/ViewModel writes, contention regression, exact-SHA PR CI.
+
+
+## Cycle 054 closure — 2026-10-09 UTC
+- [COMPLETE / PR CI #550] `US-R054-P1-01A`: lock-then-read current task snapshot; service and ViewModel migrated; six focused app JVM regressions. Exact code/test SHA `c81fc5e1a575eb695166c5d29f9e344d76fc25f3`, run API `37924104373` SUCCESS, all eight gates.
+- [NEXT / P1] `US-R055-P1-01A`: prevent queue recovery failure from unrecoverable URIs admitted by direct enqueue/preset replay.
+
+## Cycle 055 active
+### Epic E055 — Recoverable batch queue URI integrity
+#### Feature F057 — URI admission and preset replay validation
+- [ACTIVE / P1] `US-R055-P1-01A` — Validate every URI and preserve existing queue on invalid preset, with app JVM regression tests and exact-SHA CI.
