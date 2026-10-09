@@ -10,8 +10,8 @@ import kotlinx.coroutines.sync.withLock
 internal class BatchQueuePersistenceStore(
     private val dao: BatchQueueTaskDao
 ) {
-    suspend fun replaceSnapshot(tasks: List<BatchQueueTask>) {
-        writeMutex.withLock {
+    suspend fun replaceSnapshot(currentTasks: () -> List<BatchQueueTask>) {
+        persistLatestSnapshot(writeMutex, currentTasks) { tasks ->
             dao.replaceAll(BatchQueuePersistenceMapper.toEntities(tasks))
         }
     }
@@ -22,6 +22,20 @@ internal class BatchQueuePersistenceStore(
 
     private companion object {
         val writeMutex = Mutex()
+    }
+}
+
+/**
+ * Evaluate the current snapshot only after obtaining the shared write lock.
+ * Capturing it before the lock can let an older writer overwrite newer queue state.
+ */
+internal suspend fun <T> persistLatestSnapshot(
+    mutex: Mutex,
+    currentSnapshot: () -> List<T>,
+    persist: suspend (List<T>) -> Unit
+) {
+    mutex.withLock {
+        persist(currentSnapshot())
     }
 }
 

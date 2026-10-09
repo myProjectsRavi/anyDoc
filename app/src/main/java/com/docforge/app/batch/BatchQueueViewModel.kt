@@ -44,7 +44,7 @@ class BatchQueueViewModel(
                         runtimeState.copy(errorMessage = current.errorMessage ?: runtimeState.errorMessage)
                     }
                     try {
-                        persistenceStore.replaceSnapshot(runtimeState.tasks)
+                        persistenceStore.replaceSnapshot { BatchQueueRuntimeStore.state.value.tasks }
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (error: Exception) {

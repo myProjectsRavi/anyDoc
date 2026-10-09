@@ -242,7 +242,7 @@ class BatchQueueForegroundService : Service() {
         )
 
     private suspend fun persistQueueSnapshot() {
-        persistenceStore.replaceSnapshot(BatchQueueRuntimeStore.state.value.tasks)
+        persistenceStore.replaceSnapshot { BatchQueueRuntimeStore.state.value.tasks }
     }
 
     private suspend fun executeTask(task: BatchQueueTask): BatchExecutionOutcome {
