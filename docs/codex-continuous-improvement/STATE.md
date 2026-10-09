@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-09_cycle-056`
+**Current report:** `2026-10-09_cycle-057`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 056
-**Current Epic:** `E056` — Batch task terminal-state integrity
-**Current Feature:** `F058` — Atomic idempotent terminal transitions
-**Current User Story:** `US-R056-P1-01A` — Prevent duplicate and conflicting terminal task transitions (ACTIVE)
-**Last completed cycle:** Cycle 055
+**Cycle:** 057
+**Current Epic:** `E057` — Concurrent queue reorder integrity
+**Current Feature:** `F059` — Atomic queue reorder from current state
+**Current User Story:** `US-R057-P1-01A` — Prevent stale reorders from losing tasks or reverting task outcomes (ACTIVE)
+**Last completed cycle:** Cycle 056
 **State checkpoint timestamp:** 2026-10-09 UTC
 
 ## Current next executable step
-Cycle 056 E056/F058/US-R056-P1-01A ACTIVE / INCOMPLETE. Cycle 055 exact SHA `f6fe6b9256db881a898728c32ee0cbd261007e7e` passed authoritative PR CI #556 / API `37973956107`. Source: task terminal methods mutate status and increment counters in separate updates, including when task is already terminal or absent. Next: atomically guard RUNNING -> SUCCESS/FAILED/CANCELED transitions and update counters in the same StateFlow update, preserve terminal outcomes on duplicate/conflicting calls, add deterministic app JVM regressions, and validate exact code/test SHA through PR CI. Do not modify main.
+Cycle 057 E057/F059/US-R057-P1-01A ACTIVE / INCOMPLETE. Cycle 056 exact code/test SHA `2dd59048b0844ed347eb28960922b52e39c0c7bf` passed authoritative PR CI #559 / API `37993664370` on 2026-10-09 UTC (eight gates). Source: `BatchQueueRuntimeStore.moveTask` captures a task list and constructs reordered `updated` before `_state.update`; a concurrent task addition or terminal transition can be overwritten by the stale list on retry. Next: compute reorder from the latest StateFlow value within an atomic compare-and-set loop; recheck QUEUED status and edge constraints against the same state; add app JVM regressions for latest-state preservation and invalid edits; validate exact code/test SHA via PR CI. Keep PR #1 draft; never modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -176,3 +176,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 055 completion / Cycle 056 activation — 2026-10-09 UTC
 - Cycle 055 `E055 / F057 / US-R055-P1-01A` COMPLETE. Exact code/test SHA `f6fe6b9256db881a898728c32ee0cbd261007e7e`; authoritative pull-request workflow #556 / API `37973956107` SUCCESS on 2026-10-09 UTC. Core PDF, converter, scanner, PDF tools signature, app JVM unit tests, debug APK, unsigned release/R8 and Android lint all passed. Admission rejects blank/non-content URIs; preset replay validates before mutation and deduplicates before effective count validation; nine URI admission JVM regression cases are present. No device, emulator, benchmark, or crash-free evidence.
 - Cycle 056 `E056 / F058 / US-R056-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.markTaskSuccess/Failure/Canceled` independently call `updateTask` then `incrementCounters` without guarding existing terminal state or missing task ID. Repeated/conflicting calls can overwrite SUCCESS/FAILED/CANCELED and inflate processed/success/failure counters. Next exact mutation: update terminal status and counters in one atomic StateFlow update, accept only RUNNING -> terminal transitions, preserve already-terminal tasks, add focused app JVM regressions for duplicate/conflicting transitions and unknown IDs, then validate exact SHA via PR CI. Keep PR #1 draft; do not touch main.
+
+
+## Cycle 056 completion / Cycle 057 activation — 2026-10-09 UTC
+- Cycle 056 E056/F058/US-R056-P1-01A COMPLETE. Exact code/test SHA `2dd59048b0844ed347eb28960922b52e39c0c7bf`; authoritative PR CI #559 / API `37993664370` SUCCESS on 2026-10-09 UTC. All eight gates passed: core PDF, converter, scanner, PDF tools, app JVM tests, debug APK, unsigned release/R8, Android lint. Terminal state/counters now transition atomically only from RUNNING; ten app JVM regressions cover duplicate/conflicting/unknown/queued/concurrent callbacks. No device, emulator, benchmark, or crash-free evidence.
+- Cycle 057 E057/F059/US-R057-P1-01A ACTIVE / INCOMPLETE. Source: `moveTask` calculates reordered task list before StateFlow atomic update; concurrent enqueue or terminal-state update may be lost. Next: move validation and reordering into one CAS guarded update against the current state; test no lost task/status and boundary failures; validate exact SHA through PR CI. No Cycle 057 production/test mutation claimed at activation. PR #1 draft/unmerged; main untouched.

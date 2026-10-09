@@ -1,25 +1,24 @@
 # Current Report
 
-**ID:** `2026-10-09_cycle-056`
+**ID:** `2026-10-09_cycle-057`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E056` — Batch task terminal-state integrity
-**Feature:** `F058` — Atomic idempotent terminal transitions
-**User Story:** `US-R056-P1-01A` — Prevent duplicate and conflicting terminal task transitions
+**Epic:** `E057` — Concurrent queue reorder integrity
+**Feature:** `F059` — Atomic queue reorder from current state
+**User Story:** `US-R057-P1-01A` — Prevent stale reorders from losing tasks or reverting task outcomes
 
 ## Previous validated cycle
-Cycle 055 E055/F057/US-R055-P1-01A COMPLETE. Exact code/test SHA `f6fe6b9256db881a898728c32ee0cbd261007e7e`; authoritative PR CI #556 / API `37973956107` SUCCESS on 2026-10-09 UTC. Eight validation stages passed: core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8 and Android lint. Preset replay validates content URIs and deduplicates before input-count checks. No device/emulator/benchmark evidence.
+Cycle 056 E056/F058/US-R056-P1-01A COMPLETE. Exact code/test SHA `2dd59048b0844ed347eb28960922b52e39c0c7bf`; authoritative PR run #559 / API `37993664370` SUCCESS on 2026-10-09 UTC, all eight gates. Atomic RUNNING-to-terminal task/counter updates and ten JVM regression tests validated. No emulator, physical-device, benchmark or crash-free evidence.
 
 ## Source finding
-`BatchQueueRuntimeStore.markTaskSuccess`, `markTaskFailure`, and `markTaskCanceled` independently update task status and increment processing counters, even for unknown IDs or already terminal tasks. Duplicate or conflicting calls corrupt outcome and totals.
+`BatchQueueRuntimeStore.moveTask` captures `state.tasks` and builds `updated` before calling `_state.update { it.copy(tasks = updated) }`. Concurrent task enqueue or terminal transitions can be discarded by that stale list; queued eligibility and target indices are also validated against a different snapshot from the actual write.
 
 ## Acceptance
-- Only a RUNNING task may become SUCCESS, FAILED, or CANCELED.
-- Task status/output/error and processed/success/failure counters change in one atomic StateFlow update.
-- Repeated or conflicting terminal calls, absent IDs and queued tasks do not mutate outcomes/counters.
-- Preserve existing service execution, cancellation and persistence semantics.
-- Focused app JVM regression tests; authoritative PR CI against exact SHA.
-- Keep PR #1 draft and main untouched.
+- Reorder validation and mutation use the same current state; no stale task list can overwrite a newer enqueue, terminal outcome, or queue edit.
+- Only QUEUED tasks can be reordered; no-op/failure on unknown IDs and queue edges.
+- Preserve queued-order semantics and other state fields; avoid false success if concurrent edits invalidate the request.
+- Add focused deterministic app JVM tests, review diff, validate exact implementation SHA in authoritative PR CI.
+- Keep PR #1 draft/unmerged; never modify main.
 
 ## Next exact action
-Inspect current task terminal methods and app JVM test conventions. Replace separate status and counter updates with a single guarded atomic transition. Test success/failure/cancel idempotence, conflicting outcomes, missing IDs and counter consistency. Commit only to `codex/anydoc-continuous-improvement`, then inspect CI and synchronize checkpoints after terminal validation.
+Implement CAS-based reorder with validation against the current `BatchQueueUiState` in `BatchQueueRuntimeStore.kt`. Add focused JVM regressions for stale-state avoidance, edge errors, and task-status preservation. Commit only to `codex/anydoc-continuous-improvement`, inspect authoritative CI, and synchronize checkpoints after terminal validation.

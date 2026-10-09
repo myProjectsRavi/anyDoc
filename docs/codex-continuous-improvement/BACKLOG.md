@@ -449,3 +449,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E056 — Batch task terminal-state integrity
 #### Feature F058 — Atomic idempotent terminal transitions
 - [ACTIVE / P1] `US-R056-P1-01A` — Guard RUNNING-to-terminal changes, update task and counters atomically, test repeated/conflicting/absent transitions, validate exact SHA through PR CI.
+
+
+## Cycle 056 closure — 2026-10-09 UTC
+- [COMPLETE / PR CI #559] `US-R056-P1-01A` — Atomic idempotent RUNNING-to-terminal task transitions and counters; ten focused app JVM regressions. Exact code/test SHA `2dd59048b0844ed347eb28960922b52e39c0c7bf`, authoritative PR run API `37993664370` SUCCESS, all eight gates.
+- [NEXT / P1] `US-R057-P1-01A` — Prevent stale queue reorder snapshots from clobbering concurrent task additions or terminal outcomes.
+
+## Cycle 057 active
+### Epic E057 — Concurrent queue reorder integrity
+#### Feature F059 — Atomic queue reorder from current state
+- [ACTIVE / P1] `US-R057-P1-01A` — Validate and reorder QUEUED tasks atomically from current StateFlow state; preserve concurrent additions and terminal outcomes; focused app JVM regressions and exact-SHA PR CI.
