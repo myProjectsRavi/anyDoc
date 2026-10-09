@@ -158,12 +158,14 @@ object BatchQueueRuntimeStore {
                     IllegalArgumentException("Preset task ${index + 1} (${presetTask.type.title}): $error")
                 )
             }
-            presetTask.type.validateInputCount(uris.size)?.let { error ->
+            // Match recovery's first-seen URI deduplication before checking input counts.
+            val uniqueUris = uris.distinct()
+            presetTask.type.validateInputCount(uniqueUris.size)?.let { error ->
                 return Result.failure(
                     IllegalArgumentException("Preset task ${index + 1} (${presetTask.type.title}): $error")
                 )
             }
-            presetTask to uris
+            presetTask to uniqueUris
         }
 
         val rebuiltTasks = validatedTasks.map { (presetTask, uris) ->

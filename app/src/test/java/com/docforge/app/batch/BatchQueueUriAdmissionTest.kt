@@ -133,6 +133,75 @@ class BatchQueueUriAdmissionTest {
         ).map { it.id })
     }
 
+    @Test
+    fun duplicateMergePresetCannotReplaceQueueOrConsumeTaskIds() {
+        val original = Uri.parse("content://provider/original.pdf")
+        assertTrue(BatchQueueRuntimeStore.addTask(
+            BatchTaskType.PDF_COMPRESS, listOf(original), emptyList()
+        ).isSuccess)
+        val previous = BatchQueueRuntimeStore.state.value
+        val previousId = previous.tasks.single().id
+
+        val result = BatchQueueRuntimeStore.replaceQueueWithPreset(
+            "duplicate merge",
+            listOf(BatchQueuePresetTask(
+                type = BatchTaskType.PDF_MERGE,
+                inputUris = listOf("content://provider/a.pdf", " content://provider/a.pdf "),
+                inputSummary = "two entries, one document",
+                outputBaseName = "merge"
+            ))
+        )
+        assertTrue(result.isFailure)
+        assertEquals(previous, BatchQueueRuntimeStore.state.value)
+        assertTrue(BatchQueueRuntimeStore.addTask(
+            BatchTaskType.PDF_COMPRESS,
+            listOf(Uri.parse("content://provider/next.pdf")), emptyList()
+        ).isSuccess)
+        assertEquals(previousId + 1, BatchQueueRuntimeStore.state.value.tasks.last().id)
+    }
+
+    @Test
+    fun validMergePresetDeduplicatesUrisBeforeRecoveryInFirstSeenOrder() {
+        val first = Uri.parse("content://provider/first.pdf")
+        val second = Uri.parse("content://provider/second.pdf")
+        val result = BatchQueueRuntimeStore.replaceQueueWithPreset(
+            "deduplicated merge",
+            listOf(BatchQueuePresetTask(
+                type = BatchTaskType.PDF_MERGE,
+                inputUris = listOf(first.toString(), "  ${first}  ", second.toString()),
+                inputSummary = "merge",
+                outputBaseName = "merged"
+            ))
+        )
+        assertTrue(result.isSuccess)
+        val task = BatchQueueRuntimeStore.state.value.tasks.single()
+        assertEquals(listOf(first, second), task.inputUris)
+        val recovered = BatchQueuePersistenceMapper.fromEntities(
+            BatchQueuePersistenceMapper.toEntities(listOf(task))
+        )
+        assertEquals(listOf(first, second), recovered.single().inputUris)
+    }
+
+    @Test
+    fun singleInputPresetWithDuplicateUriUsesOneEffectiveInput() {
+        val uri = Uri.parse("content://provider/one.pdf")
+        val result = BatchQueueRuntimeStore.replaceQueueWithPreset(
+            "duplicate single",
+            listOf(BatchQueuePresetTask(
+                type = BatchTaskType.PDF_COMPRESS,
+                inputUris = listOf(uri.toString(), uri.toString()),
+                inputSummary = "one file",
+                outputBaseName = "compressed"
+            ))
+        )
+        assertTrue(result.isSuccess)
+        val task = BatchQueueRuntimeStore.state.value.tasks.single()
+        assertEquals(listOf(uri), task.inputUris)
+        assertEquals(listOf(uri), BatchQueuePersistenceMapper.fromEntities(
+            BatchQueuePersistenceMapper.toEntities(listOf(task))
+        ).single().inputUris)
+    }
+
     private fun preset(uri: String, output: String = "compressed") = BatchQueuePresetTask(
         type = BatchTaskType.PDF_COMPRESS,
         inputUris = listOf(uri),
