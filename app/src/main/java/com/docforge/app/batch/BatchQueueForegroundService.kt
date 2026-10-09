@@ -25,9 +25,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class BatchQueueForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -157,7 +159,14 @@ class BatchQueueForegroundService : Service() {
                     }
                 } catch (cancelled: CancellationException) {
                     BatchQueueRuntimeStore.markTaskCanceled(task.id)
-                    runCatching { persistQueueSnapshot() }
+                    // Cancellation is already active; use a bounded cleanup scope to persist the
+                    // canceled task once, then propagate the original cancellation.
+                    withContext(NonCancellable) {
+                        persistBatchQueueCheckpoint(
+                            persist = { persistQueueSnapshot() },
+                            onFailure = { /* Best effort: terminal checkpoint will retry. */ }
+                        )
+                    }
                     throw cancelled
                 } catch (error: Throwable) {
                     BatchQueueRuntimeStore.markTaskFailure(
@@ -188,24 +197,26 @@ class BatchQueueForegroundService : Service() {
             )
             showCompletionNotification(summary)
         } catch (_: CancellationException) {
-            BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()
-            val canceledState = BatchQueueRuntimeStore.state.value
-            val summary = "Batch queue canceled: ${canceledState.successCount} success, ${canceledState.failureCount} failed"
-            BatchQueueRuntimeStore.finishProcessing(summary)
-            persistTerminalCheckpoint(
-                "Batch cancellation completed, but the final queue state could not be saved."
-            )
-            showCompletionNotification(summary)
+            // The queue is intentionally terminal on cancellation; persist that terminal state
+            // outside the cancelled job context rather than misclassifying it as a disk failure.
+            withContext(NonCancellable) {
+                BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()
+                val canceledState = BatchQueueRuntimeStore.state.value
+                val summary = "Batch queue canceled: ${canceledState.successCount} success, ${canceledState.failureCount} failed"
+                BatchQueueRuntimeStore.finishProcessing(summary)
+                persistTerminalCheckpoint(
+                    "Batch cancellation completed, but the final queue state could not be saved."
+                )
+                showCompletionNotification(summary)
+            }
         } finally {
             stopForeground(STOP_FOREGROUND_REMOVE)
         }
     }
 
-    private suspend fun persistRunningCheckpoint(taskId: Long): Boolean {
-        return runCatching {
-            persistQueueSnapshot()
-        }.fold(
-            onSuccess = { true },
+    private suspend fun persistRunningCheckpoint(taskId: Long): Boolean =
+        persistBatchQueueCheckpoint(
+            persist = { persistQueueSnapshot() },
             onFailure = { error ->
                 val message = error.message ?: "Unable to save the running queue state."
                 BatchQueueRuntimeStore.markTaskFailure(
@@ -215,23 +226,20 @@ class BatchQueueForegroundService : Service() {
                 BatchQueueRuntimeStore.failProcessing(
                     "Batch stopped before running task #$taskId because its queue state could not be saved."
                 )
-                runCatching { persistQueueSnapshot() }
-                false
+                // Preserve the existing best-effort failure-state snapshot. Cancellation
+                // must escape rather than being converted into another storage error.
+                persistBatchQueueCheckpoint(
+                    persist = { persistQueueSnapshot() },
+                    onFailure = { /* Keep the first persistence failure visible. */ }
+                )
             }
         )
-    }
 
-    private suspend fun persistTerminalCheckpoint(failureMessage: String): Boolean {
-        return runCatching {
-            persistQueueSnapshot()
-        }.fold(
-            onSuccess = { true },
-            onFailure = {
-                BatchQueueRuntimeStore.failProcessing(failureMessage)
-                false
-            }
+    private suspend fun persistTerminalCheckpoint(failureMessage: String): Boolean =
+        persistBatchQueueCheckpoint(
+            persist = { persistQueueSnapshot() },
+            onFailure = { BatchQueueRuntimeStore.failProcessing(failureMessage) }
         )
-    }
 
     private suspend fun persistQueueSnapshot() {
         persistenceStore.replaceSnapshot(BatchQueueRuntimeStore.state.value.tasks)

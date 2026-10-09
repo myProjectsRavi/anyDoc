@@ -63,6 +63,30 @@ class BatchQueueCheckpointTest {
         }
     }
 
+    @Test fun recoveryWriteFailureDoesNotOverrideOriginalFailure() = runBlocking {
+        val original = IllegalStateException("first snapshot write failed")
+        var writes = 0
+        var handled: Exception? = null
+
+        val saved = persistBatchQueueCheckpoint(
+            persist = {
+                writes++
+                throw original
+            },
+            onFailure = { error ->
+                handled = error
+                persistBatchQueueCheckpoint(
+                    persist = { writes++; error("retry failed") },
+                    onFailure = { /* Retain the original failure. */ }
+                )
+            }
+        )
+
+        assertFalse(saved)
+        assertSame(original, handled)
+        assertEquals(2, writes)
+    }
+
     @Test fun cancellingSuspendedWriteDoesNotInvokeFailureHandler() = runBlocking {
         var failures = 0
         val job = launch {
