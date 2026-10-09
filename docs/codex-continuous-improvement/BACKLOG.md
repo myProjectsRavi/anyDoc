@@ -401,3 +401,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E051 — Batch cancellation crash safety
 #### Feature F053 — Failure-safe cancellation service launch
 - [ACTIVE / P1] `US-R051-P1-01A` — Testable cancellation-launch error handling with app JVM regression coverage and exact-SHA CI.
+
+
+## Cycle 051 closure — 2026-10-09 UTC
+- [COMPLETE / CI #533] `US-R051-P1-01A` — Service-start failures during cancellation are surfaced to the UI; four focused app JVM tests. Exact SHA `3d65db557207eb900bca99a9a8ff52b250fb5071` passed PR run #533 / API `37860102445`, eight gates.
+- [NEXT / P1] `US-R052-P1-01A` — Reject corrupt recoverable queue rows to avoid silent partial restoration and subsequent destructive writes.
+
+## Cycle 052 active
+### Epic E052 — Saved batch queue integrity
+#### Feature F054 — Strict recoverable task validation
+- [ACTIVE / P1] `US-R052-P1-01A` — Strict active-row validation, intentional terminal filtering, app JVM regressions and exact-SHA CI.

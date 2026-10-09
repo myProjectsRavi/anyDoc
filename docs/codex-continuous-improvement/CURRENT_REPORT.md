@@ -1,23 +1,23 @@
 # Current Report
 
-**ID:** `2026-10-08_cycle-051`
+**ID:** `2026-10-09_cycle-052`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E051` — Batch cancellation crash safety
-**Feature:** `F053` — Failure-safe cancellation service launch
-**User Story:** `US-R051-P1-01A` — Report cancellation launch failures without crashing
+**Epic:** `E052` — Saved batch queue integrity
+**Feature:** `F054` — Strict recoverable task validation
+**User Story:** `US-R052-P1-01A` — Reject corrupt recoverable queue rows without destructive replacement
 
 ## Prior validated cycle
-Cycle 050 `E050 / F052 / US-R050-P1-01A` COMPLETE: exact code/test SHA `b318a37cc68bab3c34ddaee4c6deac52017e6a15` passed authoritative PR run #530 / API `37853941252` (SUCCESS; core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8, Android lint). Push #529 was cancelled by concurrency and is not completion evidence. Eight app JVM regressions cover failure/no-write, restoration order, empty recovery, retries and cancellation. No emulator, physical-device, benchmark or crash-free claim.
+Cycle 051 `E051 / F053 / US-R051-P1-01A` COMPLETE: exact code/test SHA `3d65db557207eb900bca99a9a8ff52b250fb5071` passed authoritative PR CI #533 / API `37860102445` on 2026-10-08 UTC (SUCCESS; eight configured gates). The cancellation launch now reports service-start errors and preserves cancellation propagation; four focused app JVM regressions were committed. Push #532 was cancelled by concurrency, not completion evidence. No emulator, device, benchmark, or crash-free claim.
 
-## P1 source evidence
-`BatchQueueViewModel.cancelQueue()` calls `context.startService(intent)` without exception handling, unlike `runQueue()` which catches foreground-service launch failures. Android may reject service starts, leaving an uncaught exception on the UI thread.
+## Source evidence and scope
+`BatchQueuePersistenceMapper.fromEntities()` maps persisted rows with `mapNotNull`; invalid active rows are silently dropped. Existing Cycle 050 recovery gating prevents snapshot writes only if the read fails. A strict mapper error is therefore required to prevent partial recovery and subsequent overwrite.
 
 ## Acceptance
-- Successful cancel launches preserve the existing intent and service action.
-- Service-start failure is surfaced as an actionable UI error, without crashing the caller.
-- CancellationException is not swallowed.
-- Focused app JVM regressions and exact-SHA authoritative GitHub Actions must pass.
+- Corrupt QUEUED/RUNNING rows fail the entire recovery, never returning a partial queue.
+- Valid QUEUED and RUNNING rows retain existing recovery semantics.
+- Terminal SUCCESS/FAILED/CANCELED rows remain intentionally excluded even if their payloads are malformed.
+- Focused app JVM tests and exact-SHA authoritative GitHub Actions pass.
 
 ## Next exact action
-Cycle 051 `E051 / F053 / US-R051-P1-01A` ACTIVE / INCOMPLETE: `BatchQueueViewModel.cancelQueue()` invokes `context.startService(intent)` directly without handling `IllegalStateException`, `SecurityException`, or other service-start exceptions. A rejected cancel request can crash the UI rather than report failure. Next exact mutation: introduce a small testable cancellation-launch wrapper that catches non-cancellation exceptions, propagates coroutine cancellation, surfaces a visible error and preserves existing service intent/action. Add app JVM tests for successful launch and failure/cancellation paths, then validate exact candidate SHA with authoritative CI. PR #1 stays draft/unmerged; main untouched.
+Cycle 052 `E052 / F054 / US-R052-P1-01A` ACTIVE / INCOMPLETE: `BatchQueuePersistenceMapper.fromEntities()` currently uses `mapNotNull(::fromEntity)` and silently discards malformed QUEUED/RUNNING persisted rows. That can yield a partial queue and subsequent destructive snapshot replacement. Next exact mutation: reject malformed recoverable rows with explicit exceptions, preserve intentional terminal-row filtering, add app JVM regression tests for invalid status/type/URI/count/ID/output and mixed valid-corrupt snapshots, then validate exact code/test SHA in authoritative GitHub Actions. PR #1 remains draft/unmerged; main untouched.

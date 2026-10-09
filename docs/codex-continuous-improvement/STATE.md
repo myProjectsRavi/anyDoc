@@ -3,17 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-08_cycle-051`
+**Current report:** `2026-10-09_cycle-052`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 051
-**Current Epic:** `E051` — Batch cancellation crash safety
-**Current Feature:** `F053` — Failure-safe cancellation service launch
-**Current User Story:** `US-R051-P1-01A` — Report cancellation launch failures without crashing (ACTIVE)
-**Last completed cycle:** Cycle 050
-**State checkpoint timestamp:** 2026-10-08 UTC
+**Cycle:** 052
+**Current Epic:** `E052` — Saved batch queue integrity
+**Current Feature:** `F054` — Strict recoverable task validation
+**Current User Story:** `US-R052-P1-01A` — Reject corrupt recoverable queue rows without destructive replacement (ACTIVE)
+**Last completed cycle:** Cycle 051
+**State checkpoint timestamp:** 2026-10-09 UTC
 
 ## Current next executable step
-Cycle 051 `E051 / F053 / US-R051-P1-01A` ACTIVE / INCOMPLETE: `BatchQueueViewModel.cancelQueue()` invokes `context.startService(intent)` directly without handling `IllegalStateException`, `SecurityException`, or other service-start exceptions. A rejected cancel request can crash the UI rather than report failure. Next exact mutation: introduce a small testable cancellation-launch wrapper that catches non-cancellation exceptions, propagates coroutine cancellation, surfaces a visible error and preserves existing service intent/action. Add app JVM tests for successful launch and failure/cancellation paths, then validate exact candidate SHA with authoritative CI. PR #1 stays draft/unmerged; main untouched.
+Cycle 052 `E052 / F054 / US-R052-P1-01A` ACTIVE / INCOMPLETE: `BatchQueuePersistenceMapper.fromEntities()` currently uses `mapNotNull(::fromEntity)` and silently discards malformed QUEUED/RUNNING persisted rows. That can yield a partial queue and subsequent destructive snapshot replacement. Next exact mutation: reject malformed recoverable rows with explicit exceptions, preserve intentional terminal-row filtering, add app JVM regression tests for invalid status/type/URI/count/ID/output and mixed valid-corrupt snapshots, then validate exact code/test SHA in authoritative GitHub Actions. PR #1 remains draft/unmerged; main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -153,3 +153,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 050 completion / Cycle 051 activation — 2026-10-08 UTC
 - Cycle 050 `E050 / F052 / US-R050-P1-01A` COMPLETE: exact code/test SHA `b318a37cc68bab3c34ddaee4c6deac52017e6a15` passed authoritative PR run #530 / API `37853941252` (SUCCESS; core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8, Android lint). Push #529 was cancelled by concurrency and is not completion evidence. Eight app JVM regressions cover failure/no-write, restoration order, empty recovery, retries and cancellation. No emulator, physical-device, benchmark or crash-free claim.
 - Cycle 051 `E051 / F053 / US-R051-P1-01A` ACTIVE / INCOMPLETE: `BatchQueueViewModel.cancelQueue()` invokes `context.startService(intent)` directly without handling `IllegalStateException`, `SecurityException`, or other service-start exceptions. A rejected cancel request can crash the UI rather than report failure. Next exact mutation: introduce a small testable cancellation-launch wrapper that catches non-cancellation exceptions, propagates coroutine cancellation, surfaces a visible error and preserves existing service intent/action. Add app JVM tests for successful launch and failure/cancellation paths, then validate exact candidate SHA with authoritative CI. PR #1 stays draft/unmerged; main untouched.
+
+
+## Cycle 051 completion / Cycle 052 activation — 2026-10-09 UTC
+- Cycle 051 `E051 / F053 / US-R051-P1-01A` COMPLETE: exact code/test SHA `3d65db557207eb900bca99a9a8ff52b250fb5071` passed authoritative PR CI #533 / API `37860102445` on 2026-10-08 UTC (SUCCESS; eight configured gates). The cancellation launch now reports service-start errors and preserves cancellation propagation; four focused app JVM regressions were committed. Push #532 was cancelled by concurrency, not completion evidence. No emulator, device, benchmark, or crash-free claim.
+- Cycle 052 `E052 / F054 / US-R052-P1-01A` ACTIVE / INCOMPLETE: `BatchQueuePersistenceMapper.fromEntities()` currently uses `mapNotNull(::fromEntity)` and silently discards malformed QUEUED/RUNNING persisted rows. That can yield a partial queue and subsequent destructive snapshot replacement. Next exact mutation: reject malformed recoverable rows with explicit exceptions, preserve intentional terminal-row filtering, add app JVM regression tests for invalid status/type/URI/count/ID/output and mixed valid-corrupt snapshots, then validate exact code/test SHA in authoritative GitHub Actions. PR #1 remains draft/unmerged; main untouched.
