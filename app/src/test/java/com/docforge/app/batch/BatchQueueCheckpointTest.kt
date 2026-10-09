@@ -76,7 +76,7 @@ class BatchQueueCheckpointTest {
             onFailure = { error ->
                 handled = error
                 persistBatchQueueCheckpoint(
-                    persist = { writes++; error("retry failed") },
+                    persist = { writes++; throw IllegalStateException("retry failed") },
                     onFailure = { /* Retain the original failure. */ }
                 )
             }

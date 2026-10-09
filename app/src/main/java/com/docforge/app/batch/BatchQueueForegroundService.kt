@@ -159,7 +159,7 @@ class BatchQueueForegroundService : Service() {
                     }
                 } catch (cancelled: CancellationException) {
                     BatchQueueRuntimeStore.markTaskCanceled(task.id)
-                    // Cancellation is already active; use a bounded cleanup scope to persist the
+                    // Cancellation is already active; use a non-cancellable cleanup context to persist the
                     // canceled task once, then propagate the original cancellation.
                     withContext(NonCancellable) {
                         persistBatchQueueCheckpoint(
