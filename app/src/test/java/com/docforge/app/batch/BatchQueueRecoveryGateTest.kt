@@ -151,4 +151,25 @@ class BatchQueueRecoveryGateTest {
         )
         assertEquals(listOf(listOf(task), emptyList<BatchQueueTask>()), persisted)
     }
+
+    @Test fun corruptRecoverableRowAbortsRecoveryBeforeAnySnapshotWrite() = runBlocking {
+        val valid = BatchQueuePersistenceMapper.toEntities(listOf(task)).single()
+        val corrupt = valid.copy(id = 72L, inputUrisJson = "not-json")
+        var restores = 0
+        var writes = 0
+        val errors = mutableListOf<String>()
+
+        collectBatchQueueAfterRecovery(
+            recover = { BatchQueuePersistenceMapper.fromEntities(listOf(valid, corrupt)) },
+            restore = { restores++ },
+            states = flowOf(BatchQueueUiState()),
+            onRecoveryFailure = { errors += it.message.orEmpty() },
+            onState = { writes++ }
+        )
+
+        assertEquals(0, restores)
+        assertEquals(0, writes)
+        assertEquals(1, errors.size)
+        assertTrue(errors.single().contains("#72"))
+    }
 }

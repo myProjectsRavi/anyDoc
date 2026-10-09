@@ -56,33 +56,43 @@ internal object BatchQueuePersistenceMapper {
     }
 
     private fun fromEntity(entity: BatchQueueTaskEntity): BatchQueueTask? {
+        val persistedStatus = BatchTaskStatus.entries.firstOrNull { it.name == entity.status }
+            ?: throw IllegalStateException("Saved batch task #${entity.id} has an unknown status.")
+        // Completed tasks are deliberately not requeued after process death.
+        if (persistedStatus != BatchTaskStatus.QUEUED && persistedStatus != BatchTaskStatus.RUNNING) {
+            return null
+        }
+
+        fun invalid(reason: String): Nothing =
+            throw IllegalStateException("Saved batch task #${entity.id} is invalid: $reason")
+
         if (
             entity.id <= 0L ||
             entity.id == Long.MAX_VALUE ||
             entity.outputBaseName.isBlank() ||
             !SAFE_OUTPUT_BASE.matches(entity.outputBaseName)
-        ) return null
+        ) invalid("task ID or output name")
 
-        val type = BatchTaskType.entries.firstOrNull { it.name == entity.taskType } ?: return null
-        val persistedStatus = BatchTaskStatus.entries.firstOrNull { it.name == entity.status } ?: return null
-        if (persistedStatus != BatchTaskStatus.QUEUED && persistedStatus != BatchTaskStatus.RUNNING) {
-            return null
-        }
-
-        val uris = runCatching {
+        val type = BatchTaskType.entries.firstOrNull { it.name == entity.taskType }
+            ?: invalid("unknown task type")
+        val uris = try {
             val array = JSONArray(entity.inputUrisJson)
             buildList {
                 repeat(array.length()) { index ->
                     val raw = array.optString(index).trim()
-                    if (raw.isBlank()) return@runCatching emptyList<Uri>()
+                    if (raw.isBlank()) invalid("empty input URI")
                     val uri = Uri.parse(raw)
-                    if (uri.scheme != "content") return@runCatching emptyList<Uri>()
+                    if (uri.scheme != "content") invalid("unsupported input URI")
                     add(uri)
                 }
             }.distinct()
-        }.getOrNull() ?: return null
+        } catch (error: Exception) {
+            throw IllegalStateException("Saved batch task #${entity.id} has invalid input URIs.", error)
+        }
 
-        if (uris.isEmpty() || type.validateInputCount(uris.size) != null) return null
+        if (uris.isEmpty() || type.validateInputCount(uris.size) != null) {
+            invalid("input count")
+        }
 
         val recoveredFromRunning = persistedStatus == BatchTaskStatus.RUNNING
         return BatchQueueTask(

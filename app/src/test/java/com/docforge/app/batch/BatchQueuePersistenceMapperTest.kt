@@ -81,7 +81,7 @@ class BatchQueuePersistenceMapperTest {
     fun restore_rejectsMalformedTypeStatusUriAndInputCount() {
         val malformed = listOf(
             entity(id = 1L, taskType = "UNKNOWN"),
-            entity(id = 2L, status = "SUCCESS"),
+            entity(id = 2L, status = "UNKNOWN"),
             entity(id = 3L, inputUrisJson = "[\"file:///tmp/a.pdf\"]"),
             entity(
                 id = 4L,
@@ -89,10 +89,52 @@ class BatchQueuePersistenceMapperTest {
                 inputUrisJson = "[\"content://provider/only-one.pdf\"]"
             ),
             entity(id = Long.MAX_VALUE),
-            entity(id = 6L, outputBaseName = "../unsafe")
+            entity(id = 6L, outputBaseName = "../unsafe"),
+            entity(id = 7L, inputUrisJson = "not-json"),
+            entity(id = 8L, inputUrisJson = "[]"),
+            entity(id = 9L, status = "RUNNING", inputUrisJson = "not-json"),
+            entity(id = 10L, status = "RUNNING", taskType = "UNKNOWN"),
+            entity(id = 11L, inputUrisJson = "[\"\"]"),
+            entity(id = 12L, inputUrisJson = "{}"),
+            entity(id = 0L)
         )
 
-        assertTrue(BatchQueuePersistenceMapper.fromEntities(malformed).isEmpty())
+        malformed.forEach { row ->
+            try {
+                BatchQueuePersistenceMapper.fromEntities(listOf(row))
+                org.junit.Assert.fail("Expected corrupt saved task #${row.id} to fail recovery")
+            } catch (expected: IllegalStateException) {
+                assertTrue(expected.message.orEmpty().contains("Saved batch task"))
+            }
+        }
+    }
+
+    @Test
+    fun restore_rejectsWholeSnapshotWhenAnyRecoverableRowIsCorrupt() {
+        val rows = listOf(
+            entity(id = 101L),
+            entity(id = 102L, inputUrisJson = "[\"file:///unsafe.pdf\"]"),
+            entity(id = 103L)
+        )
+        try {
+            BatchQueuePersistenceMapper.fromEntities(rows)
+            org.junit.Assert.fail("Expected failure rather than a partial recovered queue")
+        } catch (expected: IllegalStateException) {
+            assertTrue(expected.message.orEmpty().contains("#102"))
+        }
+    }
+
+    @Test
+    fun restore_stillSkipsTerminalRowsEvenWhenTheirPayloadIsMalformed() {
+        val restored = BatchQueuePersistenceMapper.fromEntities(
+            listOf(
+                entity(id = Long.MAX_VALUE, status = "SUCCESS", inputUrisJson = "not-json"),
+                entity(id = 202L, status = "FAILED", outputBaseName = "../invalid"),
+                entity(id = 203L, status = "CANCELED", taskType = "UNKNOWN"),
+                entity(id = 204L, status = "QUEUED")
+            )
+        )
+        assertEquals(listOf(204L), restored.map { it.id })
     }
 
     private fun task(
