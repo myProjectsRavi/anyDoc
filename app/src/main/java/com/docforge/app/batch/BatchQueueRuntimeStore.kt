@@ -259,35 +259,57 @@ object BatchQueueRuntimeStore {
     }
 
     fun markTaskSuccess(taskId: Long, outputPath: String, outputSizeBytes: Long) {
-        updateTask(taskId) {
-            it.copy(
-                status = BatchTaskStatus.SUCCESS,
-                outputPath = outputPath,
-                outputSizeBytes = outputSizeBytes,
-                errorMessage = null
-            )
-        }
-        incrementCounters(successDelta = 1, failureDelta = 0)
+        transitionTaskToTerminal(
+            taskId = taskId,
+            status = BatchTaskStatus.SUCCESS,
+            outputPath = outputPath,
+            outputSizeBytes = outputSizeBytes
+        )
     }
 
     fun markTaskFailure(taskId: Long, errorMessage: String) {
-        updateTask(taskId) {
-            it.copy(
-                status = BatchTaskStatus.FAILED,
-                errorMessage = errorMessage
-            )
-        }
-        incrementCounters(successDelta = 0, failureDelta = 1)
+        transitionTaskToTerminal(
+            taskId = taskId,
+            status = BatchTaskStatus.FAILED,
+            errorMessage = errorMessage
+        )
     }
 
     fun markTaskCanceled(taskId: Long) {
-        updateTask(taskId) {
-            it.copy(
-                status = BatchTaskStatus.CANCELED,
-                errorMessage = "Task canceled"
+        transitionTaskToTerminal(
+            taskId = taskId,
+            status = BatchTaskStatus.CANCELED,
+            errorMessage = "Task canceled"
+        )
+    }
+
+    private fun transitionTaskToTerminal(
+        taskId: Long,
+        status: BatchTaskStatus,
+        outputPath: String? = null,
+        outputSizeBytes: Long? = null,
+        errorMessage: String? = null
+    ) {
+        _state.update { state ->
+            val index = state.tasks.indexOfFirst {
+                it.id == taskId && it.status == BatchTaskStatus.RUNNING
+            }
+            if (index < 0) return@update state
+
+            val updatedTasks = state.tasks.toMutableList()
+            updatedTasks[index] = updatedTasks[index].copy(
+                status = status,
+                outputPath = outputPath,
+                outputSizeBytes = outputSizeBytes,
+                errorMessage = errorMessage
+            )
+            state.copy(
+                tasks = updatedTasks,
+                processedCount = state.processedCount + 1,
+                successCount = state.successCount + if (status == BatchTaskStatus.SUCCESS) 1 else 0,
+                failureCount = state.failureCount + if (status == BatchTaskStatus.SUCCESS) 0 else 1
             )
         }
-        incrementCounters(successDelta = 0, failureDelta = 1)
     }
 
     fun markRemainingQueuedAsCanceled(exceptTaskId: Long? = null) {
@@ -326,16 +348,6 @@ object BatchQueueRuntimeStore {
 
     fun setStatusMessage(message: String) {
         _state.update { it.copy(statusMessage = message, errorMessage = null) }
-    }
-
-    private fun incrementCounters(successDelta: Int, failureDelta: Int) {
-        _state.update {
-            it.copy(
-                processedCount = it.processedCount + 1,
-                successCount = it.successCount + successDelta,
-                failureCount = it.failureCount + failureDelta
-            )
-        }
     }
 
     private fun updateTask(taskId: Long, transform: (BatchQueueTask) -> BatchQueueTask) {
