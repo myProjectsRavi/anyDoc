@@ -3,18 +3,17 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-09_cycle-055`
+**Current report:** `2026-10-09_cycle-056`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 055
-**Current Epic:** `E055` — Recoverable batch queue URI integrity
-**Current Feature:** `F057` — URI admission and preset replay validation
-**Current User Story:** `US-R055-P1-01A` — Reject unrecoverable batch task URIs before enqueue (ACTIVE)
-**Last completed cycle:** Cycle 054
+**Cycle:** 056
+**Current Epic:** `E056` — Batch task terminal-state integrity
+**Current Feature:** `F058` — Atomic idempotent terminal transitions
+**Current User Story:** `US-R056-P1-01A` — Prevent duplicate and conflicting terminal task transitions (ACTIVE)
+**Last completed cycle:** Cycle 055
 **State checkpoint timestamp:** 2026-10-09 UTC
 
 ## Current next executable step
-Cycle 055 E055/F057/US-R055-P1-01A ACTIVE / INCOMPLETE. Source: `BatchQueueRuntimeStore.addTask()` only validates URI count; `replaceQueueWithPreset()` silently skips blank URI strings and accepts non-content schemes. Persisted recoverable queue mapper rejects non-content schemes and blanks, so an admitted queue may fail recovery after restart. Next: enforce content URI and nonblank per-item validation at admission for both direct tasks and preset loads, preserve previous queue and counters when preset validation fails, add deterministic app JVM tests for rejected/valid/mixed inputs, then validate exact code/test SHA via authoritative PR CI.
-
+Cycle 056 E056/F058/US-R056-P1-01A ACTIVE / INCOMPLETE. Cycle 055 exact SHA `f6fe6b9256db881a898728c32ee0cbd261007e7e` passed authoritative PR CI #556 / API `37973956107`. Source: task terminal methods mutate status and increment counters in separate updates, including when task is already terminal or absent. Next: atomically guard RUNNING -> SUCCESS/FAILED/CANCELED transitions and update counters in the same StateFlow update, preserve terminal outcomes on duplicate/conflicting calls, add deterministic app JVM regressions, and validate exact code/test SHA through PR CI. Do not modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -173,3 +172,7 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 054 completion / Cycle 055 activation — 2026-10-09 UTC
 - Cycle 054 E054/F056/US-R054-P1-01A COMPLETE. Exact code/test SHA `c81fc5e1a575eb695166c5d29f9e344d76fc25f3`, authoritative PR CI #550 / API `37924104373`: SUCCESS across core PDF, converter, scanner, PDF tools, app JVM tests, debug APK, unsigned release/R8, and Android lint. Shared write mutex now captures current task list only after acquiring the lock. Both ViewModel and foreground service use the new provider; six JVM tests cover contention, latest-state writes, cancellation, and exceptional cleanup. No device/emulator/benchmark validation is claimed.
 - Cycle 055 E055/F057/US-R055-P1-01A ACTIVE / INCOMPLETE. Source: `BatchQueueRuntimeStore.addTask()` only validates URI count; `replaceQueueWithPreset()` silently skips blank URI strings and accepts non-content schemes. Persisted recoverable queue mapper rejects non-content schemes and blanks, so an admitted queue may fail recovery after restart. Next: enforce content URI and nonblank per-item validation at admission for both direct tasks and preset loads, preserve previous queue and counters when preset validation fails, add deterministic app JVM tests for rejected/valid/mixed inputs, then validate exact code/test SHA via authoritative PR CI.
+
+## Cycle 055 completion / Cycle 056 activation — 2026-10-09 UTC
+- Cycle 055 `E055 / F057 / US-R055-P1-01A` COMPLETE. Exact code/test SHA `f6fe6b9256db881a898728c32ee0cbd261007e7e`; authoritative pull-request workflow #556 / API `37973956107` SUCCESS on 2026-10-09 UTC. Core PDF, converter, scanner, PDF tools signature, app JVM unit tests, debug APK, unsigned release/R8 and Android lint all passed. Admission rejects blank/non-content URIs; preset replay validates before mutation and deduplicates before effective count validation; nine URI admission JVM regression cases are present. No device, emulator, benchmark, or crash-free evidence.
+- Cycle 056 `E056 / F058 / US-R056-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.markTaskSuccess/Failure/Canceled` independently call `updateTask` then `incrementCounters` without guarding existing terminal state or missing task ID. Repeated/conflicting calls can overwrite SUCCESS/FAILED/CANCELED and inflate processed/success/failure counters. Next exact mutation: update terminal status and counters in one atomic StateFlow update, accept only RUNNING -> terminal transitions, preserve already-terminal tasks, add focused app JVM regressions for duplicate/conflicting transitions and unknown IDs, then validate exact SHA via PR CI. Keep PR #1 draft; do not touch main.

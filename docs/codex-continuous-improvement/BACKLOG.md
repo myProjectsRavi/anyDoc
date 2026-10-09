@@ -440,3 +440,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E055 — Recoverable batch queue URI integrity
 #### Feature F057 — URI admission and preset replay validation
 - [ACTIVE / P1] `US-R055-P1-01A` — Validate every URI and preserve existing queue on invalid preset, with app JVM regression tests and exact-SHA CI.
+
+## Cycle 055 closure — 2026-10-09 UTC
+- [COMPLETE / PR CI #556] `US-R055-P1-01A` — Validate content URIs before queue admission; atomic preset validation and effective URI-count checks after deduplication. Exact code/test SHA `f6fe6b9256db881a898728c32ee0cbd261007e7e`, PR run API `37973956107` SUCCESS, all eight gates.
+- [NEXT / P1] `US-R056-P1-01A` — Make batch terminal transitions atomic/idempotent to prevent conflicting terminal states and duplicate counters.
+
+## Cycle 056 active
+### Epic E056 — Batch task terminal-state integrity
+#### Feature F058 — Atomic idempotent terminal transitions
+- [ACTIVE / P1] `US-R056-P1-01A` — Guard RUNNING-to-terminal changes, update task and counters atomically, test repeated/conflicting/absent transitions, validate exact SHA through PR CI.

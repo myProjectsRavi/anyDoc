@@ -1,24 +1,25 @@
 # Current Report
 
-**ID:** `2026-10-09_cycle-055`
+**ID:** `2026-10-09_cycle-056`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E055` — Recoverable batch queue URI integrity
-**Feature:** `F057` — URI admission and preset replay validation
-**User Story:** `US-R055-P1-01A` — Reject unrecoverable batch task URIs before enqueue
+**Epic:** `E056` — Batch task terminal-state integrity
+**Feature:** `F058` — Atomic idempotent terminal transitions
+**User Story:** `US-R056-P1-01A` — Prevent duplicate and conflicting terminal task transitions
 
 ## Previous validated cycle
-Cycle 054 E054/F056/US-R054-P1-01A COMPLETE. Exact code/test SHA `c81fc5e1a575eb695166c5d29f9e344d76fc25f3`, authoritative PR CI #550 / API `37924104373`: SUCCESS across core PDF, converter, scanner, PDF tools, app JVM tests, debug APK, unsigned release/R8, and Android lint. Shared write mutex now captures current task list only after acquiring the lock. Both ViewModel and foreground service use the new provider; six JVM tests cover contention, latest-state writes, cancellation, and exceptional cleanup. No device/emulator/benchmark validation is claimed.
+Cycle 055 E055/F057/US-R055-P1-01A COMPLETE. Exact code/test SHA `f6fe6b9256db881a898728c32ee0cbd261007e7e`; authoritative PR CI #556 / API `37973956107` SUCCESS on 2026-10-09 UTC. Eight validation stages passed: core PDF, converter, scanner, PDF tools, app unit tests, debug APK, unsigned release/R8 and Android lint. Preset replay validates content URIs and deduplicates before input-count checks. No device/emulator/benchmark evidence.
 
-## Confirmed source defect
-`BatchQueueRuntimeStore.addTask()` accepts any `Uri` when the input count matches. Preset replay uses `mapNotNull` on raw URI strings and silently discards blanks while admitting file/http/relative URI strings. Recovery mapper rejects non-content URIs and blanks, so persisted queued work can become unrecoverable.
+## Source finding
+`BatchQueueRuntimeStore.markTaskSuccess`, `markTaskFailure`, and `markTaskCanceled` independently update task status and increment processing counters, even for unknown IDs or already terminal tasks. Duplicate or conflicting calls corrupt outcome and totals.
 
 ## Acceptance
-- Admit only nonblank content URIs, consistent with `BatchQueuePersistenceMapper.fromEntity`.
-- Do not silently discard malformed preset input entries or replace an existing queue on failure.
-- Preserve ordinary valid content URIs, task ordering, existing filenames and batch behavior.
-- Add deterministic JVM tests for malformed direct input, all-or-nothing preset validation, valid replay, and recovery compatibility.
-- Exact-SHA authoritative PR CI; PR #1 draft/unmerged and no main mutation.
+- Only a RUNNING task may become SUCCESS, FAILED, or CANCELED.
+- Task status/output/error and processed/success/failure counters change in one atomic StateFlow update.
+- Repeated or conflicting terminal calls, absent IDs and queued tasks do not mutate outcomes/counters.
+- Preserve existing service execution, cancellation and persistence semantics.
+- Focused app JVM regression tests; authoritative PR CI against exact SHA.
+- Keep PR #1 draft and main untouched.
 
 ## Next exact action
-Cycle 055 E055/F057/US-R055-P1-01A ACTIVE / INCOMPLETE. Source: `BatchQueueRuntimeStore.addTask()` only validates URI count; `replaceQueueWithPreset()` silently skips blank URI strings and accepts non-content schemes. Persisted recoverable queue mapper rejects non-content schemes and blanks, so an admitted queue may fail recovery after restart. Next: enforce content URI and nonblank per-item validation at admission for both direct tasks and preset loads, preserve previous queue and counters when preset validation fails, add deterministic app JVM tests for rejected/valid/mixed inputs, then validate exact code/test SHA via authoritative PR CI.
+Inspect current task terminal methods and app JVM test conventions. Replace separate status and counter updates with a single guarded atomic transition. Test success/failure/cancel idempotence, conflicting outcomes, missing IDs and counter consistency. Commit only to `codex/anydoc-continuous-improvement`, then inspect CI and synchronize checkpoints after terminal validation.
