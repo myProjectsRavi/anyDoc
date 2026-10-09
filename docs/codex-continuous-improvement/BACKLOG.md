@@ -420,3 +420,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E053 — Cancellation-safe batch queue persistence
 #### Feature F055 — Cancellation-safe persistence checkpoints
 - [ACTIVE / P1] US-R053-P1-01A: cancellation-safe suspend helper, service integration, focused JVM regressions and exact-SHA CI.
+
+
+## Cycle 053 closure — 2026-10-09 UTC
+- [COMPLETE / CI #547] `US-R053-P1-01A` — Cancellation-aware batch checkpoint writes and service cleanup. Exact code/test SHA `eeadc85e46b5387c087dc73d6231f8afc86edaf3`; authoritative PR run `37912518611` SUCCESS across eight gates.
+- [NEXT / P1] `US-R054-P1-01A` — Prevent stale concurrent queue snapshot persistence.
+
+## Cycle 054 active
+### Epic E054 — Concurrent batch queue persistence integrity
+#### Feature F056 — Current-state snapshot writes under shared mutex
+- [ACTIVE / P1] `US-R054-P1-01A` — Capture latest tasks inside shared persistence lock, migrate service/ViewModel writes, contention regression, exact-SHA PR CI.

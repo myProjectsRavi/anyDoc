@@ -1,20 +1,23 @@
 # Current Report
 
-**ID:** `2026-10-09_cycle-053`
+**ID:** `2026-10-09_cycle-054`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E053` — Cancellation-safe batch queue persistence
-**Feature:** `F055` — Cancellation-safe persistence checkpoints
-**User Story:** `US-R053-P1-01A` — Preserve coroutine cancellation in checkpoints
+**Epic:** `E054` — Concurrent batch queue persistence integrity
+**Feature:** `F056` — Current-state snapshot writes under shared mutex
+**User Story:** `US-R054-P1-01A` — Prevent stale concurrent queue snapshots
 
 ## Previous validated cycle
-Cycle 052 E052/F054/US-R052-P1-01A COMPLETE: implementation SHA c22d28787adc5215161c580a4e2de7f5af29fa68; exact CI HEAD 71b2ace6400afcb2bac8c1326fc1ba67278f06a8 (workflow timeout adjustment only). PR run 37889034940 SUCCESS 2026-10-09 UTC: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8 and Android lint all passed. Earlier run 37884151624 cancelled at timeout; paired push run 37889031242 cancelled by concurrency. No emulator/device/benchmark evidence.
+Cycle 053 E053/F055/US-R053-P1-01A COMPLETE. Exact code/test SHA `eeadc85e46b5387c087dc73d6231f8afc86edaf3`; authoritative PR run #547 / API `37912518611` SUCCESS on 2026-10-09 UTC. Core PDF, converter, scanner, PDF tools JVM, app JVM, debug APK, unsigned release/R8 and Android lint all passed. Cancellation-aware checkpoint helper is integrated into running/terminal writes, retry and cancellation cleanup. Tests cover success, ordinary persistence failures, failure-handler cancellation, suspended-write cancellation and recovery retry. No emulator, physical-device, benchmark or runtime crash-free evidence.
 
 ## Source evidence
-Suspend persistence writes wrapped in runCatching swallow CancellationException and may execute storage-error queue mutations.
+`BatchQueuePersistenceStore.replaceSnapshot(tasks)` receives a list captured before its shared mutex is acquired. `BatchQueueForegroundService.persistQueueSnapshot()` and `BatchQueueViewModel` both call it, allowing a delayed stale writer to overwrite newer persisted tasks.
 
 ## Acceptance
-Rethrow cancellation, retain ordinary storage-failure handling, add deterministic app JVM tests and exact-SHA CI.
+Acquire the existing shared persistence mutex before obtaining the latest runtime task list. Preserve ordinary persistence errors, cancellation propagation, queue recovery and terminal evidence. Add deterministic JVM tests proving the snapshot provider is evaluated after lock acquisition and no stale value replaces the latest state. Validate exact feature-branch code/test SHA in authoritative PR CI.
 
 ## Next executable step
-Cycle 053 E053/F055/US-R053-P1-01A ACTIVE / INCOMPLETE. Evidence: BatchQueueForegroundService.persistRunningCheckpoint and persistTerminalCheckpoint use runCatching around suspend persistence writes, catching CancellationException and potentially mutating queue state after cancellation; best-effort cancellation snapshot also catches cancellation. Next: extract cancellation-safe suspend checkpoint helper, apply to running/terminal and cancellation cleanup, add focused app JVM success/failure/cancellation tests, validate exact SHA with authoritative CI. PR #1 draft/unmerged; main untouched.
+Cycle 054 E054/F056/US-R054-P1-01A ACTIVE / INCOMPLETE: Prevent stale task-list persistence from concurrent ViewModel and foreground service writers. `BatchQueuePersistenceStore.replaceSnapshot(tasks)` serializes DAO writes using a mutex but accepts an already-captured list; ViewModel uses `runtimeState.tasks` and service uses `state.value.tasks` before acquiring this mutex. A delayed stale writer can replace newer persisted queue state. Next action: acquire shared persistence mutex before reading current queue snapshot through a provider, migrate service and ViewModel callers, add deterministic JVM contention test that changes queue snapshot while another write holds lock, and verify exact SHA in authoritative PR CI.
+
+## Safety
+PR #1 draft/unmerged; `main` untouched. Do not mutate production until this ACTIVE checkpoint is durable.
