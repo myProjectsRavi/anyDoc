@@ -3,17 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-09_cycle-052`
+**Current report:** `2026-10-09_cycle-053`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 052
-**Current Epic:** `E052` — Saved batch queue integrity
-**Current Feature:** `F054` — Strict recoverable task validation
-**Current User Story:** `US-R052-P1-01A` — Reject corrupt recoverable queue rows without destructive replacement (ACTIVE)
-**Last completed cycle:** Cycle 051
+**Cycle:** 053
+**Current Epic:** `E053` — Cancellation-safe batch queue persistence
+**Current Feature:** `F055` — Cancellation-safe persistence checkpoints
+**Current User Story:** `US-R053-P1-01A` — Preserve coroutine cancellation in checkpoints (ACTIVE)
+**Last completed cycle:** Cycle 052
 **State checkpoint timestamp:** 2026-10-09 UTC
 
 ## Current next executable step
-Cycle 052 `E052 / F054 / US-R052-P1-01A` ACTIVE / INCOMPLETE: `BatchQueuePersistenceMapper.fromEntities()` currently uses `mapNotNull(::fromEntity)` and silently discards malformed QUEUED/RUNNING persisted rows. That can yield a partial queue and subsequent destructive snapshot replacement. Next exact mutation: reject malformed recoverable rows with explicit exceptions, preserve intentional terminal-row filtering, add app JVM regression tests for invalid status/type/URI/count/ID/output and mixed valid-corrupt snapshots, then validate exact code/test SHA in authoritative GitHub Actions. PR #1 remains draft/unmerged; main untouched.
+Cycle 053 E053/F055/US-R053-P1-01A ACTIVE / INCOMPLETE. Evidence: BatchQueueForegroundService.persistRunningCheckpoint and persistTerminalCheckpoint use runCatching around suspend persistence writes, catching CancellationException and potentially mutating queue state after cancellation; best-effort cancellation snapshot also catches cancellation. Next: extract cancellation-safe suspend checkpoint helper, apply to running/terminal and cancellation cleanup, add focused app JVM success/failure/cancellation tests, validate exact SHA with authoritative CI. PR #1 draft/unmerged; main untouched.
+
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -158,3 +159,7 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 051 completion / Cycle 052 activation — 2026-10-09 UTC
 - Cycle 051 `E051 / F053 / US-R051-P1-01A` COMPLETE: exact code/test SHA `3d65db557207eb900bca99a9a8ff52b250fb5071` passed authoritative PR CI #533 / API `37860102445` on 2026-10-08 UTC (SUCCESS; eight configured gates). The cancellation launch now reports service-start errors and preserves cancellation propagation; four focused app JVM regressions were committed. Push #532 was cancelled by concurrency, not completion evidence. No emulator, device, benchmark, or crash-free claim.
 - Cycle 052 `E052 / F054 / US-R052-P1-01A` ACTIVE / INCOMPLETE: `BatchQueuePersistenceMapper.fromEntities()` currently uses `mapNotNull(::fromEntity)` and silently discards malformed QUEUED/RUNNING persisted rows. That can yield a partial queue and subsequent destructive snapshot replacement. Next exact mutation: reject malformed recoverable rows with explicit exceptions, preserve intentional terminal-row filtering, add app JVM regression tests for invalid status/type/URI/count/ID/output and mixed valid-corrupt snapshots, then validate exact code/test SHA in authoritative GitHub Actions. PR #1 remains draft/unmerged; main untouched.
+
+## Cycle 052 completion / Cycle 053 activation — 2026-10-09 UTC
+- Cycle 052 E052/F054/US-R052-P1-01A COMPLETE: implementation SHA c22d28787adc5215161c580a4e2de7f5af29fa68; exact CI HEAD 71b2ace6400afcb2bac8c1326fc1ba67278f06a8 (workflow timeout adjustment only). PR run 37889034940 SUCCESS 2026-10-09 UTC: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8 and Android lint all passed. Earlier run 37884151624 cancelled at timeout; paired push run 37889031242 cancelled by concurrency. No emulator/device/benchmark evidence.
+- Cycle 053 E053/F055/US-R053-P1-01A ACTIVE / INCOMPLETE. Evidence: BatchQueueForegroundService.persistRunningCheckpoint and persistTerminalCheckpoint use runCatching around suspend persistence writes, catching CancellationException and potentially mutating queue state after cancellation; best-effort cancellation snapshot also catches cancellation. Next: extract cancellation-safe suspend checkpoint helper, apply to running/terminal and cancellation cleanup, add focused app JVM success/failure/cancellation tests, validate exact SHA with authoritative CI. PR #1 draft/unmerged; main untouched.

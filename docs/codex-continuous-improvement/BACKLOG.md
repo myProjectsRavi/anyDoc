@@ -411,3 +411,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E052 — Saved batch queue integrity
 #### Feature F054 — Strict recoverable task validation
 - [ACTIVE / P1] `US-R052-P1-01A` — Strict active-row validation, intentional terminal filtering, app JVM regressions and exact-SHA CI.
+
+## Cycle 052 closure — 2026-10-09 UTC
+- [COMPLETE / CI 37889034940] US-R052-P1-01A: strict corrupt recoverable-row rejection. Code/test c22d28787adc5215161c580a4e2de7f5af29fa68, validated HEAD 71b2ace6400afcb2bac8c1326fc1ba67278f06a8, all eight gates passed.
+- [NEXT / P1] US-R053-P1-01A: preserve coroutine cancellation in batch queue checkpoint writes.
+
+## Cycle 053 active
+### Epic E053 — Cancellation-safe batch queue persistence
+#### Feature F055 — Cancellation-safe persistence checkpoints
+- [ACTIVE / P1] US-R053-P1-01A: cancellation-safe suspend helper, service integration, focused JVM regressions and exact-SHA CI.
