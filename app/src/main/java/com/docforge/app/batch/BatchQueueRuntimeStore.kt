@@ -19,6 +19,9 @@ object BatchQueueRuntimeStore {
 
     fun addTask(type: BatchTaskType, inputUris: List<Uri>, inputLabels: List<String>): Result<Unit> {
         val uniqueUris = inputUris.distinct()
+        validateInputUris(uniqueUris)?.let { error ->
+            return Result.failure(IllegalArgumentException(error))
+        }
         val validationError = type.validateInputCount(uniqueUris.size)
         if (validationError != null) {
             return Result.failure(IllegalArgumentException(validationError))
@@ -147,18 +150,23 @@ object BatchQueueRuntimeStore {
             return Result.failure(IllegalArgumentException("Preset has no tasks."))
         }
 
-        val rebuiltTasks = presetTasks.map { presetTask ->
-            val uris = presetTask.inputUris
-                .mapNotNull { raw ->
-                    val trimmed = raw.trim()
-                    if (trimmed.isBlank()) null else Uri.parse(trimmed)
-                }
-
-            val validationError = presetTask.type.validateInputCount(uris.size)
-            if (validationError != null) {
-                return Result.failure(IllegalArgumentException("Preset task ${presetTask.type.title}: $validationError"))
+        // Validate the entire preset before allocating IDs or changing the existing queue.
+        val validatedTasks = presetTasks.mapIndexed { index, presetTask ->
+            val uris = presetTask.inputUris.map { raw -> Uri.parse(raw.trim()) }
+            validateInputUris(uris)?.let { error ->
+                return Result.failure(
+                    IllegalArgumentException("Preset task ${index + 1} (${presetTask.type.title}): $error")
+                )
             }
+            presetTask.type.validateInputCount(uris.size)?.let { error ->
+                return Result.failure(
+                    IllegalArgumentException("Preset task ${index + 1} (${presetTask.type.title}): $error")
+                )
+            }
+            presetTask to uris
+        }
 
+        val rebuiltTasks = validatedTasks.map { (presetTask, uris) ->
             val taskId = taskIdCounter.getAndIncrement()
             BatchQueueTask(
                 id = taskId,
@@ -381,6 +389,13 @@ object BatchQueueRuntimeStore {
         }
         return Result.success(Unit)
     }
+
+    private fun validateInputUris(uris: List<Uri>): String? =
+        if (uris.any { it.toString().isBlank() || it.scheme != "content" }) {
+            "Only nonblank content:// input URIs are supported."
+        } else {
+            null
+        }
 
     private fun buildInputSummary(type: BatchTaskType, count: Int, labels: List<String>): String {
         if (labels.isEmpty()) {
