@@ -94,7 +94,7 @@ class BatchQueueTaskMutationTest {
                     gate.await()
                     BatchQueueRuntimeStore.startNextQueuedTask(setOf(id), 1)
                 }
-                val remove = pool.submit {
+                val remove = pool.submit<Result<Unit>> {
                     gate.await()
                     BatchQueueRuntimeStore.removeTask(id)
                 }
@@ -126,7 +126,7 @@ class BatchQueueTaskMutationTest {
                     gate.await()
                     BatchQueueRuntimeStore.startNextQueuedTask(setOf(id), 1)
                 }
-                val rename = pool.submit {
+                val rename = pool.submit<Result<Unit>> {
                     gate.await()
                     BatchQueueRuntimeStore.updateOutputBaseName(id, "new_name")
                 }
