@@ -9,20 +9,23 @@ class BatchQueuePresetStore(
     private val dao: BatchPresetDao
 ) {
 
-    suspend fun readPresets(): List<BatchQueuePreset> {
-        return runCatching {
-            dao.getAll().mapNotNull { entity ->
-                val tasks = decodeTasks(entity.tasksJson)
-                if (tasks.isEmpty()) null
-                else BatchQueuePreset(
-                    id = entity.id,
-                    name = entity.name,
-                    createdAtMillis = entity.createdAtMillis,
-                    tasks = tasks
+    suspend fun readPresets(): List<BatchQueuePreset> =
+        dao.getAll().map { entity ->
+            val tasks = try {
+                decodeTasks(entity.tasksJson)
+            } catch (error: Exception) {
+                throw IllegalStateException(
+                    "Saved preset '${entity.name}' (#${entity.id}) contains unreadable tasks.",
+                    error
                 )
             }
-        }.getOrDefault(emptyList())
-    }
+            BatchQueuePreset(
+                id = entity.id,
+                name = entity.name,
+                createdAtMillis = entity.createdAtMillis,
+                tasks = tasks
+            )
+        }
 
     suspend fun savePreset(name: String, tasks: List<BatchQueuePresetTask>): Result<BatchQueuePreset> {
         val trimmedName = name.trim()
@@ -68,30 +71,53 @@ class BatchQueuePresetStore(
     }
 
     private fun decodeTasks(json: String): List<BatchQueuePresetTask> {
-        return runCatching {
-            val tasksArray = JSONArray(json)
-            buildList {
-                for (i in 0 until tasksArray.length()) {
-                    val taskObj = tasksArray.optJSONObject(i) ?: continue
-                    val typeName = taskObj.optString("type", "")
-                    val type = BatchTaskType.entries.firstOrNull { it.name == typeName } ?: continue
-                    val inputUrisArray = taskObj.optJSONArray("inputUris") ?: JSONArray()
-                    val inputUris = buildList {
-                        for (j in 0 until inputUrisArray.length()) {
-                            val rawUri = inputUrisArray.optString(j, "").trim()
-                            if (rawUri.isNotBlank()) add(rawUri)
+        val tasksArray = JSONArray(json)
+        require(tasksArray.length() > 0) { "Preset has no tasks." }
+        return buildList {
+            for (i in 0 until tasksArray.length()) {
+                val taskObj = tasksArray.getJSONObject(i)
+                val rawType = taskObj.get("type")
+                require(rawType is String) { "Invalid task type at index $i." }
+                val type = BatchTaskType.entries.firstOrNull { it.name == rawType }
+                    ?: throw IllegalArgumentException("Unknown task type at index $i.")
+                val urisArray = taskObj.getJSONArray("inputUris")
+                val inputUris = buildList {
+                    for (j in 0 until urisArray.length()) {
+                        val rawUri = urisArray.get(j)
+                        require(rawUri is String && rawUri.isNotBlank()) {
+                            "Invalid input URI at task $i, position $j."
                         }
+                        add(rawUri.trim())
                     }
-                    add(
-                        BatchQueuePresetTask(
-                            type = type,
-                            inputUris = inputUris,
-                            inputSummary = taskObj.optString("inputSummary", ""),
-                            outputBaseName = taskObj.optString("outputBaseName", "")
-                        )
-                    )
                 }
+                require(type.validateInputCount(inputUris.size) == null) {
+                    "Invalid input count at task $i."
+                }
+                val inputSummary = taskObj.get("inputSummary")
+                val outputBaseName = taskObj.get("outputBaseName")
+                require(inputSummary is String && outputBaseName is String) {
+                    "Invalid task metadata at index $i."
+                }
+                add(
+                    BatchQueuePresetTask(
+                        type = type,
+                        inputUris = inputUris,
+                        inputSummary = inputSummary,
+                        outputBaseName = outputBaseName
+                    )
+                )
             }
-        }.getOrDefault(emptyList())
+        }
     }
+}
+
+/** Convert storage errors to a UI result without swallowing coroutine cancellation. */
+internal suspend fun loadBatchPresets(
+    read: suspend () -> List<BatchQueuePreset>
+): Result<List<BatchQueuePreset>> = try {
+    Result.success(read())
+} catch (cancelled: kotlinx.coroutines.CancellationException) {
+    throw cancelled
+} catch (error: Exception) {
+    Result.failure(error)
 }

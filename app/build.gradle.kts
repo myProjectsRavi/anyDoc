@@ -30,7 +30,8 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            // Release signing is intentionally external. Never fall back to the debug key.
+            // CI can still compile/R8 an unsigned release artifact for validation.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -90,6 +91,12 @@ android {
         }
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     lint {
         disable += "MissingTranslation"
     }
@@ -126,6 +133,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    testImplementation(libs.junit4)
+    testImplementation(libs.robolectric)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
