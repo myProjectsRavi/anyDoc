@@ -365,43 +365,51 @@ object BatchQueueRuntimeStore {
     }
 
     private fun moveTask(taskId: Long, delta: Int): Result<Unit> {
-        val state = _state.value
-        val task = state.tasks.firstOrNull { it.id == taskId }
-            ?: return Result.failure(IllegalArgumentException("Task not found."))
+        // Validate and reorder against the same snapshot. A failed CAS means another
+        // writer changed the queue, so retry with its latest tasks and statuses.
+        while (true) {
+            val current = _state.value
+            val task = current.tasks.firstOrNull { it.id == taskId }
+                ?: return Result.failure(IllegalArgumentException("Task not found."))
 
-        if (task.status != BatchTaskStatus.QUEUED) {
-            return Result.failure(IllegalStateException("Only queued tasks can be reordered."))
-        }
-
-        val queuedIndices = state.tasks
-            .mapIndexedNotNull { index, queuedTask ->
-                if (queuedTask.status == BatchTaskStatus.QUEUED) index else null
+            if (task.status != BatchTaskStatus.QUEUED) {
+                return Result.failure(IllegalStateException("Only queued tasks can be reordered."))
             }
-        val queuedPosition = queuedIndices.indexOfFirst { state.tasks[it].id == taskId }
-        if (queuedPosition < 0) {
-            return Result.failure(IllegalStateException("Task is not queued."))
-        }
 
-        val targetQueuedPosition = queuedPosition + delta
-        if (targetQueuedPosition !in queuedIndices.indices) {
-            return Result.failure(IllegalStateException("Task is already at the edge of the queued list."))
-        }
+            val queuedIndices = current.tasks.indices.filter { index ->
+                current.tasks[index].status == BatchTaskStatus.QUEUED
+            }
+            val queuedPosition = queuedIndices.indexOfFirst { index ->
+                current.tasks[index].id == taskId
+            }
+            if (queuedPosition < 0) {
+                return Result.failure(IllegalStateException("Task is not queued."))
+            }
 
-        val sourceIndex = queuedIndices[queuedPosition]
-        val targetIndex = queuedIndices[targetQueuedPosition]
-        val updated = state.tasks.toMutableList()
-        val temp = updated[sourceIndex]
-        updated[sourceIndex] = updated[targetIndex]
-        updated[targetIndex] = temp
+            val targetQueuedPosition = queuedPosition + delta
+            if (targetQueuedPosition !in queuedIndices.indices) {
+                return Result.failure(IllegalStateException("Task is already at the edge of the queued list."))
+            }
 
-        _state.update {
-            it.copy(
-                tasks = updated,
-                statusMessage = "Reordered queued tasks.",
-                errorMessage = null
-            )
+            val updated = current.tasks.toMutableList()
+            val sourceIndex = queuedIndices[queuedPosition]
+            val targetIndex = queuedIndices[targetQueuedPosition]
+            val swapped = updated[sourceIndex]
+            updated[sourceIndex] = updated[targetIndex]
+            updated[targetIndex] = swapped
+
+            if (_state.compareAndSet(
+                    current,
+                    current.copy(
+                        tasks = updated,
+                        statusMessage = "Reordered queued tasks.",
+                        errorMessage = null
+                    )
+                )
+            ) {
+                return Result.success(Unit)
+            }
         }
-        return Result.success(Unit)
     }
 
     private fun validateInputUris(uris: List<Uri>): String? =
