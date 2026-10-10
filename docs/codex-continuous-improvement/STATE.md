@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-10_cycle-058`
+**Current report:** `2026-10-10_cycle-059`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 058
-**Current Epic:** `E058` — Batch queue task mutation integrity
-**Current Feature:** `F060` — Atomic task removal and output-name edits
-**Current User Story:** `US-R058-P1-01A` — Prevent concurrent running-task removal or rename (ACTIVE)
-**Last completed cycle:** Cycle 057
+**Cycle:** 059
+**Current Epic:** `E059` — Batch queue clear/start integrity
+**Current Feature:** `F061` — Atomic queue clearing and processing admission
+**Current User Story:** `US-R059-P1-01A` — Prevent concurrent queue clearing from losing processing tasks (ACTIVE)
+**Last completed cycle:** Cycle 058
 **State checkpoint timestamp:** 2026-10-10 UTC
 
 ## Current next executable step
-Cycle 057 `E057 / F059 / US-R057-P1-01A` COMPLETE. Exact code/test SHA `d545ea396c99aba08a1e5d345969d29d6aa2c567` passed authoritative PR workflow #562 / API `38009446988` on 2026-10-10 UTC, job `114085804215` SUCCESS. All eight validation gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, lint). Eight app JVM reorder regressions cover queued-order edges, terminal status, concurrent enqueue and completion. No emulator, physical device, benchmark, or crash-free evidence.
-Cycle 058 `E058 / F060 / US-R058-P1-01A` ACTIVE / INCOMPLETE. Evidence: `BatchQueueRuntimeStore.removeTask()` checks running status on a snapshot before `_state.update`, so a concurrent start can turn a task RUNNING before it is removed. `updateOutputBaseName()` checks QUEUED status before `updateTask()` and may rename a task that has since started. Next: perform status validation and task mutation using a single compare-and-set loop per operation; preserve valid terminal-task removal semantics; add app JVM tests for task status, error/edge cases and concurrency; validate exact code/test SHA in PR CI. Do not modify main; keep PR #1 draft.
+Cycle 058 `E058 / F060 / US-R058-P1-01A` COMPLETE. Exact code/test SHA `48d3faa924aa4b424f48fae10fc2f45a591cc9d5` passed authoritative PR workflow #567 / API `38013754231` on 2026-10-10 UTC, job `114099432847` SUCCESS. All eight configured gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Seven focused app JVM regressions cover missing IDs, queued/terminal/running status, rename sanitation and concurrent task start/removal/rename. No emulator, physical device, benchmark, or crash-free evidence.
+Cycle 059 `E059 / F061 / US-R059-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.clearQueue()` checks `_state.value.isProcessing` before assigning a new state directly; a concurrent `beginProcessing()` may start after the check and then lose all tasks, or begin from a stale queued snapshot after a clear. The begin path uses a mutex but clear does not share that mutex. Next: make clearing a compare-and-set loop that validates the exact state being cleared, and make `beginProcessing` validate and mark the same state atomically before returning task IDs. Preserve error semantics and prevent a processing state with missing queued IDs. Add app JVM race regressions and validate exact implementation SHA via authoritative PR CI. PR #1 remains draft; never modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -187,3 +187,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 057 completion / Cycle 058 activation — 2026-10-10 UTC
 - Cycle 057 `E057 / F059 / US-R057-P1-01A` COMPLETE. Exact code/test SHA `d545ea396c99aba08a1e5d345969d29d6aa2c567` passed authoritative PR workflow #562 / API `38009446988` on 2026-10-10 UTC, job `114085804215` SUCCESS. All eight validation gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, lint). Eight app JVM reorder regressions cover queued-order edges, terminal status, concurrent enqueue and completion. No emulator, physical device, benchmark, or crash-free evidence.
 - Cycle 058 `E058 / F060 / US-R058-P1-01A` ACTIVE / INCOMPLETE. Evidence: `BatchQueueRuntimeStore.removeTask()` checks running status on a snapshot before `_state.update`, so a concurrent start can turn a task RUNNING before it is removed. `updateOutputBaseName()` checks QUEUED status before `updateTask()` and may rename a task that has since started. Next: perform status validation and task mutation using a single compare-and-set loop per operation; preserve valid terminal-task removal semantics; add app JVM tests for task status, error/edge cases and concurrency; validate exact code/test SHA in PR CI. Do not modify main; keep PR #1 draft.
+
+
+## Cycle 058 completion / Cycle 059 activation — 2026-10-10 UTC
+- Cycle 058 `E058 / F060 / US-R058-P1-01A` COMPLETE. Exact code/test SHA `48d3faa924aa4b424f48fae10fc2f45a591cc9d5` passed authoritative PR workflow #567 / API `38013754231` on 2026-10-10 UTC, job `114099432847` SUCCESS. All eight configured gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Seven focused app JVM regressions cover missing IDs, queued/terminal/running status, rename sanitation and concurrent task start/removal/rename. No emulator, physical device, benchmark, or crash-free evidence.
+- Cycle 059 `E059 / F061 / US-R059-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.clearQueue()` checks `_state.value.isProcessing` before assigning a new state directly; a concurrent `beginProcessing()` may start after the check and then lose all tasks, or begin from a stale queued snapshot after a clear. The begin path uses a mutex but clear does not share that mutex. Next: make clearing a compare-and-set loop that validates the exact state being cleared, and make `beginProcessing` validate and mark the same state atomically before returning task IDs. Preserve error semantics and prevent a processing state with missing queued IDs. Add app JVM race regressions and validate exact implementation SHA via authoritative PR CI. PR #1 remains draft; never modify main.

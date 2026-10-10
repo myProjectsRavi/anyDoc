@@ -1,24 +1,22 @@
 # Current Report
 
-**ID:** `2026-10-10_cycle-058`
+**ID:** `2026-10-10_cycle-059`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E058` — Batch queue task mutation integrity
-**Feature:** `F060` — Atomic task removal and output-name edits
-**User Story:** `US-R058-P1-01A` — Prevent concurrent running-task removal or rename
+**Epic:** `E059` — Batch queue clear/start integrity
+**Feature:** `F061` — Atomic queue clearing and processing admission
+**User Story:** `US-R059-P1-01A` — Prevent concurrent queue clearing from losing processing tasks
 
 ## Previous validated cycle
-Cycle 057 `E057 / F059 / US-R057-P1-01A` COMPLETE. Exact code/test SHA `d545ea396c99aba08a1e5d345969d29d6aa2c567` passed authoritative PR workflow #562 / API `38009446988` on 2026-10-10 UTC, job `114085804215` SUCCESS. All eight validation gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, lint). Eight app JVM reorder regressions cover queued-order edges, terminal status, concurrent enqueue and completion. No emulator, physical device, benchmark, or crash-free evidence.
+Cycle 058 `E058 / F060 / US-R058-P1-01A` COMPLETE. Exact code/test SHA `48d3faa924aa4b424f48fae10fc2f45a591cc9d5` passed authoritative PR workflow #567 / API `38013754231` on 2026-10-10 UTC, job `114099432847` SUCCESS. All eight configured gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Seven focused app JVM regressions cover missing IDs, queued/terminal/running status, rename sanitation and concurrent task start/removal/rename. No emulator, physical device, benchmark, or crash-free evidence.
 
 ## Source evidence
-`BatchQueueRuntimeStore.removeTask` checks task status and processing against an earlier snapshot, then filters from a later state in `_state.update`. A concurrent `startNextQueuedTask` can transition the task to RUNNING between those steps, so it can be removed while executing. `updateOutputBaseName` similarly checks QUEUED before an unconditional later `updateTask`, potentially editing a running task.
+Cycle 059 `E059 / F061 / US-R059-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.clearQueue()` checks `_state.value.isProcessing` before assigning a new state directly; a concurrent `beginProcessing()` may start after the check and then lose all tasks, or begin from a stale queued snapshot after a clear. The begin path uses a mutex but clear does not share that mutex. Next: make clearing a compare-and-set loop that validates the exact state being cleared, and make `beginProcessing` validate and mark the same state atomically before returning task IDs. Preserve error semantics and prevent a processing state with missing queued IDs. Add app JVM race regressions and validate exact implementation SHA via authoritative PR CI. PR #1 remains draft; never modify main.
 
 ## Acceptance
-- Revalidate existence/status on the same state that is atomically replaced, retrying if concurrent changes invalidate the snapshot.
-- Preserve existing ability to remove queued and terminal tasks, but reject removal of RUNNING tasks.
-- Allow output-name edits only for QUEUED tasks; do not rename RUNNING/terminal tasks even under contention.
-- Preserve unrelated tasks and counters, return meaningful errors, add focused app JVM regressions, and validate exact implementation SHA through authoritative PR CI.
-- Keep PR #1 draft/unmerged; never modify main.
+- Atomic clear rejects processing, even under contention.
+- Atomic begin captures queued IDs and processing flag from the same state, avoiding stale task IDs.
+- Focused app JVM concurrency regressions and exact-SHA authoritative PR CI.
 
 ## Next exact action
-Implement CAS-guarded removal and output-name editing in `BatchQueueRuntimeStore.kt`; add app JVM regressions for invalid status, missing IDs, concurrency and no lost state. Publish only to `codex/anydoc-continuous-improvement`, inspect exact-SHA CI, and synchronize checkpoints after terminal validation.
+Publish code/test correction on this branch, validate CI, then synchronize canonical checkpoint files. No Cycle 059 implementation is claimed yet.

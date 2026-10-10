@@ -469,3 +469,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E058 — Batch queue task mutation integrity
 #### Feature F060 — Atomic task removal and output-name edits
 - [ACTIVE / P1] `US-R058-P1-01A` — Guard task status and mutation in a single CAS loop, preserve queued/terminal removal, add app JVM regressions and exact-SHA PR CI.
+
+
+## Cycle 058 closure — 2026-10-10 UTC
+- [COMPLETE / PR CI #567] `US-R058-P1-01A` — CAS-guarded task removal/rename and seven app JVM regressions; exact SHA `48d3faa924aa4b424f48fae10fc2f45a591cc9d5`, authoritative PR run API `38013754231` SUCCESS, eight gates.
+- [NEXT / P1] `US-R059-P1-01A` — Prevent concurrent queue clear/start from losing task state or returning stale queued IDs.
+
+## Cycle 059 active
+### Epic E059 — Batch queue clear/start integrity
+#### Feature F061 — Atomic queue clearing and processing admission
+- [ACTIVE / P1] `US-R059-P1-01A` — CAS-guard clear and begin-processing against same state; app JVM race regressions and exact-SHA PR CI.
