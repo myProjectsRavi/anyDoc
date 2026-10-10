@@ -187,11 +187,19 @@ object BatchQueueRuntimeStore {
             )
         }
 
-        _state.value = BatchQueueUiState(
-            tasks = rebuiltTasks,
-            statusMessage = "Loaded preset: $presetName (${rebuiltTasks.size} task(s))"
-        )
-        return Result.success(Unit)
+        // Preset validation can take time. Recheck the same state that will be replaced:
+        // a concurrent beginProcessing must never lose its active queue.
+        while (true) {
+            val current = _state.value
+            if (current.isProcessing) {
+                return Result.failure(IllegalStateException("Stop processing before loading a preset."))
+            }
+            val replacement = BatchQueueUiState(
+                tasks = rebuiltTasks,
+                statusMessage = "Loaded preset: $presetName (${rebuiltTasks.size} task(s))"
+            )
+            if (_state.compareAndSet(current, replacement)) return Result.success(Unit)
+        }
     }
 
     suspend fun beginProcessing(): Result<List<Long>> = mutex.withLock {
