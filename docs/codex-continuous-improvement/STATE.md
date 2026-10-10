@@ -3,17 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-09_cycle-057`
+**Current report:** `2026-10-10_cycle-058`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 057
-**Current Epic:** `E057` — Concurrent queue reorder integrity
-**Current Feature:** `F059` — Atomic queue reorder from current state
-**Current User Story:** `US-R057-P1-01A` — Prevent stale reorders from losing tasks or reverting task outcomes (ACTIVE)
-**Last completed cycle:** Cycle 056
-**State checkpoint timestamp:** 2026-10-09 UTC
+**Cycle:** 058
+**Current Epic:** `E058` — Batch queue task mutation integrity
+**Current Feature:** `F060` — Atomic task removal and output-name edits
+**Current User Story:** `US-R058-P1-01A` — Prevent concurrent running-task removal or rename (ACTIVE)
+**Last completed cycle:** Cycle 057
+**State checkpoint timestamp:** 2026-10-10 UTC
 
 ## Current next executable step
-Cycle 057 E057/F059/US-R057-P1-01A ACTIVE / INCOMPLETE. Cycle 056 exact code/test SHA `2dd59048b0844ed347eb28960922b52e39c0c7bf` passed authoritative PR CI #559 / API `37993664370` on 2026-10-09 UTC (eight gates). Source: `BatchQueueRuntimeStore.moveTask` captures a task list and constructs reordered `updated` before `_state.update`; a concurrent task addition or terminal transition can be overwritten by the stale list on retry. Next: compute reorder from the latest StateFlow value within an atomic compare-and-set loop; recheck QUEUED status and edge constraints against the same state; add app JVM regressions for latest-state preservation and invalid edits; validate exact code/test SHA via PR CI. Keep PR #1 draft; never modify main.
+Cycle 057 `E057 / F059 / US-R057-P1-01A` COMPLETE. Exact code/test SHA `d545ea396c99aba08a1e5d345969d29d6aa2c567` passed authoritative PR workflow #562 / API `38009446988` on 2026-10-10 UTC, job `114085804215` SUCCESS. All eight validation gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, lint). Eight app JVM reorder regressions cover queued-order edges, terminal status, concurrent enqueue and completion. No emulator, physical device, benchmark, or crash-free evidence.
+Cycle 058 `E058 / F060 / US-R058-P1-01A` ACTIVE / INCOMPLETE. Evidence: `BatchQueueRuntimeStore.removeTask()` checks running status on a snapshot before `_state.update`, so a concurrent start can turn a task RUNNING before it is removed. `updateOutputBaseName()` checks QUEUED status before `updateTask()` and may rename a task that has since started. Next: perform status validation and task mutation using a single compare-and-set loop per operation; preserve valid terminal-task removal semantics; add app JVM tests for task status, error/edge cases and concurrency; validate exact code/test SHA in PR CI. Do not modify main; keep PR #1 draft.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -181,3 +182,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 056 completion / Cycle 057 activation — 2026-10-09 UTC
 - Cycle 056 E056/F058/US-R056-P1-01A COMPLETE. Exact code/test SHA `2dd59048b0844ed347eb28960922b52e39c0c7bf`; authoritative PR CI #559 / API `37993664370` SUCCESS on 2026-10-09 UTC. All eight gates passed: core PDF, converter, scanner, PDF tools, app JVM tests, debug APK, unsigned release/R8, Android lint. Terminal state/counters now transition atomically only from RUNNING; ten app JVM regressions cover duplicate/conflicting/unknown/queued/concurrent callbacks. No device, emulator, benchmark, or crash-free evidence.
 - Cycle 057 E057/F059/US-R057-P1-01A ACTIVE / INCOMPLETE. Source: `moveTask` calculates reordered task list before StateFlow atomic update; concurrent enqueue or terminal-state update may be lost. Next: move validation and reordering into one CAS guarded update against the current state; test no lost task/status and boundary failures; validate exact SHA through PR CI. No Cycle 057 production/test mutation claimed at activation. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 057 completion / Cycle 058 activation — 2026-10-10 UTC
+- Cycle 057 `E057 / F059 / US-R057-P1-01A` COMPLETE. Exact code/test SHA `d545ea396c99aba08a1e5d345969d29d6aa2c567` passed authoritative PR workflow #562 / API `38009446988` on 2026-10-10 UTC, job `114085804215` SUCCESS. All eight validation gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, lint). Eight app JVM reorder regressions cover queued-order edges, terminal status, concurrent enqueue and completion. No emulator, physical device, benchmark, or crash-free evidence.
+- Cycle 058 `E058 / F060 / US-R058-P1-01A` ACTIVE / INCOMPLETE. Evidence: `BatchQueueRuntimeStore.removeTask()` checks running status on a snapshot before `_state.update`, so a concurrent start can turn a task RUNNING before it is removed. `updateOutputBaseName()` checks QUEUED status before `updateTask()` and may rename a task that has since started. Next: perform status validation and task mutation using a single compare-and-set loop per operation; preserve valid terminal-task removal semantics; add app JVM tests for task status, error/edge cases and concurrency; validate exact code/test SHA in PR CI. Do not modify main; keep PR #1 draft.

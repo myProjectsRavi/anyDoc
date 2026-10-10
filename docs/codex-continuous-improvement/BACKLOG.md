@@ -459,3 +459,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E057 — Concurrent queue reorder integrity
 #### Feature F059 — Atomic queue reorder from current state
 - [ACTIVE / P1] `US-R057-P1-01A` — Validate and reorder QUEUED tasks atomically from current StateFlow state; preserve concurrent additions and terminal outcomes; focused app JVM regressions and exact-SHA PR CI.
+
+
+## Cycle 057 closure — 2026-10-10 UTC
+- [COMPLETE / PR CI #562] `US-R057-P1-01A` — Atomic queue reorder from current StateFlow; eight app JVM regressions. Exact code/test SHA `d545ea396c99aba08a1e5d345969d29d6aa2c567`, authoritative PR run API `38009446988` SUCCESS, all eight gates.
+- [NEXT / P1] `US-R058-P1-01A` — Prevent running-task removal and rename races under concurrent execution.
+
+## Cycle 058 active
+### Epic E058 — Batch queue task mutation integrity
+#### Feature F060 — Atomic task removal and output-name edits
+- [ACTIVE / P1] `US-R058-P1-01A` — Guard task status and mutation in a single CAS loop, preserve queued/terminal removal, add app JVM regressions and exact-SHA PR CI.
