@@ -479,3 +479,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E059 — Batch queue clear/start integrity
 #### Feature F061 — Atomic queue clearing and processing admission
 - [ACTIVE / P1] `US-R059-P1-01A` — CAS-guard clear and begin-processing against same state; app JVM race regressions and exact-SHA PR CI.
+
+
+## Cycle 059 closure — 2026-10-10 UTC
+- [COMPLETE / PR CI #570] `US-R059-P1-01A` — Atomic queue clear and begin processing with five focused JVM regressions. Exact code/test SHA `a0e446b8161cf2619452a2530864c5dc14cab5fe`, authoritative PR run API `38017407741` SUCCESS, all eight gates.
+- [NEXT / P1] `US-R060-P1-01A` — Prevent preset replay from replacing active processing tasks under concurrency.
+
+## Cycle 060 active
+### Epic E060 — Preset replay concurrency integrity
+#### Feature F062 — Atomic preset queue replacement
+- [ACTIVE / P1] `US-R060-P1-01A` — CAS-guard validated preset replay against current nonprocessing state; focused app JVM race tests and exact-SHA authoritative PR CI.
