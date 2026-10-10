@@ -121,6 +121,7 @@ class BatchQueueTaskMutationTest {
                 reset()
                 val id = add(2000 + index)
                 val original = BatchQueueRuntimeStore.state.value.tasks.single().outputBaseName
+                assertTrue(runBlocking { BatchQueueRuntimeStore.beginProcessing() }.isSuccess)
                 val gate = CountDownLatch(1)
                 val start = pool.submit {
                     gate.await()
