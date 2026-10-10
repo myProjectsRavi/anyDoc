@@ -489,3 +489,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E060 — Preset replay concurrency integrity
 #### Feature F062 — Atomic preset queue replacement
 - [ACTIVE / P1] `US-R060-P1-01A` — CAS-guard validated preset replay against current nonprocessing state; focused app JVM race tests and exact-SHA authoritative PR CI.
+
+
+## Cycle 060 closure — 2026-10-10 UTC
+- [COMPLETE / PR CI #573] `US-R060-P1-01A` — Atomic preset replay with four app JVM regressions (150 concurrent replay/start scenarios). Exact code/test SHA `6eb42d73360d7795bbb267d2d6ee217f8ded474a`, authoritative PR run API `38024299499` SUCCESS, eight gates.
+- [NEXT / P1] `US-R061-P1-01A` — Prevent recovery overwriting concurrent queue mutations and reserve collision-free task IDs.
+
+## Cycle 061 active
+### Epic E061 — Recoverable queue admission integrity
+#### Feature F063 — Atomic recovery and task-ID uniqueness
+- [ACTIVE / P1] `US-R061-P1-01A` — CAS-guard recovery against current empty/nonprocessing queue, coordinate task-ID reservation across recovery/enqueue/preset replay, add focused app JVM race tests, validate exact-SHA PR CI.

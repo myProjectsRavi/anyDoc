@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-10_cycle-060`
+**Current report:** `2026-10-10_cycle-061`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 060
-**Current Epic:** `E060` — Preset replay concurrency integrity
-**Current Feature:** `F062` — Atomic preset queue replacement
-**Current User Story:** `US-R060-P1-01A` — Prevent preset replay from replacing active processing tasks (ACTIVE)
-**Last completed cycle:** Cycle 059
+**Cycle:** 061
+**Current Epic:** `E061` — Recoverable queue admission integrity
+**Current Feature:** `F063` — Atomic recovery and task-ID uniqueness
+**Current User Story:** `US-R061-P1-01A` — Prevent recovery from overwriting concurrent queue changes or reusing task IDs (ACTIVE)
+**Last completed cycle:** Cycle 060
 **State checkpoint timestamp:** 2026-10-10 UTC
 
 ## Current next executable step
-Cycle 059 `E059 / F061 / US-R059-P1-01A` COMPLETE. Exact code/test SHA `a0e446b8161cf2619452a2530864c5dc14cab5fe` passed authoritative PR workflow #570 / API `38017407741` on 2026-10-10 UTC, job `114110698073` SUCCESS. All eight configured validation gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, and Android lint. Five focused app JVM tests cover normal clear, processing rejection, empty start, duplicate start and 150 concurrent clear/start races. No emulator, physical device, benchmark, or crash-free claim.
-Cycle 060 `E060 / F062 / US-R060-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.replaceQueueWithPreset()` checks `_state.value.isProcessing` before validating/building a preset and then assigns `_state.value = BatchQueueUiState(...)` unconditionally. A concurrent `beginProcessing()` may set isProcessing after that initial check; preset replay then discards active tasks. Next: validate the preset before mutation, use compare-and-set against a current nonprocessing snapshot to publish the replacement, return a failure rather than overwrite active work, add focused app JVM race and invalid-preset tests, and validate the exact code/test SHA through authoritative PR CI. Keep PR #1 draft/unmerged; never modify main.
+Cycle 060 E060/F062/US-R060-P1-01A COMPLETE. Exact implementation/test SHA `6eb42d73360d7795bbb267d2d6ee217f8ded474a` passed authoritative pull-request workflow #573 / API `38024299499` on 2026-10-10 UTC, job `114131743685` SUCCESS. All eight gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug assembly, unsigned release/R8, Android lint. Four focused preset-replay regression tests include 150 concurrent start/replay scenarios. No emulator, physical device, benchmark or crash-free claim.
+Cycle 061 E061/F063/US-R061-P1-01A ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.restoreRecoverableTasksIfEmpty()` checks queue emptiness before direct `_state.value = ...`, potentially overwriting a concurrent enqueue or processing admission. Recovery updates `taskIdCounter` independently of concurrent task-ID reservations by addTask/preset replay, permitting ID collisions. Next: atomically admit recovery against the latest empty nonprocessing state; coordinate ID allocation and recovery across addTask and preset replay without discarding concurrent mutations; add focused JVM recovery/enqueue/preset/start race and invalid-input tests; validate exact code/test SHA in authoritative PR CI. Keep PR #1 draft/unmerged; never modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -197,3 +197,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 059 completion / Cycle 060 activation — 2026-10-10 UTC
 - Cycle 059 `E059 / F061 / US-R059-P1-01A` COMPLETE. Exact code/test SHA `a0e446b8161cf2619452a2530864c5dc14cab5fe` passed authoritative PR workflow #570 / API `38017407741` on 2026-10-10 UTC, job `114110698073` SUCCESS. All eight configured validation gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, and Android lint. Five focused app JVM tests cover normal clear, processing rejection, empty start, duplicate start and 150 concurrent clear/start races. No emulator, physical device, benchmark, or crash-free claim.
 - Cycle 060 `E060 / F062 / US-R060-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.replaceQueueWithPreset()` checks `_state.value.isProcessing` before validating/building a preset and then assigns `_state.value = BatchQueueUiState(...)` unconditionally. A concurrent `beginProcessing()` may set isProcessing after that initial check; preset replay then discards active tasks. Next: validate the preset before mutation, use compare-and-set against a current nonprocessing snapshot to publish the replacement, return a failure rather than overwrite active work, add focused app JVM race and invalid-preset tests, and validate the exact code/test SHA through authoritative PR CI. Keep PR #1 draft/unmerged; never modify main.
+
+
+## Cycle 060 completion / Cycle 061 activation — 2026-10-10 UTC
+- Cycle 060 E060/F062/US-R060-P1-01A COMPLETE: exact code/test SHA `6eb42d73360d7795bbb267d2d6ee217f8ded474a`, authoritative PR CI #573 / API `38024299499` SUCCESS, job `114131743685`; all eight gates passed. Four app JVM regressions cover active processing, valid/invalid presets and 150 concurrent replay/start scenarios. No device/emulator/benchmark evidence.
+- Cycle 061 E061/F063/US-R061-P1-01A ACTIVE / INCOMPLETE: atomic recovery admission and collision-free task-ID reservation under concurrent enqueue/preset/start. Next: coordinate IDs, CAS recovery, add deterministic app JVM race tests and validate exact implementation SHA. No Cycle 061 production/test mutation claimed at activation. PR #1 draft; main untouched.
