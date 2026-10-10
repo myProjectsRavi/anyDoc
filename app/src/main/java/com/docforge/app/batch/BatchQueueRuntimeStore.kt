@@ -11,6 +11,8 @@ import kotlinx.coroutines.sync.withLock
 
 object BatchQueueRuntimeStore {
     private val taskIdCounter = AtomicLong(1L)
+    // Protect ID reservations and recovery publication from each other.
+    private val admissionLock = Any()
     private val outputBaseSanitizer = Regex("[^a-zA-Z0-9_-]")
     private val mutex = Mutex()
 
@@ -27,28 +29,31 @@ object BatchQueueRuntimeStore {
             return Result.failure(IllegalArgumentException(validationError))
         }
 
-        val taskId = taskIdCounter.getAndIncrement()
-        val summary = buildInputSummary(type, uniqueUris.size, inputLabels)
-        val timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-        val outputBaseName = "${type.defaultOutputPrefix}_${timestamp}_$taskId"
+        return synchronized(admissionLock) {
+            val taskId = reserveTaskIds(1)
+                ?: return@synchronized Result.failure(IllegalStateException("Task IDs exhausted."))
+            val summary = buildInputSummary(type, uniqueUris.size, inputLabels)
+            val timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+            val outputBaseName = "${type.defaultOutputPrefix}_${timestamp}_$taskId"
 
-        val task = BatchQueueTask(
-            id = taskId,
-            type = type,
-            inputUris = uniqueUris,
-            inputSummary = summary,
-            outputBaseName = outputBaseName,
-            status = BatchTaskStatus.QUEUED
-        )
-
-        _state.update {
-            it.copy(
-                tasks = it.tasks + task,
-                statusMessage = "Queued: ${type.title}",
-                errorMessage = null
+            val task = BatchQueueTask(
+                id = taskId,
+                type = type,
+                inputUris = uniqueUris,
+                inputSummary = summary,
+                outputBaseName = outputBaseName,
+                status = BatchTaskStatus.QUEUED
             )
+
+            _state.update {
+                it.copy(
+                    tasks = it.tasks + task,
+                    statusMessage = "Queued: ${type.title}",
+                    errorMessage = null
+                )
+            }
+            Result.success(Unit)
         }
-        return Result.success(Unit)
     }
 
     fun removeTask(taskId: Long): Result<Unit> {
@@ -123,26 +128,31 @@ object BatchQueueRuntimeStore {
     }
 
     fun restoreRecoverableTasksIfEmpty(tasks: List<BatchQueueTask>): Boolean {
-        if (_state.value.isProcessing || _state.value.tasks.isNotEmpty() || tasks.isEmpty()) {
-            return false
-        }
-
         val restored = tasks
             .filter { it.status == BatchTaskStatus.QUEUED }
             .distinctBy { it.id }
-
         if (restored.isEmpty()) return false
 
         val restoredMaxId = restored.maxOf { it.id }
-        taskIdCounter.updateAndGet { current ->
-            nextTaskIdAfterRestore(current, restoredMaxId)
+        return synchronized(admissionLock) {
+            var accepted = false
+            while (!accepted) {
+                val current = _state.value
+                if (current.isProcessing || current.tasks.isNotEmpty()) break
+                val replacement = BatchQueueUiState(
+                    tasks = restored,
+                    statusMessage = "Recovered ${restored.size} queued task(s) after app restart."
+                )
+                if (_state.compareAndSet(current, replacement)) {
+                    // No enqueue or preset can reserve an ID until this is advanced.
+                    taskIdCounter.updateAndGet { next ->
+                        nextTaskIdAfterRestore(next, restoredMaxId)
+                    }
+                    accepted = true
+                }
+            }
+            accepted
         }
-
-        _state.value = BatchQueueUiState(
-            tasks = restored,
-            statusMessage = "Recovered ${restored.size} queued task(s) after app restart."
-        )
-        return true
     }
 
     fun replaceQueueWithPreset(presetName: String, presetTasks: List<BatchQueuePresetTask>): Result<Unit> {
@@ -171,34 +181,42 @@ object BatchQueueRuntimeStore {
             presetTask to uniqueUris
         }
 
-        val rebuiltTasks = validatedTasks.map { (presetTask, uris) ->
-            val taskId = taskIdCounter.getAndIncrement()
-            BatchQueueTask(
-                id = taskId,
-                type = presetTask.type,
-                inputUris = uris,
-                inputSummary = presetTask.inputSummary.ifBlank {
-                    buildInputSummary(presetTask.type, uris.size, emptyList())
-                },
-                outputBaseName = presetTask.outputBaseName.trim()
-                    .replace(outputBaseSanitizer, "_")
-                    .ifBlank { "${presetTask.type.defaultOutputPrefix}_$taskId" },
-                status = BatchTaskStatus.QUEUED
-            )
-        }
-
-        // Preset validation can take time. Recheck the same state that will be replaced:
-        // a concurrent beginProcessing must never lose its active queue.
-        while (true) {
-            val current = _state.value
-            if (current.isProcessing) {
-                return Result.failure(IllegalStateException("Stop processing before loading a preset."))
+        return synchronized(admissionLock) {
+            if (_state.value.isProcessing) {
+                return@synchronized Result.failure(IllegalStateException("Stop processing before loading a preset."))
             }
-            val replacement = BatchQueueUiState(
-                tasks = rebuiltTasks,
-                statusMessage = "Loaded preset: $presetName (${rebuiltTasks.size} task(s))"
-            )
-            if (_state.compareAndSet(current, replacement)) return Result.success(Unit)
+            val firstId = reserveTaskIds(validatedTasks.size)
+                ?: return@synchronized Result.failure(IllegalStateException("Task IDs exhausted."))
+            val rebuiltTasks = validatedTasks.mapIndexed { index, (presetTask, uris) ->
+                val taskId = firstId + index.toLong()
+                BatchQueueTask(
+                    id = taskId,
+                    type = presetTask.type,
+                    inputUris = uris,
+                    inputSummary = presetTask.inputSummary.ifBlank {
+                        buildInputSummary(presetTask.type, uris.size, emptyList())
+                    },
+                    outputBaseName = presetTask.outputBaseName.trim()
+                        .replace(outputBaseSanitizer, "_")
+                        .ifBlank { "${presetTask.type.defaultOutputPrefix}_$taskId" },
+                    status = BatchTaskStatus.QUEUED
+                )
+            }
+
+            // A concurrent beginProcessing can still win; retry against current state.
+            var replaced = false
+            while (!replaced) {
+                val current = _state.value
+                if (current.isProcessing) {
+                    return@synchronized Result.failure(IllegalStateException("Stop processing before loading a preset."))
+                }
+                val replacement = BatchQueueUiState(
+                    tasks = rebuiltTasks,
+                    statusMessage = "Loaded preset: $presetName (${rebuiltTasks.size} task(s))"
+                )
+                replaced = _state.compareAndSet(current, replacement)
+            }
+            Result.success(Unit)
         }
     }
 
@@ -422,6 +440,14 @@ object BatchQueueRuntimeStore {
                 return Result.success(Unit)
             }
         }
+    }
+
+    // Must be called with admissionLock held. Long.MAX_VALUE is the exhaustion sentinel.
+    private fun reserveTaskIds(count: Int): Long? {
+        val first = taskIdCounter.get()
+        if (count <= 0 || first <= 0L || first > Long.MAX_VALUE - count.toLong()) return null
+        taskIdCounter.set(first + count)
+        return first
     }
 
     private fun validateInputUris(uris: List<Uri>): String? =
