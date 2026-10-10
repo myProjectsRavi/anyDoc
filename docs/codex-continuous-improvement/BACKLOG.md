@@ -499,3 +499,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E061 — Recoverable queue admission integrity
 #### Feature F063 — Atomic recovery and task-ID uniqueness
 - [ACTIVE / P1] `US-R061-P1-01A` — CAS-guard recovery against current empty/nonprocessing queue, coordinate task-ID reservation across recovery/enqueue/preset replay, add focused app JVM race tests, validate exact-SHA PR CI.
+
+## Cycle 061 closure — 2026-10-10 UTC
+- [COMPLETE / PR CI #576] `US-R061-P1-01A` — Atomic recovery admission and coordinated task IDs. Seven focused app JVM regressions, including 450 concurrency scenarios. Exact SHA `e4ec1efc4556b4f3cea6124d53f28ed4fd1bf3a2`, PR run API `38034856244` SUCCESS, all eight gates.
+- [NEXT / P1] `US-R062-P1-01A` — Prevent inactive dispatch and uncommitted task returns.
+
+## Cycle 062 active
+### Epic E062 — Batch queue dispatch claim integrity
+#### Feature F064 — Atomic processing-aware task claims
+- [ACTIVE / P1] `US-R062-P1-01A` — CAS-claim QUEUED tasks only while processing, return committed RUNNING tasks, add app JVM regressions and exact-SHA PR CI.

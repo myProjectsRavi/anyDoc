@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-10_cycle-061`
+**Current report:** `2026-10-10_cycle-062`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 061
-**Current Epic:** `E061` — Recoverable queue admission integrity
-**Current Feature:** `F063` — Atomic recovery and task-ID uniqueness
-**Current User Story:** `US-R061-P1-01A` — Prevent recovery from overwriting concurrent queue changes or reusing task IDs (ACTIVE)
-**Last completed cycle:** Cycle 060
+**Cycle:** 062
+**Current Epic:** `E062` — Batch queue dispatch claim integrity
+**Current Feature:** `F064` — Atomic processing-aware task claims
+**Current User Story:** `US-R062-P1-01A` — Return only committed task claims while processing is active (ACTIVE)
+**Last completed cycle:** Cycle 061
 **State checkpoint timestamp:** 2026-10-10 UTC
 
 ## Current next executable step
-Cycle 060 E060/F062/US-R060-P1-01A COMPLETE. Exact implementation/test SHA `6eb42d73360d7795bbb267d2d6ee217f8ded474a` passed authoritative pull-request workflow #573 / API `38024299499` on 2026-10-10 UTC, job `114131743685` SUCCESS. All eight gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug assembly, unsigned release/R8, Android lint. Four focused preset-replay regression tests include 150 concurrent start/replay scenarios. No emulator, physical device, benchmark or crash-free claim.
-Cycle 061 E061/F063/US-R061-P1-01A ACTIVE / INCOMPLETE. Source evidence: `BatchQueueRuntimeStore.restoreRecoverableTasksIfEmpty()` checks queue emptiness before direct `_state.value = ...`, potentially overwriting a concurrent enqueue or processing admission. Recovery updates `taskIdCounter` independently of concurrent task-ID reservations by addTask/preset replay, permitting ID collisions. Next: atomically admit recovery against the latest empty nonprocessing state; coordinate ID allocation and recovery across addTask and preset replay without discarding concurrent mutations; add focused JVM recovery/enqueue/preset/start race and invalid-input tests; validate exact code/test SHA in authoritative PR CI. Keep PR #1 draft/unmerged; never modify main.
+Cycle 061 E061/F063/US-R061-P1-01A COMPLETE: exact code/test SHA `e4ec1efc4556b4f3cea6124d53f28ed4fd1bf3a2` passed authoritative PR CI #576 / API `38034856244` on 2026-10-10 UTC, job `114163103040` SUCCESS; eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug, unsigned release/R8, lint). Seven app JVM regression tests include 450 concurrent recovery scenarios. No emulator, physical device, benchmark or crash-free claim.
+Cycle 062 E062/F064/US-R062-P1-01A ACTIVE / INCOMPLETE: `BatchQueueRuntimeStore.startNextQueuedTask()` assigns its return value inside retryable StateFlow.update before the update is committed, so concurrent updates can return an uncommitted task. It also does not check `isProcessing`, allowing dispatch after processing has stopped. Next: CAS-claim only in active processing state, return only a committed RUNNING task, add focused JVM regression and concurrency tests, validate exact SHA via authoritative PR CI, then finalize checkpoints. No Cycle 062 production/test mutation claimed at activation. PR #1 draft/unmerged; main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -202,3 +202,7 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 060 completion / Cycle 061 activation — 2026-10-10 UTC
 - Cycle 060 E060/F062/US-R060-P1-01A COMPLETE: exact code/test SHA `6eb42d73360d7795bbb267d2d6ee217f8ded474a`, authoritative PR CI #573 / API `38024299499` SUCCESS, job `114131743685`; all eight gates passed. Four app JVM regressions cover active processing, valid/invalid presets and 150 concurrent replay/start scenarios. No device/emulator/benchmark evidence.
 - Cycle 061 E061/F063/US-R061-P1-01A ACTIVE / INCOMPLETE: atomic recovery admission and collision-free task-ID reservation under concurrent enqueue/preset/start. Next: coordinate IDs, CAS recovery, add deterministic app JVM race tests and validate exact implementation SHA. No Cycle 061 production/test mutation claimed at activation. PR #1 draft; main untouched.
+
+## Cycle 061 completion / Cycle 062 activation — 2026-10-10 UTC
+- Cycle 061 E061/F063/US-R061-P1-01A COMPLETE: exact code/test SHA `e4ec1efc4556b4f3cea6124d53f28ed4fd1bf3a2` passed authoritative PR CI #576 / API `38034856244` on 2026-10-10 UTC, job `114163103040` SUCCESS; eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug, unsigned release/R8, lint). Seven app JVM regression tests include 450 concurrent recovery scenarios. No emulator, physical device, benchmark or crash-free claim.
+- Cycle 062 E062/F064/US-R062-P1-01A ACTIVE / INCOMPLETE: `BatchQueueRuntimeStore.startNextQueuedTask()` assigns its return value inside retryable StateFlow.update before the update is committed, so concurrent updates can return an uncommitted task. It also does not check `isProcessing`, allowing dispatch after processing has stopped. Next: CAS-claim only in active processing state, return only a committed RUNNING task, add focused JVM regression and concurrency tests, validate exact SHA via authoritative PR CI, then finalize checkpoints. No Cycle 062 production/test mutation claimed at activation. PR #1 draft/unmerged; main untouched.
