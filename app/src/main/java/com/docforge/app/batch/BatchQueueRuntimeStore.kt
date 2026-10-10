@@ -254,31 +254,29 @@ object BatchQueueRuntimeStore {
     }
 
     fun startNextQueuedTask(taskIds: Set<Long>, total: Int): BatchQueueTask? {
-        var nextTask: BatchQueueTask? = null
-        _state.update { state ->
-            val index = state.tasks.indexOfFirst { task ->
+        while (true) {
+            val current = _state.value
+            if (!current.isProcessing) return null
+
+            val index = current.tasks.indexOfFirst { task ->
                 task.id in taskIds && task.status == BatchTaskStatus.QUEUED
             }
-            if (index < 0) {
-                return@update state
-            }
+            if (index < 0) return null
 
-            val running = state.tasks[index].copy(
+            val running = current.tasks[index].copy(
                 status = BatchTaskStatus.RUNNING,
                 errorMessage = null
             )
-            nextTask = running
-
-            val updatedTasks = state.tasks.toMutableList()
+            val updatedTasks = current.tasks.toMutableList()
             updatedTasks[index] = running
 
-            state.copy(
+            val claimed = current.copy(
                 tasks = updatedTasks,
-                statusMessage = "Running ${state.processedCount + 1}/$total: ${running.type.title}",
+                statusMessage = "Running ${current.processedCount + 1}/$total: ${running.type.title}",
                 errorMessage = null
             )
+            if (_state.compareAndSet(current, claimed)) return running
         }
-        return nextTask
     }
 
     fun markTaskRunning(taskId: Long, index: Int, total: Int) {
