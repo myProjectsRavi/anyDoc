@@ -52,22 +52,20 @@ object BatchQueueRuntimeStore {
     }
 
     fun removeTask(taskId: Long): Result<Unit> {
-        val current = _state.value
-        val task = current.tasks.firstOrNull { it.id == taskId }
-            ?: return Result.failure(IllegalArgumentException("Task not found."))
-
-        if (current.isProcessing && task.status == BatchTaskStatus.RUNNING) {
-            return Result.failure(IllegalStateException("Cannot remove a running task."))
-        }
-
-        _state.update {
-            it.copy(
-                tasks = it.tasks.filterNot { item -> item.id == taskId },
+        while (true) {
+            val current = _state.value
+            val task = current.tasks.firstOrNull { it.id == taskId }
+                ?: return Result.failure(IllegalArgumentException("Task not found."))
+            if (task.status == BatchTaskStatus.RUNNING) {
+                return Result.failure(IllegalStateException("Cannot remove a running task."))
+            }
+            val updated = current.copy(
+                tasks = current.tasks.filterNot { it.id == taskId },
                 statusMessage = "Removed task #$taskId",
                 errorMessage = null
             )
+            if (_state.compareAndSet(current, updated)) return Result.success(Unit)
         }
-        return Result.success(Unit)
     }
 
     fun moveTaskUp(taskId: Long): Result<Unit> = moveTask(taskId, -1)
@@ -75,26 +73,28 @@ object BatchQueueRuntimeStore {
     fun moveTaskDown(taskId: Long): Result<Unit> = moveTask(taskId, +1)
 
     fun updateOutputBaseName(taskId: Long, outputBaseName: String): Result<Unit> {
-        val current = _state.value
-        val task = current.tasks.firstOrNull { it.id == taskId }
-            ?: return Result.failure(IllegalArgumentException("Task not found."))
-
-        if (task.status != BatchTaskStatus.QUEUED) {
-            return Result.failure(IllegalStateException("Only queued tasks can be edited."))
-        }
-
-        val sanitized = outputBaseName.trim()
-            .replace(outputBaseSanitizer, "_")
-            .ifBlank { "${task.type.defaultOutputPrefix}_${task.id}" }
-
-        updateTask(taskId) { it.copy(outputBaseName = sanitized) }
-        _state.update {
-            it.copy(
+        while (true) {
+            val current = _state.value
+            val index = current.tasks.indexOfFirst { it.id == taskId }
+            if (index < 0) {
+                return Result.failure(IllegalArgumentException("Task not found."))
+            }
+            val task = current.tasks[index]
+            if (task.status != BatchTaskStatus.QUEUED) {
+                return Result.failure(IllegalStateException("Only queued tasks can be edited."))
+            }
+            val sanitized = outputBaseName.trim()
+                .replace(outputBaseSanitizer, "_")
+                .ifBlank { "${task.type.defaultOutputPrefix}_${task.id}" }
+            val tasks = current.tasks.toMutableList()
+            tasks[index] = task.copy(outputBaseName = sanitized)
+            val updated = current.copy(
+                tasks = tasks,
                 statusMessage = "Updated output base for task #$taskId",
                 errorMessage = null
             )
+            if (_state.compareAndSet(current, updated)) return Result.success(Unit)
         }
-        return Result.success(Unit)
     }
 
     fun clearQueue(): Result<Unit> {
