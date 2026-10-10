@@ -98,11 +98,14 @@ object BatchQueueRuntimeStore {
     }
 
     fun clearQueue(): Result<Unit> {
-        if (_state.value.isProcessing) {
-            return Result.failure(IllegalStateException("Stop processing before clearing the queue."))
+        while (true) {
+            val current = _state.value
+            if (current.isProcessing) {
+                return Result.failure(IllegalStateException("Stop processing before clearing the queue."))
+            }
+            val cleared = BatchQueueUiState(statusMessage = "Queue cleared")
+            if (_state.compareAndSet(current, cleared)) return Result.success(Unit)
         }
-        _state.value = BatchQueueUiState(statusMessage = "Queue cleared")
-        return Result.success(Unit)
     }
 
     fun clearError() {
@@ -192,20 +195,22 @@ object BatchQueueRuntimeStore {
     }
 
     suspend fun beginProcessing(): Result<List<Long>> = mutex.withLock {
-        if (_state.value.isProcessing) {
-            return@withLock Result.failure(IllegalStateException("Queue is already running."))
-        }
+        beginProcessingFromCurrentState()
+    }
 
-        val queued = _state.value.tasks
-            .filter { it.status == BatchTaskStatus.QUEUED }
-            .map { it.id }
-
-        if (queued.isEmpty()) {
-            return@withLock Result.failure(IllegalArgumentException("Add at least one queued task first."))
-        }
-
-        _state.update {
-            it.copy(
+    private fun beginProcessingFromCurrentState(): Result<List<Long>> {
+        while (true) {
+            val current = _state.value
+            if (current.isProcessing) {
+                return Result.failure(IllegalStateException("Queue is already running."))
+            }
+            val queued = current.tasks
+                .filter { it.status == BatchTaskStatus.QUEUED }
+                .map { it.id }
+            if (queued.isEmpty()) {
+                return Result.failure(IllegalArgumentException("Add at least one queued task first."))
+            }
+            val started = current.copy(
                 isProcessing = true,
                 processedCount = 0,
                 successCount = 0,
@@ -213,9 +218,8 @@ object BatchQueueRuntimeStore {
                 statusMessage = "Starting batch queue...",
                 errorMessage = null
             )
+            if (_state.compareAndSet(current, started)) return Result.success(queued)
         }
-
-        Result.success(queued)
     }
 
     fun snapshotTasks(taskIds: List<Long>): List<BatchQueueTask> {
