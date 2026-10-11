@@ -527,3 +527,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E064 — Batch queue cancel/start handoff integrity
 #### Feature F066 — Cancel-before-worker-start recovery
 - [ACTIVE / P1] `US-R064-P1-01A` — Correct pending-start/pre-dispatch cancellation and idempotent terminal cleanup; focused JVM/Robolectric tests and exact-SHA PR CI.
+
+
+## Cycle 064 closure — 2026-10-11 UTC
+- [COMPLETE / PR CI #593] `US-R064-P1-01A` — Run-identified cancellation handoff, pre-dispatch cleanup, stale command/worker isolation, 13 focused app JVM tests. Exact SHA `0227722822dab7d4c6d9ed06c0d722b430a660cd`, API `38142774494` SUCCESS all eight gates. Paired push #592 cancelled by concurrency, not test evidence.
+- [NEXT / P1] `US-R065-P1-01A` — Recover admitted batch when foreground service promotion throws before worker attachment.
+
+## Cycle 065 active
+### Epic E065 — Foreground service promotion integrity
+#### Feature F067 — Run-scoped foreground promotion failure recovery
+- [ACTIVE / P1] `US-R065-P1-01A` — Handle `startForeground()` failures without stranding current run; preserve newer runs; deterministic JVM/Robolectric regressions and exact-head CI.
