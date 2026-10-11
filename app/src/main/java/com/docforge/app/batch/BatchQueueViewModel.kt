@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -159,8 +160,10 @@ class BatchQueueViewModel(
         }
     }
 
+    private var pendingStartJob: Job? = null
+
     fun runQueue() {
-        viewModelScope.launch {
+        pendingStartJob = viewModelScope.launch {
             val startResult = BatchQueueRuntimeStore.beginProcessing()
             val taskIds = startResult.getOrElse { err ->
                 setError(err.message ?: "Failed to start queue")
@@ -182,9 +185,18 @@ class BatchQueueViewModel(
     }
 
     fun cancelQueue() {
+        val taskIds = BatchQueueRuntimeStore.state.value.activeRunTaskIds
+        if (taskIds.isEmpty()) {
+            // A queued runQueue coroutine may still be awaiting the admission mutex.
+            // Cancel it before it can admit a batch after the user's cancel action.
+            pendingStartJob?.cancel()
+            return
+        }
+
         val context = getApplication<Application>().applicationContext
         val intent = Intent(context, BatchQueueForegroundService::class.java).apply {
             action = BatchQueueServiceContract.ACTION_CANCEL_QUEUE
+            putExtra(BatchQueueServiceContract.EXTRA_TASK_IDS, taskIds.toLongArray())
         }
         launchBatchQueueCancellation(
             launch = {

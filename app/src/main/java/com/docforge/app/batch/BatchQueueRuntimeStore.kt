@@ -238,6 +238,7 @@ object BatchQueueRuntimeStore {
             }
             val started = current.copy(
                 isProcessing = true,
+                activeRunTaskIds = queued.toSet(),
                 processedCount = 0,
                 successCount = 0,
                 failureCount = 0,
@@ -340,6 +341,58 @@ object BatchQueueRuntimeStore {
         }
     }
 
+    /** A stale service command must never attach to or finish a later admitted batch. */
+    fun isCurrentRun(taskIds: Set<Long>): Boolean =
+        taskIds.isNotEmpty() && _state.value.let {
+            it.isProcessing && it.activeRunTaskIds == taskIds
+        }
+
+    /**
+     * Complete cancellation even when the RUN command has not attached a worker.
+     * Only tasks admitted to this exact run are affected; later enqueues remain queued.
+     */
+    fun cancelPendingRun(taskIds: Set<Long>): Boolean {
+        if (taskIds.isEmpty()) return false
+        while (true) {
+            val current = _state.value
+            if (!current.isProcessing || current.activeRunTaskIds != taskIds) return false
+            val canceledRunning = current.tasks.count {
+                it.id in taskIds && it.status == BatchTaskStatus.RUNNING
+            }
+            val canceled = current.copy(
+                isProcessing = false,
+                activeRunTaskIds = emptySet(),
+                statusMessage = "Batch queue canceled",
+                errorMessage = null,
+                processedCount = current.processedCount + canceledRunning,
+                failureCount = current.failureCount + canceledRunning,
+                tasks = current.tasks.map { task ->
+                    if (task.id in taskIds &&
+                        (task.status == BatchTaskStatus.QUEUED || task.status == BatchTaskStatus.RUNNING)
+                    ) {
+                        task.copy(status = BatchTaskStatus.CANCELED, errorMessage = "Queue canceled")
+                    } else task
+                }
+            )
+            if (_state.compareAndSet(current, canceled)) return true
+        }
+    }
+
+    /** Ignore a late terminal callback from a previously canceled or superseded run. */
+    fun finishRunIfCurrent(taskIds: Set<Long>, message: String): Boolean {
+        if (taskIds.isEmpty()) return false
+        while (true) {
+            val current = _state.value
+            if (!current.isProcessing || current.activeRunTaskIds != taskIds) return false
+            if (_state.compareAndSet(current, current.copy(
+                isProcessing = false,
+                activeRunTaskIds = emptySet(),
+                statusMessage = message,
+                errorMessage = null
+            ))) return true
+        }
+    }
+
     fun markRemainingQueuedAsCanceled(taskIds: Set<Long>, exceptTaskId: Long? = null) {
         _state.update { state ->
             state.copy(
@@ -358,6 +411,7 @@ object BatchQueueRuntimeStore {
         _state.update {
             it.copy(
                 isProcessing = false,
+                activeRunTaskIds = emptySet(),
                 statusMessage = statusMessage,
                 errorMessage = null
             )
@@ -368,6 +422,7 @@ object BatchQueueRuntimeStore {
         _state.update {
             it.copy(
                 isProcessing = false,
+                activeRunTaskIds = emptySet(),
                 statusMessage = null,
                 errorMessage = message
             )
