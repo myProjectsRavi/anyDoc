@@ -112,4 +112,75 @@ class BatchQueueForegroundPromotionTest {
         }
         assertEquals(0, failures)
     }
+
+    @Test fun delayedSaveFailureIsReportedForUnchangedTerminalSnapshot() {
+        enqueue()
+        val run = admit()
+        val failed = BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+            run.taskIds.toSet(), run.runId, "foreground denied"
+        )!!
+        assertTrue(BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(
+            "Queue could not be saved", failed
+        ))
+        assertEquals("Queue could not be saved", BatchQueueRuntimeStore.state.value.errorMessage)
+    }
+
+    @Test fun delayedSaveFailureDoesNotOverwriteCompletedRetry() {
+        enqueue()
+        val first = admit()
+        val failed = BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+            first.taskIds.toSet(), first.runId, "foreground denied"
+        )!!
+        val retry = admit()
+        assertTrue(BatchQueueRuntimeStore.finishRunIfCurrent(
+            retry.taskIds.toSet(), retry.runId, "Retry complete"
+        ))
+        assertFalse(BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(
+            "Old save failed", failed
+        ))
+        assertEquals("Retry complete", BatchQueueRuntimeStore.state.value.statusMessage)
+    }
+
+    @Test fun identicalFailureMessagesDoNotMakeOldSnapshotCurrent() {
+        enqueue()
+        val first = admit()
+        val oldFailed = BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+            first.taskIds.toSet(), first.runId, "foreground denied"
+        )!!
+        val retry = admit()
+        val newFailed = BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+            retry.taskIds.toSet(), retry.runId, "foreground denied"
+        )!!
+        assertFalse(BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(
+            "Old save failed", oldFailed
+        ))
+        assertTrue(BatchQueueRuntimeStore.state.value === newFailed)
+        assertEquals("foreground denied", BatchQueueRuntimeStore.state.value.errorMessage)
+    }
+
+    @Test fun dismissedErrorIsNotRestoredByDelayedSaveFailure() {
+        enqueue()
+        val run = admit()
+        val failed = BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+            run.taskIds.toSet(), run.runId, "foreground denied"
+        )!!
+        BatchQueueRuntimeStore.clearError()
+        assertFalse(BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(
+            "Old save failed", failed
+        ))
+        assertTrue(BatchQueueRuntimeStore.state.value.errorMessage == null)
+    }
+
+    @Test fun delayedSaveFailureDoesNotOverwriteActiveRetry() {
+        enqueue()
+        val first = admit()
+        val failed = BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+            first.taskIds.toSet(), first.runId, "foreground denied"
+        )!!
+        val retry = admit()
+        assertFalse(BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(
+            "Old save failed", failed
+        ))
+        assertTrue(BatchQueueRuntimeStore.isCurrentRun(retry.taskIds.toSet(), retry.runId))
+    }
 }

@@ -409,16 +409,24 @@ object BatchQueueRuntimeStore {
         }
     }
 
-    /** Ignore a late terminal callback from a previously canceled or superseded run. */
     /** Failure from an older worker must not stop a newer run. */
-    fun failRunIfCurrent(taskIds: Set<Long>, expectedRunId: Long, message: String): Boolean {
-        if (taskIds.isEmpty() || expectedRunId <= 0L) return false
+    fun failRunIfCurrent(taskIds: Set<Long>, expectedRunId: Long, message: String): Boolean =
+        failRunIfCurrentWithSnapshot(taskIds, expectedRunId, message) != null
+
+    /**
+     * Return the exact terminal state published by this run.
+     * A delayed save failure must only update this same state instance.
+     */
+    internal fun failRunIfCurrentWithSnapshot(
+        taskIds: Set<Long>, expectedRunId: Long, message: String
+    ): BatchQueueUiState? {
+        if (taskIds.isEmpty() || expectedRunId <= 0L) return null
         while (true) {
             val current = _state.value
             if (!current.isProcessing ||
                 current.activeRunId != expectedRunId ||
                 current.activeRunTaskIds != taskIds
-            ) return false
+            ) return null
 
             // An interrupted task must not remain RUNNING after its run is released.
             // Never auto-retry it: its converter may already have published output.
@@ -435,7 +443,7 @@ object BatchQueueRuntimeStore {
                     task
                 }
             }
-            if (_state.compareAndSet(current, current.copy(
+            val failed = current.copy(
                 tasks = terminalTasks,
                 isProcessing = false,
                 activeRunId = 0L,
@@ -444,15 +452,18 @@ object BatchQueueRuntimeStore {
                 failureCount = current.failureCount + interrupted,
                 statusMessage = null,
                 errorMessage = message
-            ))) return true
+            )
+            if (_state.compareAndSet(current, failed)) return failed
         }
     }
 
-    /** A completed older run may report a save failure, but never reset active work. */
-    fun reportPersistenceFailureIfIdle(message: String): Boolean {
+    /** A delayed save error must not replace newer UI state, even if idle. */
+    fun reportPersistenceFailureIfIdle(
+        message: String, expectedState: BatchQueueUiState
+    ): Boolean {
         while (true) {
             val current = _state.value
-            if (current.isProcessing) return false
+            if (current.isProcessing || current !== expectedState) return false
             if (_state.compareAndSet(current, current.copy(
                 statusMessage = null,
                 errorMessage = message

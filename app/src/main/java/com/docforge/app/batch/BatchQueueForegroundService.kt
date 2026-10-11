@@ -142,13 +142,17 @@ class BatchQueueForegroundService : Service() {
                     onFailure = { error ->
                         val failureMessage = "Unable to start foreground batch service: " +
                             (error.message ?: error.javaClass.simpleName)
-                        if (BatchQueueRuntimeStore.failRunIfCurrent(runIds, runId, failureMessage)) {
+                        val failedSnapshot = BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+                            runIds, runId, failureMessage
+                        )
+                        if (failedSnapshot != null) {
                             // The OS may kill a started service that fails to become foreground
                             // within its deadline. Persist on the application scope, not the
                             // service scope that onDestroy() cancels.
                             (application as com.docforge.app.DocForgeApp).launchBatchQueueRecovery {
                                 persistTerminalCheckpoint(
-                                    "Foreground start failed, and the queue could not be saved."
+                                    "Foreground start failed, and the queue could not be saved.",
+                                    expectedState = failedSnapshot
                                 )
                             }
                         }
@@ -344,10 +348,15 @@ class BatchQueueForegroundService : Service() {
             }
         )
 
-    private suspend fun persistTerminalCheckpoint(failureMessage: String): Boolean =
+    private suspend fun persistTerminalCheckpoint(
+        failureMessage: String,
+        expectedState: BatchQueueUiState = BatchQueueRuntimeStore.state.value
+    ): Boolean =
         persistBatchQueueCheckpoint(
             persist = { persistQueueSnapshot() },
-            onFailure = { BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(failureMessage) }
+            onFailure = {
+                BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(failureMessage, expectedState)
+            }
         )
 
     private suspend fun persistQueueSnapshot() {
