@@ -561,3 +561,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ## Cycle 067 completion / Cycle 068 activation — 2026-10-11 UTC
 - [COMPLETE / PR CI #606] `US-R067-P1-01A`: exact code/test SHA `3aa276af37760db53365ee720c3ac525ac469eec`; PR run `38172791603` SUCCESS (eight configured gates). Snapshot-scoped persistence errors preserve newer/dismissed state; no device or benchmark evidence.
 - [ACTIVE / P1] `US-R068-P1-01A` (`E068/F070`): fail-close the matching batch when per-task terminal checkpoint persistence fails; preserve terminal results, counters, queued work, newer runs and cancellation. Add JVM tests and exact-SHA PR CI.
+
+
+## Cycle 068 completion / Cycle 069 activation — 2026-10-11 UTC
+- Cycle 068 `E068/F070/US-R068-P1-01A` COMPLETE. Exact code/test SHA `7bcff3d9cc89d9ded303b3053b48b4cbc4b188b6` passed authoritative PR CI #610 / API `38176646082` (2026-10-11 UTC, job `114580380447`), all eight configured gates SUCCESS. A failed per-task terminal checkpoint now fail-closes the matching run and retries persistence without changing already completed results, counters or newer runs. Six focused Robolectric/JVM regressions cover success, failure, stale retries, duplicate callbacks and cancellation. No emulator, physical device, benchmark or crash-free claim.
+- Cycle 069 `E069/F071/US-R069-P1-01A` ACTIVE / INCOMPLETE. Source: `BatchQueueForegroundService.processQueue` executes `executeTask(task)` and then calls `dependencies.historyRepository.insert(...)` before `markTaskSuccess`; an ordinary history-DAO failure enters the outer catch and marks a successfully published output as FAILED, risking misleading retries. Next: isolate non-cancellation history-recording failures from conversion success, preserve cancellation propagation and correct terminal state/output path/counters, add focused JVM tests, and validate exact implementation SHA via authoritative PR CI. PR #1 stays draft/unmerged; main untouched.
+
+## Cycle 069 active
+### Epic E069 — Batch conversion result integrity
+#### Feature F071 — Separate history persistence from conversion outcome
+- [ACTIVE / P1] `US-R069-P1-01A` — A failed history insert must not downgrade an already produced output to FAILED; retain cancellation and output/counter semantics, add app JVM regressions and exact-SHA PR CI.
