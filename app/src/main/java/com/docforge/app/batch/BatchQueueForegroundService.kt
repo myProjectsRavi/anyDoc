@@ -200,7 +200,7 @@ class BatchQueueForegroundService : Service() {
             // The queue is intentionally terminal on cancellation; persist that terminal state
             // outside the cancelled job context rather than misclassifying it as a disk failure.
             withContext(NonCancellable) {
-                BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()
+                BatchQueueRuntimeStore.markRemainingQueuedAsCanceled(allowedTaskIds)
                 val canceledState = BatchQueueRuntimeStore.state.value
                 val summary = "Batch queue canceled: ${canceledState.successCount} success, ${canceledState.failureCount} failed"
                 BatchQueueRuntimeStore.finishProcessing(summary)

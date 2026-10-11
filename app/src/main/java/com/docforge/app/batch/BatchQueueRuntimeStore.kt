@@ -340,11 +340,11 @@ object BatchQueueRuntimeStore {
         }
     }
 
-    fun markRemainingQueuedAsCanceled(exceptTaskId: Long? = null) {
+    fun markRemainingQueuedAsCanceled(taskIds: Set<Long>, exceptTaskId: Long? = null) {
         _state.update { state ->
             state.copy(
                 tasks = state.tasks.map { task ->
-                    if (task.status == BatchTaskStatus.QUEUED && task.id != exceptTaskId) {
+                    if (task.id in taskIds && task.status == BatchTaskStatus.QUEUED && task.id != exceptTaskId) {
                         task.copy(status = BatchTaskStatus.CANCELED, errorMessage = "Queue canceled")
                     } else {
                         task
