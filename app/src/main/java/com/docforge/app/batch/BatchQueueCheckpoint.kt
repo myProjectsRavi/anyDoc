@@ -18,3 +18,29 @@ internal suspend fun persistBatchQueueCheckpoint(
     onFailure(error)
     false
 }
+
+
+/**
+ * A failed per-task terminal write must release its admitted run. Otherwise the
+ * worker returns while the queue still reports isProcessing=true indefinitely.
+ * The second write is best effort and cannot replace a newer run's UI state.
+ */
+internal suspend fun persistBatchTaskTerminalCheckpoint(
+    persist: suspend () -> Unit,
+    taskIds: Set<Long>,
+    runId: Long,
+    failureMessage: String
+): Boolean = persistBatchQueueCheckpoint(
+    persist = persist,
+    onFailure = {
+        if (BatchQueueRuntimeStore.failRunIfCurrentWithSnapshot(
+                taskIds, runId, failureMessage
+            ) != null
+        ) {
+            persistBatchQueueCheckpoint(
+                persist = persist,
+                onFailure = { /* Retain the original run failure in runtime state. */ }
+            )
+        }
+    }
+)

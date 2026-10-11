@@ -252,8 +252,11 @@ class BatchQueueForegroundService : Service() {
                         outputSizeBytes = outcome.outputSizeBytes,
                         expectedRunId = runId
                     )
-                    if (!persistTerminalCheckpoint(
-                            "Task completed, but its queue state could not be saved. Review the output before retrying."
+                    if (!persistBatchTaskTerminalCheckpoint(
+                            persist = { persistQueueSnapshot() },
+                            taskIds = allowedTaskIds,
+                            runId = runId,
+                            failureMessage = "Task completed, but its queue state could not be saved. Review the output before retrying."
                         )
                     ) {
                         return
@@ -275,8 +278,11 @@ class BatchQueueForegroundService : Service() {
                         errorMessage = error.message ?: "Task failed",
                         expectedRunId = runId
                     )
-                    if (!persistTerminalCheckpoint(
-                            "Task failed, but its queue state could not be saved. Review the queue before retrying."
+                    if (!persistBatchTaskTerminalCheckpoint(
+                            persist = { persistQueueSnapshot() },
+                            taskIds = allowedTaskIds,
+                            runId = runId,
+                            failureMessage = "Task failed, but its queue state could not be saved. Review the queue before retrying."
                         )
                     ) {
                         return
