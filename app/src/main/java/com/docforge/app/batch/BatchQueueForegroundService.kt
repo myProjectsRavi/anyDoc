@@ -197,7 +197,7 @@ class BatchQueueForegroundService : Service() {
             currentCoroutineContext().ensureActive()
             if (!BatchQueueRuntimeStore.isCurrentRun(allowedTaskIds, runId)) return
             while (true) {
-                val task = BatchQueueRuntimeStore.startNextQueuedTask(allowedTaskIds, total) ?: break
+                val task = BatchQueueRuntimeStore.startNextQueuedTask(allowedTaskIds, total, runId) ?: break
                 if (!persistRunningCheckpoint(task.id, allowedTaskIds, runId)) {
                     return
                 }
@@ -222,7 +222,8 @@ class BatchQueueForegroundService : Service() {
                     BatchQueueRuntimeStore.markTaskSuccess(
                         taskId = task.id,
                         outputPath = outcome.outputPath,
-                        outputSizeBytes = outcome.outputSizeBytes
+                        outputSizeBytes = outcome.outputSizeBytes,
+                        expectedRunId = runId
                     )
                     if (!persistTerminalCheckpoint(
                             "Task completed, but its queue state could not be saved. Review the output before retrying."
@@ -231,7 +232,7 @@ class BatchQueueForegroundService : Service() {
                         return
                     }
                 } catch (cancelled: CancellationException) {
-                    BatchQueueRuntimeStore.markTaskCanceled(task.id)
+                    BatchQueueRuntimeStore.markTaskCanceled(task.id, runId)
                     // Cancellation is already active; use a non-cancellable cleanup context to persist the
                     // canceled task once, then propagate the original cancellation.
                     withContext(NonCancellable) {
@@ -244,7 +245,8 @@ class BatchQueueForegroundService : Service() {
                 } catch (error: Throwable) {
                     BatchQueueRuntimeStore.markTaskFailure(
                         taskId = task.id,
-                        errorMessage = error.message ?: "Task failed"
+                        errorMessage = error.message ?: "Task failed",
+                        expectedRunId = runId
                     )
                     if (!persistTerminalCheckpoint(
                             "Task failed, but its queue state could not be saved. Review the queue before retrying."
@@ -302,7 +304,8 @@ class BatchQueueForegroundService : Service() {
                 if (BatchQueueRuntimeStore.isCurrentRun(taskIds, runId)) {
                     BatchQueueRuntimeStore.markTaskFailure(
                         taskId = taskId,
-                        errorMessage = "Task was not run because queue state could not be saved: $message"
+                        errorMessage = "Task was not run because queue state could not be saved: $message",
+                        expectedRunId = runId
                     )
                     BatchQueueRuntimeStore.failRunIfCurrent(
                         taskIds,

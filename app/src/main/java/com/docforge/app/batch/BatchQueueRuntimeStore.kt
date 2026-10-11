@@ -267,10 +267,15 @@ object BatchQueueRuntimeStore {
         return _state.value.tasks.filter { task -> task.id in set }
     }
 
-    fun startNextQueuedTask(taskIds: Set<Long>, total: Int): BatchQueueTask? {
+    fun startNextQueuedTask(
+        taskIds: Set<Long>,
+        total: Int,
+        expectedRunId: Long = _state.value.activeRunId
+    ): BatchQueueTask? {
+        if (expectedRunId <= 0L) return null
         while (true) {
             val current = _state.value
-            if (!current.isProcessing) return null
+            if (!current.isProcessing || current.activeRunId != expectedRunId) return null
 
             val index = current.tasks.indexOfFirst { task ->
                 task.id in taskIds && task.status == BatchTaskStatus.QUEUED
@@ -300,28 +305,33 @@ object BatchQueueRuntimeStore {
         }
     }
 
-    fun markTaskSuccess(taskId: Long, outputPath: String, outputSizeBytes: Long) {
+    fun markTaskSuccess(
+        taskId: Long, outputPath: String, outputSizeBytes: Long, expectedRunId: Long? = null
+    ) {
         transitionTaskToTerminal(
             taskId = taskId,
             status = BatchTaskStatus.SUCCESS,
             outputPath = outputPath,
-            outputSizeBytes = outputSizeBytes
+            outputSizeBytes = outputSizeBytes,
+            expectedRunId = expectedRunId
         )
     }
 
-    fun markTaskFailure(taskId: Long, errorMessage: String) {
+    fun markTaskFailure(taskId: Long, errorMessage: String, expectedRunId: Long? = null) {
         transitionTaskToTerminal(
             taskId = taskId,
             status = BatchTaskStatus.FAILED,
-            errorMessage = errorMessage
+            errorMessage = errorMessage,
+            expectedRunId = expectedRunId
         )
     }
 
-    fun markTaskCanceled(taskId: Long) {
+    fun markTaskCanceled(taskId: Long, expectedRunId: Long? = null) {
         transitionTaskToTerminal(
             taskId = taskId,
             status = BatchTaskStatus.CANCELED,
-            errorMessage = "Task canceled"
+            errorMessage = "Task canceled",
+            expectedRunId = expectedRunId
         )
     }
 
@@ -330,9 +340,13 @@ object BatchQueueRuntimeStore {
         status: BatchTaskStatus,
         outputPath: String? = null,
         outputSizeBytes: Long? = null,
-        errorMessage: String? = null
+        errorMessage: String? = null,
+        expectedRunId: Long? = null
     ) {
         _state.update { state ->
+            if (expectedRunId != null &&
+                (!state.isProcessing || state.activeRunId != expectedRunId)
+            ) return@update state
             val index = state.tasks.indexOfFirst {
                 it.id == taskId && it.status == BatchTaskStatus.RUNNING
             }

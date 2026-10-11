@@ -160,6 +160,42 @@ class BatchQueueCancellationHandoffTest {
         assertTrue(BatchQueueRuntimeStore.isCurrentRun(second.taskIds.toSet(), second.runId))
     }
 
+    @Test fun staleWorkerCannotClaimTaskInRetryWithSameTaskIds() {
+        val id = enqueue("retry")
+        val first = admit()
+        BatchQueueRuntimeStore.failProcessing("previous start failed")
+        val second = admit()
+        assertEquals(first.taskIds, second.taskIds)
+        val before = BatchQueueRuntimeStore.state.value
+        assertEquals(null, BatchQueueRuntimeStore.startNextQueuedTask(
+            first.taskIds.toSet(), 1, first.runId
+        ))
+        assertEquals(before, BatchQueueRuntimeStore.state.value)
+        assertEquals(id, BatchQueueRuntimeStore.startNextQueuedTask(
+            second.taskIds.toSet(), 1, second.runId
+        )?.id)
+    }
+
+    @Test fun staleWorkerCannotCompleteNewRunTaskAfterRetry() {
+        val id = enqueue("retry")
+        val first = admit()
+        BatchQueueRuntimeStore.failProcessing("previous start failed")
+        val second = admit()
+        assertEquals(id, BatchQueueRuntimeStore.startNextQueuedTask(
+            second.taskIds.toSet(), 1, second.runId
+        )?.id)
+        val before = BatchQueueRuntimeStore.state.value
+        BatchQueueRuntimeStore.markTaskSuccess(id, "/old.pdf", 10L, first.runId)
+        BatchQueueRuntimeStore.markTaskFailure(id, "old error", first.runId)
+        BatchQueueRuntimeStore.markTaskCanceled(id, first.runId)
+        assertEquals(before, BatchQueueRuntimeStore.state.value)
+        BatchQueueRuntimeStore.markTaskSuccess(id, "/new.pdf", 11L, second.runId)
+        val after = BatchQueueRuntimeStore.state.value
+        assertEquals(BatchTaskStatus.SUCCESS, after.tasks.single().status)
+        assertEquals(1, after.processedCount)
+        assertEquals(1, after.successCount)
+    }
+
     @Test fun normalCompletionIsGuardedAndIdempotent() {
         enqueue("first")
         val session = admit()

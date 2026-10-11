@@ -177,10 +177,20 @@ class BatchQueueViewModel(
                 putExtra(BatchQueueServiceContract.EXTRA_RUN_ID, admission.runId)
             }
 
+            // Cancel may have been accepted while the service intent was being prepared.
+            // Never launch or fail a later run for this obsolete admission.
+            if (!BatchQueueRuntimeStore.isCurrentRun(
+                    admission.taskIds.toSet(), admission.runId
+                )
+            ) return@launch
             runCatching {
                 ContextCompat.startForegroundService(context, intent)
             }.onFailure { err ->
-                BatchQueueRuntimeStore.failProcessing(err.message ?: "Unable to start batch service")
+                BatchQueueRuntimeStore.failRunIfCurrent(
+                    admission.taskIds.toSet(),
+                    admission.runId,
+                    err.message ?: "Unable to start batch service"
+                )
             }
         }
     }
