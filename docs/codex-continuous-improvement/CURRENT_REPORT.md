@@ -1,23 +1,23 @@
 # Current Report
 
-**ID:** `2026-10-10_cycle-062`
+**ID:** `2026-10-10_cycle-063`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E062` — Batch queue dispatch claim integrity
-**Feature:** `F064` — Atomic processing-aware task claims
-**User Story:** `US-R062-P1-01A` — Return only committed task claims while processing is active
+**Epic:** `E063` — Batch queue cancellation scope integrity
+**Feature:** `F065` — Run-scoped queued task cancellation
+**User Story:** `US-R063-P1-01A` — Cancel only queued tasks belonging to the active run
 
 ## Previous validated cycle
-Cycle 061 E061/F063/US-R061-P1-01A COMPLETE: exact code/test SHA `e4ec1efc4556b4f3cea6124d53f28ed4fd1bf3a2` passed authoritative PR CI #576 / API `38034856244` on 2026-10-10 UTC, job `114163103040` SUCCESS; eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug, unsigned release/R8, lint). Seven app JVM regression tests include 450 concurrent recovery scenarios. No emulator, physical device, benchmark or crash-free claim.
+Cycle 062 E062/F064/US-R062-P1-01A COMPLETE: exact code/test SHA `d88c011fc4d04d3847b0be81416042f40f89eb37` passed authoritative PR CI #583 / API `38095021819` (SUCCESS, 2026-10-10 UTC), job `114339056845`; all eight gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). CAS task claims require active processing; rename/removal race tests activate processing. No emulator, physical-device, benchmark or crash-free claim.
 
 ## Source evidence
-`BatchQueueRuntimeStore.startNextQueuedTask()` assigns its return value inside retryable StateFlow.update before the update is committed, so concurrent updates can return an uncommitted task. It also does not check `isProcessing`, allowing dispatch after processing has stopped.
+`BatchQueueForegroundService.processQueue` already captures `allowedTaskIds` from the run-start intent. Its cancellation handler calls `BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()` without a run ID filter; tasks queued after processing starts can be marked CANCELED even though they are not part of that run.
 
 ## Acceptance
-- No dispatch when processing is inactive or no eligible QUEUED task exists.
-- A returned task has successfully transitioned to RUNNING in committed state.
-- Concurrent claimers cannot both claim the same task; queue order and status messages remain correct.
-- Focused app JVM tests and authoritative CI validate the exact code/test SHA.
+- Cancellation marks only still-QUEUED tasks whose IDs were admitted to the active run.
+- Tasks added after the run starts remain QUEUED, including under concurrent enqueue/cancel.
+- RUNNING, SUCCESS, FAILED and already-CANCELED tasks remain unchanged; counters retain their semantics.
+- Focused app JVM regression tests and authoritative PR CI validate the exact implementation SHA.
 
 ## Next exact action
-Review prepared Cycle 062 patch against current HEAD, implement atomic task dispatch and focused tests, inspect authoritative CI, repair failures, then synchronize checkpoint documents after terminal CI. PR #1 draft/unmerged; main untouched.
+Update the runtime cancellation helper to accept active run task IDs and pass `allowedTaskIds` from the service; add deterministic and concurrent app JVM tests, run authoritative PR CI, repair failures and synchronize checkpoints after terminal CI. No Cycle 063 code/test mutation at activation. PR #1 stays draft/unmerged; main untouched.

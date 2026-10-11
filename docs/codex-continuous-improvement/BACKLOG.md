@@ -508,3 +508,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E062 — Batch queue dispatch claim integrity
 #### Feature F064 — Atomic processing-aware task claims
 - [ACTIVE / P1] `US-R062-P1-01A` — CAS-claim QUEUED tasks only while processing, return committed RUNNING tasks, add app JVM regressions and exact-SHA PR CI.
+
+
+## Cycle 062 closure — 2026-10-10 UTC
+- [COMPLETE / PR CI #583] `US-R062-P1-01A` — Atomic processing-aware task claims. Exact code/test SHA `d88c011fc4d04d3847b0be81416042f40f89eb37`; authoritative PR run API `38095021819` SUCCESS, eight gates. Rename/removal race setup repaired. No emulator, device or benchmark evidence.
+- [NEXT / P1] `US-R063-P1-01A` — Scope cancellation to tasks admitted to active batch.
+
+## Cycle 063 active
+### Epic E063 — Batch queue cancellation scope integrity
+#### Feature F065 — Run-scoped queued task cancellation
+- [ACTIVE / P1] `US-R063-P1-01A` — Cancel only queued tasks in active run ID set; preserve later enqueue and terminal/running states; deterministic and concurrent app JVM regressions; exact-SHA PR CI.

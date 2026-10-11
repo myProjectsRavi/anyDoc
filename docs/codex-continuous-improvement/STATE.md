@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-10_cycle-062`
+**Current report:** `2026-10-10_cycle-063`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 062
-**Current Epic:** `E062` — Batch queue dispatch claim integrity
-**Current Feature:** `F064` — Atomic processing-aware task claims
-**Current User Story:** `US-R062-P1-01A` — Return only committed task claims while processing is active (ACTIVE)
-**Last completed cycle:** Cycle 061
+**Cycle:** 063
+**Current Epic:** `E063` — Batch queue cancellation scope integrity
+**Current Feature:** `F065` — Run-scoped queued task cancellation
+**Current User Story:** `US-R063-P1-01A` — Cancel only queued tasks belonging to the active run (ACTIVE)
+**Last completed cycle:** Cycle 062
 **State checkpoint timestamp:** 2026-10-10 UTC
 
 ## Current next executable step
-Cycle 061 E061/F063/US-R061-P1-01A COMPLETE: exact code/test SHA `e4ec1efc4556b4f3cea6124d53f28ed4fd1bf3a2` passed authoritative PR CI #576 / API `38034856244` on 2026-10-10 UTC, job `114163103040` SUCCESS; eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug, unsigned release/R8, lint). Seven app JVM regression tests include 450 concurrent recovery scenarios. No emulator, physical device, benchmark or crash-free claim.
-Cycle 062 E062/F064/US-R062-P1-01A ACTIVE / INCOMPLETE: `BatchQueueRuntimeStore.startNextQueuedTask()` assigns its return value inside retryable StateFlow.update before the update is committed, so concurrent updates can return an uncommitted task. It also does not check `isProcessing`, allowing dispatch after processing has stopped. Next: CAS-claim only in active processing state, return only a committed RUNNING task, add focused JVM regression and concurrency tests, validate exact SHA via authoritative PR CI, then finalize checkpoints. No Cycle 062 production/test mutation claimed at activation. PR #1 draft/unmerged; main untouched.
+Cycle 062 E062/F064/US-R062-P1-01A COMPLETE: exact code/test SHA `d88c011fc4d04d3847b0be81416042f40f89eb37` passed authoritative PR CI #583 / API `38095021819` (SUCCESS, 2026-10-10 UTC), job `114339056845`; all eight gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). CAS task claims require active processing; rename/removal race tests activate processing. No emulator, physical-device, benchmark or crash-free claim.
+Cycle 063 E063/F065/US-R063-P1-01A ACTIVE / INCOMPLETE: `BatchQueueForegroundService.processQueue` retains `allowedTaskIds` from batch start, but its cancellation handler calls `BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()` without an ID filter, canceling queued tasks added after the run started. Next exact mutation: scope queued cancellation to active run IDs, preserve running/terminal and later-enqueued tasks, add app JVM deterministic/concurrency regressions, validate exact code/test SHA through authoritative PR CI. No Cycle 063 production/test mutation at activation. PR #1 remains draft/unmerged; main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -206,3 +206,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 061 completion / Cycle 062 activation — 2026-10-10 UTC
 - Cycle 061 E061/F063/US-R061-P1-01A COMPLETE: exact code/test SHA `e4ec1efc4556b4f3cea6124d53f28ed4fd1bf3a2` passed authoritative PR CI #576 / API `38034856244` on 2026-10-10 UTC, job `114163103040` SUCCESS; eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug, unsigned release/R8, lint). Seven app JVM regression tests include 450 concurrent recovery scenarios. No emulator, physical device, benchmark or crash-free claim.
 - Cycle 062 E062/F064/US-R062-P1-01A ACTIVE / INCOMPLETE: `BatchQueueRuntimeStore.startNextQueuedTask()` assigns its return value inside retryable StateFlow.update before the update is committed, so concurrent updates can return an uncommitted task. It also does not check `isProcessing`, allowing dispatch after processing has stopped. Next: CAS-claim only in active processing state, return only a committed RUNNING task, add focused JVM regression and concurrency tests, validate exact SHA via authoritative PR CI, then finalize checkpoints. No Cycle 062 production/test mutation claimed at activation. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 062 completion / Cycle 063 activation — 2026-10-10 UTC
+- Cycle 062 E062/F064/US-R062-P1-01A COMPLETE: exact code/test SHA `d88c011fc4d04d3847b0be81416042f40f89eb37` passed authoritative PR CI #583 / API `38095021819` (SUCCESS, 2026-10-10 UTC), job `114339056845`; all eight gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). CAS task claims require active processing; rename/removal race tests activate processing. No emulator, physical-device, benchmark or crash-free claim.
+- Cycle 063 E063/F065/US-R063-P1-01A ACTIVE / INCOMPLETE: `BatchQueueForegroundService.processQueue` retains `allowedTaskIds` from batch start, but its cancellation handler calls `BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()` without an ID filter, canceling queued tasks added after the run started. Next exact mutation: scope queued cancellation to active run IDs, preserve running/terminal and later-enqueued tasks, add app JVM deterministic/concurrency regressions, validate exact code/test SHA through authoritative PR CI. No Cycle 063 production/test mutation at activation. PR #1 remains draft/unmerged; main untouched.
