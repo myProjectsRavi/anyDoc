@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-11_cycle-068`
+**Current report:** `2026-10-11_cycle-069`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 068
-**Current Epic:** `E068` — Terminal checkpoint failure recovery
-**Current Feature:** `F070` — Fail-close on per-task terminal persistence errors
-**Current User Story:** `US-R068-P1-01A` — Prevent stranded active batches after terminal checkpoint failures (ACTIVE)
-**Last completed cycle:** Cycle 067
+**Cycle:** 069
+**Current Epic:** `E069` — Batch conversion result integrity
+**Current Feature:** `F071` — Separate history persistence from conversion outcome
+**Current User Story:** `US-R069-P1-01A` — Do not downgrade published output when history insertion fails (ACTIVE)
+**Last completed cycle:** Cycle 068
 **State checkpoint timestamp:** 2026-10-11 UTC
 
 ## Current next executable step
-- Cycle 067 `E067/F069/US-R067-P1-01A` COMPLETE. Exact code/test SHA `3aa276af37760db53365ee720c3ac525ac469eec` passed authoritative PR workflow #606 / API `38172791603` on 2026-10-11 UTC (job `114568758180` SUCCESS). All eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, and Android lint. The terminal-save failure reporter uses the exact original terminal-state instance; later completed runs, user-dismissed errors, and same-message retries are not overwritten. Candidate `255a275c020ff88d31776e665694e5766d200fae` failed PR CI #605 / API `38172270865`; regression fixture was corrected in `3aa276af`. No emulator, device, benchmark, or crash-free evidence.
-- Cycle 068 `E068/F070/US-R068-P1-01A` ACTIVE / INCOMPLETE. Source: `BatchQueueForegroundService.processQueue` returns immediately when a per-task terminal `persistTerminalCheckpoint` fails, after `markTaskSuccess` or `markTaskFailure` but before `finishRunIfCurrent`; the runtime can retain `isProcessing=true` indefinitely and block further queue operations. Next: fail-close only the exact admitted run on terminal checkpoint failure, preserve already completed task results and queued work, avoid double-counting, attempt recovery persistence without overwriting a newer run, and add deterministic app JVM tests for success/failure checkpoint errors, stale runs, repeated callbacks, and cancellation propagation. Validate exact implementation SHA in authoritative PR CI. PR #1 remains draft/unmerged; never modify main.
+- Cycle 068 E068/F070/US-R068-P1-01A COMPLETE. Exact code/test SHA `7bcff3d9cc89d9ded303b3053b48b4cbc4b188b6` passed authoritative PR CI #610 / API `38176646082` SUCCESS on 2026-10-11 UTC; all eight gates passed. Six app JVM regressions. No device/emulator/benchmark evidence.
+- Cycle 069 E069/F071/US-R069-P1-01A ACTIVE / INCOMPLETE. History repository insertion after `executeTask` can fail and misclassify a published output as FAILED. Next: isolate history write failures, preserve SUCCESS output path/counters, cancellation and real conversion failures; add JVM tests and exact-SHA CI. PR #1 draft, main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
