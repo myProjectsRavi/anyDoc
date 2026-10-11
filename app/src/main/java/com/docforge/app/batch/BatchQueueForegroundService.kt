@@ -126,16 +126,43 @@ class BatchQueueForegroundService : Service() {
 
                 // Only a validated new RUN needs foreground promotion. Late CANCEL/RUN
                 // intents must not overwrite the notification of a newer active batch.
-                startForeground(
-                    BatchQueueServiceContract.NOTIFICATION_ID,
-                    buildProgressNotification(
-                        title = "AnyDoc batch queue",
-                        text = "Preparing...",
-                        processed = 0,
-                        total = taskIds.size,
-                        ongoing = true
-                    )
+                val promoted = attemptBatchForegroundPromotion(
+                    promote = {
+                        startForeground(
+                            BatchQueueServiceContract.NOTIFICATION_ID,
+                            buildProgressNotification(
+                                title = "AnyDoc batch queue",
+                                text = "Preparing...",
+                                processed = 0,
+                                total = taskIds.size,
+                                ongoing = true
+                            )
+                        )
+                    },
+                    onFailure = { error ->
+                        val failureMessage = "Unable to start foreground batch service: " +
+                            (error.message ?: error.javaClass.simpleName)
+                        if (BatchQueueRuntimeStore.failRunIfCurrent(runIds, runId, failureMessage)) {
+                            // Persist a retryable queued state even if the service start is rejected.
+                            serviceScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                                try {
+                                    withContext(NonCancellable) {
+                                        persistTerminalCheckpoint(
+                                            "Foreground start failed, and the queue could not be saved."
+                                        )
+                                    }
+                                } finally {
+                                    stopSelf(startId)
+                                }
+                            }
+                        } else {
+                            // A stale service start cannot fail or stop a newer run.
+                            stopSelf(startId)
+                        }
+                    }
                 )
+                if (!promoted) return START_NOT_STICKY
+
                 processingTaskIds = runIds
                 processingRunId = runId
                 notifyProgress(
