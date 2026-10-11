@@ -17,6 +17,11 @@ class DocForgeApp : Application() {
     val dependencies: AppDependencies by lazy { AppDependencies(this) }
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    // Work needed after a service start is rejected must survive onDestroy().
+    internal fun launchBatchQueueRecovery(block: suspend () -> Unit) {
+        appScope.launch { block() }
+    }
+
     override fun onCreate() {
         super.onCreate()
 

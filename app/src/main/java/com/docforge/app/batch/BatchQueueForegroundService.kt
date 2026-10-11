@@ -143,22 +143,18 @@ class BatchQueueForegroundService : Service() {
                         val failureMessage = "Unable to start foreground batch service: " +
                             (error.message ?: error.javaClass.simpleName)
                         if (BatchQueueRuntimeStore.failRunIfCurrent(runIds, runId, failureMessage)) {
-                            // Persist a retryable queued state even if the service start is rejected.
-                            serviceScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                                try {
-                                    withContext(NonCancellable) {
-                                        persistTerminalCheckpoint(
-                                            "Foreground start failed, and the queue could not be saved."
-                                        )
-                                    }
-                                } finally {
-                                    stopSelf(startId)
-                                }
+                            // The OS may kill a started service that fails to become foreground
+                            // within its deadline. Persist on the application scope, not the
+                            // service scope that onDestroy() cancels.
+                            (application as com.docforge.app.DocForgeApp).launchBatchQueueRecovery {
+                                persistTerminalCheckpoint(
+                                    "Foreground start failed, and the queue could not be saved."
+                                )
                             }
-                        } else {
-                            // A stale service start cannot fail or stop a newer run.
-                            stopSelf(startId)
                         }
+                        // Release the failed foreground-service start without waiting for I/O.
+                        // stopSelf(startId) cannot stop a service with a newer start ID.
+                        stopSelf(startId)
                     }
                 )
                 if (!promoted) return START_NOT_STICKY
