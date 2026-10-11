@@ -547,3 +547,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E066 — Interrupted batch run terminal integrity
 #### Feature F068 — Terminalize interrupted RUNNING tasks on run failure
 - [ACTIVE / P1] `US-R066-P1-01A` — CAS-guard failed run, mark interrupted RUNNING tasks FAILED exactly once and update counters. Preserve queued/terminal tasks, stale-run isolation, and verify with app JVM regressions and PR CI.
+
+## Cycle 066 completion / Cycle 067 activation — 2026-10-11 UTC
+- Cycle 066 E066/F068/US-R066-P1-01A COMPLETE. Exact code/test SHA `ce5d8b0192ee68c8922b256c5baf9d56cf3949f4`; authoritative PR GitHub Actions run #601 / API `38165332836` SUCCESS (2026-10-11 UTC), all eight configured gates: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. `failRunIfCurrent` atomically terminalizes only admitted RUNNING tasks as FAILED, increments processed/failure counters exactly once, and preserves QUEUED, terminal, later-enqueued and newer-run work. Five focused Robolectric/JVM regressions were committed. Paired push run `38165328986` was cancelled by concurrency, not completion evidence. No emulator, device, benchmark or crash-free evidence.
+- Cycle 067 E067/F069/US-R067-P1-01A ACTIVE / INCOMPLETE. Evidence: `BatchQueueForegroundService.persistTerminalCheckpoint` suspends while saving, then calls `BatchQueueRuntimeStore.reportPersistenceFailureIfIdle` on error; the latter checks only `!isProcessing`. An older delayed save failure can overwrite a newer completed batch's status or reintroduce a user-dismissed error after the app returns to idle. Next: bind persistence failure reporting to the exact terminal-state snapshot captured before the write, reject superseded snapshots, add deterministic JVM regressions for unchanged state, newer completion, dismissed error, same-message retry, and active processing, then validate exact code/test SHA with authoritative PR CI. PR #1 stays draft/unmerged; main untouched.
+
+## Cycle 067 active
+### Epic E067 — Run-scoped persistence failure reporting
+#### Feature F069 — Suppress superseded terminal-save failures
+- [ACTIVE / P1] `US-R067-P1-01A` — Bind delayed terminal persistence error reporting to the original idle terminal snapshot; preserve newer/dismissed UI state. Add focused app JVM regressions and validate exact-SHA PR CI.

@@ -1,24 +1,24 @@
 # Current Report
 
-**ID:** `2026-10-11_cycle-066`
+**ID:** `2026-10-11_cycle-067`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E066` — Interrupted batch run terminal integrity
-**Feature:** `F068` — Terminalize interrupted RUNNING tasks on run failure
-**User Story:** `US-R066-P1-01A` — Prevent stranded RUNNING tasks after run failure
+**Epic:** `E067` — Run-scoped persistence failure reporting
+**Feature:** `F069` — Suppress superseded terminal-save failures
+**User Story:** `US-R067-P1-01A` — Keep stale terminal persistence errors from replacing newer UI state
 
 ## Validated previous cycle
-Cycle 065 E065/F067/US-R065-P1-01A COMPLETE. Exact validated code/test SHA `33d58689a282ea0c1c8832b95752c29a85df4221`; authoritative PR workflow #598 / API `38148001273` SUCCESS across core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8 and lint. Production catches foreground promotion exceptions, fail-closes only the matching admitted run, releases failed service start promptly, and persists terminal state in application scope after service destruction. Five focused JVM/Robolectric tests cover success, SecurityException, platform restrictions, stale retries, cancellation propagation. No emulator, physical device, performance benchmark or crash-free evidence claimed.
+Cycle 066 E066/F068/US-R066-P1-01A COMPLETE. Exact code/test SHA `ce5d8b0192ee68c8922b256c5baf9d56cf3949f4`; authoritative PR GitHub Actions run #601 / API `38165332836` SUCCESS (2026-10-11 UTC), all eight configured gates: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. `failRunIfCurrent` atomically terminalizes only admitted RUNNING tasks as FAILED, increments processed/failure counters exactly once, and preserves QUEUED, terminal, later-enqueued and newer-run work. Five focused Robolectric/JVM regressions were committed. Paired push run `38165328986` was cancelled by concurrency, not completion evidence. No emulator, device, benchmark or crash-free evidence.
 
 ## Confirmed source risk
-Cycle 066 E066/F068/US-R066-P1-01A ACTIVE / INCOMPLETE. Source: `BatchQueueRuntimeStore.failRunIfCurrent()` clears processing and run ID without terminalizing a matching `RUNNING` task; the orphan can no longer be claimed by `startNextQueuedTask()` or removed by `removeTask()`. Next: atomically transition only RUNNING tasks admitted to that exact run into FAILED with an interrupted-run diagnostic and consistent counters; leave QUEUED tasks available for explicit retry, preserve SUCCESS/FAILED/CANCELED tasks and later enqueues, prevent stale failed runs from changing newer runs. Add deterministic app JVM tests and validate exact SHA via authoritative PR CI.
+Cycle 067 E067/F069/US-R067-P1-01A ACTIVE / INCOMPLETE. Evidence: `BatchQueueForegroundService.persistTerminalCheckpoint` suspends while saving, then calls `BatchQueueRuntimeStore.reportPersistenceFailureIfIdle` on error; the latter checks only `!isProcessing`. An older delayed save failure can overwrite a newer completed batch's status or reintroduce a user-dismissed error after the app returns to idle. Next: bind persistence failure reporting to the exact terminal-state snapshot captured before the write, reject superseded snapshots, add deterministic JVM regressions for unchanged state, newer completion, dismissed error, same-message retry, and active processing, then validate exact code/test SHA with authoritative PR CI. PR #1 stays draft/unmerged; main untouched.
 
 ## Acceptance
-- Only `RUNNING` tasks admitted to the current failed run become `FAILED` exactly once.
-- Counters and terminal error preserve coherent state; no automatic redo of possibly partially finished output.
-- Queued and already-terminal tasks, later enqueues and newer run IDs remain intact.
-- Add deterministic app JVM regression coverage; validate code/test SHA with PR CI.
-- Keep PR #1 draft/unmerged and `main` untouched.
+- Report failed terminal persistence only when the exact pre-write terminal state is still current and idle.
+- Preserve a newer batch's completion status, user-dismissed errors and newer run identity even if old/new error strings are identical.
+- Keep cancellation propagation and the existing persistence success path unchanged.
+- Add focused deterministic app JVM tests and validate the exact code/test SHA through authoritative PR CI.
+- Keep PR #1 draft/unmerged; never modify `main`.
 
 ## Next exact action
-Modify the CAS transition in `failRunIfCurrent` and add focused tests, then validate authoritative CI and synchronize all canonical docs after terminal result.
+Introduce snapshot-scoped terminal-save failure reporting in the runtime and foreground service; add regressions, commit on the feature branch and validate CI.
