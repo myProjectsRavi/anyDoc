@@ -37,7 +37,8 @@ import kotlinx.coroutines.withContext
 class BatchQueueForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var processingJob: Job? = null
-    private var processingTaskIds: Set<Long> = emptySet()
+    @Volatile private var processingTaskIds: Set<Long> = emptySet()
+    @Volatile private var processingRunId: Long = 0L
 
     private val dependencies by lazy { (application as com.docforge.app.DocForgeApp).dependencies }
     private val persistenceStore by lazy {
@@ -54,38 +55,42 @@ class BatchQueueForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // CRITICAL: startForeground must be called within 5s of startForegroundService
-        startForeground(
-            BatchQueueServiceContract.NOTIFICATION_ID,
-            buildProgressNotification(
-                title = "AnyDoc batch queue",
-                text = "Preparing...",
-                processed = 0,
-                total = 1,
-                ongoing = true
-            )
-        )
-
         when (intent?.action) {
             BatchQueueServiceContract.ACTION_CANCEL_QUEUE -> {
                 val requested = intent.getLongArrayExtra(BatchQueueServiceContract.EXTRA_TASK_IDS)
                     ?.toSet().orEmpty()
-                if (requested.isNotEmpty() && requested == processingTaskIds && processingJob?.isActive == true) {
+                val requestedRunId = intent.getLongExtra(BatchQueueServiceContract.EXTRA_RUN_ID, 0L)
+                if (requestedRunId > 0L && requestedRunId == processingRunId &&
+                    requested.isNotEmpty() && requested == processingTaskIds &&
+                    processingJob?.isCompleted == false
+                ) {
                     processingJob?.cancel()
-                    // The ATOMIC start guarantees that processQueue gets to its
-                    // cancellation handler even if dispatch has not begun yet.
-                } else if (BatchQueueRuntimeStore.cancelPendingRun(requested)) {
-                    // No matching worker is attached. Persist the terminal state asynchronously.
+                    // Its ATOMIC start ensures the worker enters cancellation cleanup.
+                    return START_NOT_STICKY
+                }
+                if (BatchQueueRuntimeStore.cancelPendingRun(requested, requestedRunId)) {
+                    // No matching worker is attached. Persist before ending this service start.
                     serviceScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                        withContext(NonCancellable) {
-                            persistTerminalCheckpoint(
-                                "Batch cancellation completed, but the queue could not be saved."
-                            )
+                        try {
+                            withContext(NonCancellable) {
+                                persistTerminalCheckpoint(
+                                    "Batch cancellation completed, but the queue could not be saved."
+                                )
+                            }
+                        } finally {
+                            if (!BatchQueueRuntimeStore.state.value.isProcessing) {
+                                stopForeground(STOP_FOREGROUND_REMOVE)
+                            }
+                            stopSelf(startId)
                         }
-                        stopSelf(startId)
                     }
                 }
-                stopForeground(STOP_FOREGROUND_REMOVE)
+                // Ignore stale cancel intents; never remove a newer run's notification.
+                if (!BatchQueueRuntimeStore.state.value.isProcessing &&
+                    processingJob?.isCompleted != false
+                ) {
+                    stopSelf(startId)
+                }
                 return START_NOT_STICKY
             }
 
@@ -96,42 +101,60 @@ class BatchQueueForegroundService : Service() {
                     .orEmpty()
 
                 if (taskIds.isEmpty()) {
-                    BatchQueueRuntimeStore.failProcessing("No queued tasks to run.")
-                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    // Malformed/stale intents cannot fail an unrelated admitted run.
+                    if (!BatchQueueRuntimeStore.state.value.isProcessing) {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                    }
                     stopSelf(startId)
                     return START_NOT_STICKY
                 }
 
                 val runIds = taskIds.toSet()
-                if (!BatchQueueRuntimeStore.isCurrentRun(runIds)) {
-                    stopForeground(STOP_FOREGROUND_REMOVE)
+                val runId = intent.getLongExtra(BatchQueueServiceContract.EXTRA_RUN_ID, 0L)
+                if (!BatchQueueRuntimeStore.isCurrentRun(runIds, runId)) {
+                    if (!BatchQueueRuntimeStore.state.value.isProcessing) {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                    }
                     stopSelf(startId)
                     return START_NOT_STICKY
                 }
 
-                val previous = processingJob?.takeIf { it.isActive }
-                if (previous != null && processingTaskIds == runIds) {
+                val previous = processingJob?.takeUnless { it.isCompleted }
+                if (previous != null && processingTaskIds == runIds && processingRunId == runId) {
                     return batchQueueRestartMode()
                 }
 
+                // Only a validated new RUN needs foreground promotion. Late CANCEL/RUN
+                // intents must not overwrite the notification of a newer active batch.
+                startForeground(
+                    BatchQueueServiceContract.NOTIFICATION_ID,
+                    buildProgressNotification(
+                        title = "AnyDoc batch queue",
+                        text = "Preparing...",
+                        processed = 0,
+                        total = taskIds.size,
+                        ongoing = true
+                    )
+                )
+                processingTaskIds = runIds
+                processingRunId = runId
                 notifyProgress(
                     text = "Starting queue...",
                     processed = 0,
                     total = taskIds.size
                 )
 
-                processingTaskIds = runIds
                 processingJob = serviceScope.launch(start = CoroutineStart.ATOMIC) {
                     try {
                         // A previous run can be finishing its terminal checkpoint even after
                         // isProcessing becomes false. Do not drop the newly admitted RUN intent.
                         previous?.join()
-                        processQueue(taskIds)
+                        processQueue(taskIds, runId)
                     } catch (_: CancellationException) {
                         // Covers cancellation while waiting for an older worker, before this
                         // run ever reaches processQueue's own cancellation handler.
                         withContext(NonCancellable) {
-                            if (BatchQueueRuntimeStore.cancelPendingRun(runIds)) {
+                            if (BatchQueueRuntimeStore.cancelPendingRun(runIds, runId)) {
                                 persistTerminalCheckpoint(
                                     "Batch cancellation completed, but the queue could not be saved."
                                 )
@@ -146,7 +169,10 @@ class BatchQueueForegroundService : Service() {
             }
 
             else -> {
-                stopForeground(STOP_FOREGROUND_REMOVE)
+                if (!BatchQueueRuntimeStore.state.value.isProcessing) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf(startId)
+                }
                 return START_NOT_STICKY
             }
         }
@@ -158,7 +184,7 @@ class BatchQueueForegroundService : Service() {
         super.onDestroy()
     }
 
-    private suspend fun processQueue(taskIds: List<Long>) {
+    private suspend fun processQueue(taskIds: List<Long>, runId: Long) {
         val allowedTaskIds = taskIds.toSet()
         if (allowedTaskIds.isEmpty()) {
             BatchQueueRuntimeStore.failProcessing("No queued tasks available.")
@@ -169,10 +195,10 @@ class BatchQueueForegroundService : Service() {
         val total = allowedTaskIds.size
         try {
             currentCoroutineContext().ensureActive()
-            if (!BatchQueueRuntimeStore.isCurrentRun(allowedTaskIds)) return
+            if (!BatchQueueRuntimeStore.isCurrentRun(allowedTaskIds, runId)) return
             while (true) {
                 val task = BatchQueueRuntimeStore.startNextQueuedTask(allowedTaskIds, total) ?: break
-                if (!persistRunningCheckpoint(task.id)) {
+                if (!persistRunningCheckpoint(task.id, allowedTaskIds, runId)) {
                     return
                 }
                 notifyProgress(
@@ -238,7 +264,7 @@ class BatchQueueForegroundService : Service() {
 
             val finalState = BatchQueueRuntimeStore.state.value
             val summary = "Batch complete: ${finalState.successCount} success, ${finalState.failureCount} failed"
-            if (BatchQueueRuntimeStore.finishRunIfCurrent(allowedTaskIds, summary)) {
+            if (BatchQueueRuntimeStore.finishRunIfCurrent(allowedTaskIds, runId, summary)) {
                 persistTerminalCheckpoint(
                     "Batch finished, but the final queue state could not be saved. Review outputs before retrying."
                 )
@@ -249,7 +275,7 @@ class BatchQueueForegroundService : Service() {
             // outside the cancelled job context rather than misclassifying it as a disk failure.
             withContext(NonCancellable) {
                 // CAS before touching tasks prevents a late callback from affecting a later run.
-                if (BatchQueueRuntimeStore.cancelPendingRun(allowedTaskIds)) {
+                if (BatchQueueRuntimeStore.cancelPendingRun(allowedTaskIds, runId)) {
                     persistTerminalCheckpoint(
                         "Batch cancellation completed, but the final queue state could not be saved."
                     )
@@ -257,35 +283,45 @@ class BatchQueueForegroundService : Service() {
                 }
             }
         } finally {
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            // An older worker can complete after a newer run has attached.
+            if (processingRunId == runId && processingTaskIds == allowedTaskIds) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            }
         }
     }
 
-    private suspend fun persistRunningCheckpoint(taskId: Long): Boolean =
+    private suspend fun persistRunningCheckpoint(
+        taskId: Long,
+        taskIds: Set<Long>,
+        runId: Long
+    ): Boolean =
         persistBatchQueueCheckpoint(
             persist = { persistQueueSnapshot() },
             onFailure = { error ->
                 val message = error.message ?: "Unable to save the running queue state."
-                BatchQueueRuntimeStore.markTaskFailure(
-                    taskId = taskId,
-                    errorMessage = "Task was not run because queue state could not be saved: $message"
-                )
-                BatchQueueRuntimeStore.failProcessing(
-                    "Batch stopped before running task #$taskId because its queue state could not be saved."
-                )
-                // Preserve the existing best-effort failure-state snapshot. Cancellation
-                // must escape rather than being converted into another storage error.
-                persistBatchQueueCheckpoint(
-                    persist = { persistQueueSnapshot() },
-                    onFailure = { /* Keep the first persistence failure visible. */ }
-                )
+                if (BatchQueueRuntimeStore.isCurrentRun(taskIds, runId)) {
+                    BatchQueueRuntimeStore.markTaskFailure(
+                        taskId = taskId,
+                        errorMessage = "Task was not run because queue state could not be saved: $message"
+                    )
+                    BatchQueueRuntimeStore.failRunIfCurrent(
+                        taskIds,
+                        runId,
+                        "Batch stopped before running task #$taskId because its queue state could not be saved."
+                    )
+                    // Keep the first error visible if recovery persistence also fails.
+                    persistBatchQueueCheckpoint(
+                        persist = { persistQueueSnapshot() },
+                        onFailure = { /* Best effort */ }
+                    )
+                }
             }
         )
 
     private suspend fun persistTerminalCheckpoint(failureMessage: String): Boolean =
         persistBatchQueueCheckpoint(
             persist = { persistQueueSnapshot() },
-            onFailure = { BatchQueueRuntimeStore.failProcessing(failureMessage) }
+            onFailure = { BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(failureMessage) }
         )
 
     private suspend fun persistQueueSnapshot() {

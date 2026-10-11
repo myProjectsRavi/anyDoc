@@ -164,8 +164,8 @@ class BatchQueueViewModel(
 
     fun runQueue() {
         pendingStartJob = viewModelScope.launch {
-            val startResult = BatchQueueRuntimeStore.beginProcessing()
-            val taskIds = startResult.getOrElse { err ->
+            val startResult = BatchQueueRuntimeStore.beginProcessingSession()
+            val admission = startResult.getOrElse { err ->
                 setError(err.message ?: "Failed to start queue")
                 return@launch
             }
@@ -173,7 +173,8 @@ class BatchQueueViewModel(
             val context = getApplication<Application>().applicationContext
             val intent = Intent(context, BatchQueueForegroundService::class.java).apply {
                 action = BatchQueueServiceContract.ACTION_RUN_QUEUE
-                putExtra(BatchQueueServiceContract.EXTRA_TASK_IDS, taskIds.toLongArray())
+                putExtra(BatchQueueServiceContract.EXTRA_TASK_IDS, admission.taskIds.toLongArray())
+                putExtra(BatchQueueServiceContract.EXTRA_RUN_ID, admission.runId)
             }
 
             runCatching {
@@ -185,8 +186,9 @@ class BatchQueueViewModel(
     }
 
     fun cancelQueue() {
-        val taskIds = BatchQueueRuntimeStore.state.value.activeRunTaskIds
-        if (taskIds.isEmpty()) {
+        val admission = BatchQueueRuntimeStore.state.value
+        val taskIds = admission.activeRunTaskIds
+        if (taskIds.isEmpty() || admission.activeRunId <= 0L) {
             // A queued runQueue coroutine may still be awaiting the admission mutex.
             // Cancel it before it can admit a batch after the user's cancel action.
             pendingStartJob?.cancel()
@@ -197,6 +199,7 @@ class BatchQueueViewModel(
         val intent = Intent(context, BatchQueueForegroundService::class.java).apply {
             action = BatchQueueServiceContract.ACTION_CANCEL_QUEUE
             putExtra(BatchQueueServiceContract.EXTRA_TASK_IDS, taskIds.toLongArray())
+            putExtra(BatchQueueServiceContract.EXTRA_RUN_ID, admission.activeRunId)
         }
         launchBatchQueueCancellation(
             launch = {

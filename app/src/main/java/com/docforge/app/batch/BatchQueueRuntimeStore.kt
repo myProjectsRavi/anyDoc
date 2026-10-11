@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+internal data class BatchRunAdmission(val runId: Long, val taskIds: List<Long>)
+
 object BatchQueueRuntimeStore {
     private val taskIdCounter = AtomicLong(1L)
+    private val runIdCounter = AtomicLong(1L)
     // Protect ID reservations and recovery publication from each other.
     private val admissionLock = Any()
     private val outputBaseSanitizer = Regex("[^a-zA-Z0-9_-]")
@@ -220,11 +223,14 @@ object BatchQueueRuntimeStore {
         }
     }
 
-    suspend fun beginProcessing(): Result<List<Long>> = mutex.withLock {
+    suspend fun beginProcessing(): Result<List<Long>> =
+        beginProcessingSession().map { it.taskIds }
+
+    internal suspend fun beginProcessingSession(): Result<BatchRunAdmission> = mutex.withLock {
         beginProcessingFromCurrentState()
     }
 
-    private fun beginProcessingFromCurrentState(): Result<List<Long>> {
+    private fun beginProcessingFromCurrentState(): Result<BatchRunAdmission> {
         while (true) {
             val current = _state.value
             if (current.isProcessing) {
@@ -236,8 +242,13 @@ object BatchQueueRuntimeStore {
             if (queued.isEmpty()) {
                 return Result.failure(IllegalArgumentException("Add at least one queued task first."))
             }
+            val runId = runIdCounter.getAndIncrement()
+            if (runId <= 0L) {
+                return Result.failure(IllegalStateException("Batch run IDs exhausted."))
+            }
             val started = current.copy(
                 isProcessing = true,
+                activeRunId = runId,
                 activeRunTaskIds = queued.toSet(),
                 processedCount = 0,
                 successCount = 0,
@@ -245,7 +256,9 @@ object BatchQueueRuntimeStore {
                 statusMessage = "Starting batch queue...",
                 errorMessage = null
             )
-            if (_state.compareAndSet(current, started)) return Result.success(queued)
+            if (_state.compareAndSet(current, started)) {
+                return Result.success(BatchRunAdmission(runId, queued))
+            }
         }
     }
 
@@ -342,26 +355,30 @@ object BatchQueueRuntimeStore {
     }
 
     /** A stale service command must never attach to or finish a later admitted batch. */
-    fun isCurrentRun(taskIds: Set<Long>): Boolean =
-        taskIds.isNotEmpty() && _state.value.let {
-            it.isProcessing && it.activeRunTaskIds == taskIds
+    fun isCurrentRun(taskIds: Set<Long>, expectedRunId: Long): Boolean =
+        expectedRunId > 0L && taskIds.isNotEmpty() && _state.value.let {
+            it.isProcessing && it.activeRunId == expectedRunId && it.activeRunTaskIds == taskIds
         }
 
     /**
      * Complete cancellation even when the RUN command has not attached a worker.
      * Only tasks admitted to this exact run are affected; later enqueues remain queued.
      */
-    fun cancelPendingRun(taskIds: Set<Long>): Boolean {
-        if (taskIds.isEmpty()) return false
+    fun cancelPendingRun(taskIds: Set<Long>, expectedRunId: Long): Boolean {
+        if (taskIds.isEmpty() || expectedRunId <= 0L) return false
         while (true) {
             val current = _state.value
-            if (!current.isProcessing || current.activeRunTaskIds != taskIds) return false
+            if (!current.isProcessing ||
+                current.activeRunId != expectedRunId ||
+                current.activeRunTaskIds != taskIds
+            ) return false
             val canceledRunning = current.tasks.count {
                 it.id in taskIds && it.status == BatchTaskStatus.RUNNING
             }
             val canceled = current.copy(
                 isProcessing = false,
                 activeRunTaskIds = emptySet(),
+                activeRunId = 0L,
                 statusMessage = "Batch queue canceled",
                 errorMessage = null,
                 processedCount = current.processedCount + canceledRunning,
@@ -379,14 +396,49 @@ object BatchQueueRuntimeStore {
     }
 
     /** Ignore a late terminal callback from a previously canceled or superseded run. */
-    fun finishRunIfCurrent(taskIds: Set<Long>, message: String): Boolean {
-        if (taskIds.isEmpty()) return false
+    /** Failure from an older worker must not stop a newer run. */
+    fun failRunIfCurrent(taskIds: Set<Long>, expectedRunId: Long, message: String): Boolean {
+        if (taskIds.isEmpty() || expectedRunId <= 0L) return false
         while (true) {
             val current = _state.value
-            if (!current.isProcessing || current.activeRunTaskIds != taskIds) return false
+            if (!current.isProcessing ||
+                current.activeRunId != expectedRunId ||
+                current.activeRunTaskIds != taskIds
+            ) return false
+            if (_state.compareAndSet(current, current.copy(
+                isProcessing = false,
+                activeRunId = 0L,
+                activeRunTaskIds = emptySet(),
+                statusMessage = null,
+                errorMessage = message
+            ))) return true
+        }
+    }
+
+    /** A completed older run may report a save failure, but never reset active work. */
+    fun reportPersistenceFailureIfIdle(message: String): Boolean {
+        while (true) {
+            val current = _state.value
+            if (current.isProcessing) return false
+            if (_state.compareAndSet(current, current.copy(
+                statusMessage = null,
+                errorMessage = message
+            ))) return true
+        }
+    }
+
+    fun finishRunIfCurrent(taskIds: Set<Long>, expectedRunId: Long, message: String): Boolean {
+        if (taskIds.isEmpty() || expectedRunId <= 0L) return false
+        while (true) {
+            val current = _state.value
+            if (!current.isProcessing ||
+                current.activeRunId != expectedRunId ||
+                current.activeRunTaskIds != taskIds
+            ) return false
             if (_state.compareAndSet(current, current.copy(
                 isProcessing = false,
                 activeRunTaskIds = emptySet(),
+                activeRunId = 0L,
                 statusMessage = message,
                 errorMessage = null
             ))) return true
@@ -412,6 +464,7 @@ object BatchQueueRuntimeStore {
             it.copy(
                 isProcessing = false,
                 activeRunTaskIds = emptySet(),
+                activeRunId = 0L,
                 statusMessage = statusMessage,
                 errorMessage = null
             )
@@ -423,6 +476,7 @@ object BatchQueueRuntimeStore {
             it.copy(
                 isProcessing = false,
                 activeRunTaskIds = emptySet(),
+                activeRunId = 0L,
                 statusMessage = null,
                 errorMessage = message
             )
