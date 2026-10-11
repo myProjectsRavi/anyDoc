@@ -153,9 +153,12 @@ class BatchQueueCancellationHandoffTest {
         assertTrue(BatchQueueRuntimeStore.finishRunIfCurrent(
             first.taskIds.toSet(), first.runId, "done"
         ))
+        val completedSnapshot = BatchQueueRuntimeStore.state.value
         val second = admit()
         val before = BatchQueueRuntimeStore.state.value
-        assertFalse(BatchQueueRuntimeStore.reportPersistenceFailureIfIdle("old save failed"))
+        assertFalse(BatchQueueRuntimeStore.reportPersistenceFailureIfIdle(
+            "old save failed", completedSnapshot
+        ))
         assertEquals(before, BatchQueueRuntimeStore.state.value)
         assertTrue(BatchQueueRuntimeStore.isCurrentRun(second.taskIds.toSet(), second.runId))
     }
