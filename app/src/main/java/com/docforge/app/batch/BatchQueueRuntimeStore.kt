@@ -419,10 +419,29 @@ object BatchQueueRuntimeStore {
                 current.activeRunId != expectedRunId ||
                 current.activeRunTaskIds != taskIds
             ) return false
+
+            // An interrupted task must not remain RUNNING after its run is released.
+            // Never auto-retry it: its converter may already have published output.
+            val interrupted = current.tasks.count { task ->
+                task.id in taskIds && task.status == BatchTaskStatus.RUNNING
+            }
+            val terminalTasks = if (interrupted == 0) current.tasks else current.tasks.map { task ->
+                if (task.id in taskIds && task.status == BatchTaskStatus.RUNNING) {
+                    task.copy(
+                        status = BatchTaskStatus.FAILED,
+                        errorMessage = "Batch interrupted: $message"
+                    )
+                } else {
+                    task
+                }
+            }
             if (_state.compareAndSet(current, current.copy(
+                tasks = terminalTasks,
                 isProcessing = false,
                 activeRunId = 0L,
                 activeRunTaskIds = emptySet(),
+                processedCount = current.processedCount + interrupted,
+                failureCount = current.failureCount + interrupted,
                 statusMessage = null,
                 errorMessage = message
             ))) return true
