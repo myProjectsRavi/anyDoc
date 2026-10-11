@@ -1,24 +1,24 @@
 # Current Report
 
-**ID:** `2026-10-11_cycle-065`
+**ID:** `2026-10-11_cycle-066`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic:** `E065` — Foreground service promotion integrity
-**Feature:** `F067` — Run-scoped foreground promotion failure recovery
-**User Story:** `US-R065-P1-01A` — Recover batch after foreground promotion failure
+**Epic:** `E066` — Interrupted batch run terminal integrity
+**Feature:** `F068` — Terminalize interrupted RUNNING tasks on run failure
+**User Story:** `US-R066-P1-01A` — Prevent stranded RUNNING tasks after run failure
 
-## Last validated story
-Cycle 064 E064/F066/US-R064-P1-01A COMPLETE. Exact code/test SHA `0227722822dab7d4c6d9ed06c0d722b430a660cd` passed authoritative PR CI #593 / API `38142774494` on 2026-10-11 UTC. All eight gates SUCCESS: core PDF unit tests, converter unit tests, scanner unit tests, PDF tools unit tests, app JVM tests, debug APK, unsigned release/R8, Android lint. 13 focused cancellation handoff regressions cover pre-worker/pre-dispatch cancellation, atomic worker launch, run-scoped pending cancellation, later enqueues, duplicate/late callbacks, retry with same task IDs but unique run IDs, stale worker dispatch and terminal transitions, old persistence failures and counters. Push run #592 canceled by concurrency, not validation. No emulator/physical-device/benchmark/crash-free evidence claimed.
+## Validated previous cycle
+Cycle 065 E065/F067/US-R065-P1-01A COMPLETE. Exact validated code/test SHA `33d58689a282ea0c1c8832b95752c29a85df4221`; authoritative PR workflow #598 / API `38148001273` SUCCESS across core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8 and lint. Production catches foreground promotion exceptions, fail-closes only the matching admitted run, releases failed service start promptly, and persists terminal state in application scope after service destruction. Five focused JVM/Robolectric tests cover success, SecurityException, platform restrictions, stale retries, cancellation propagation. No emulator, physical device, performance benchmark or crash-free evidence claimed.
 
 ## Confirmed source risk
-Cycle 065 E065/F067/US-R065-P1-01A ACTIVE / INCOMPLETE. Source evidence: `BatchQueueForegroundService.onStartCommand(ACTION_RUN_QUEUE)` calls Android `startForeground()` after the run was admitted; if foreground promotion throws (for example a platform start restriction or SecurityException), onStartCommand has no failure handler and the runtime can remain `isProcessing=true` without a worker. The ViewModel only handles errors from `startForegroundService()`, not later promotion errors inside the service. Next: add a small, testable foreground-promotion failure boundary; fail only the matching active run using its run ID, preserve retryable queued work, stop the failed service start safely, add focused JVM/Robolectric tests for successful promotion, platform/security exception, and stale-run isolation, then validate exact code/test SHA in authoritative GitHub Actions. Keep PR #1 draft/unmerged; do not touch main.
+Cycle 066 E066/F068/US-R066-P1-01A ACTIVE / INCOMPLETE. Source: `BatchQueueRuntimeStore.failRunIfCurrent()` clears processing and run ID without terminalizing a matching `RUNNING` task; the orphan can no longer be claimed by `startNextQueuedTask()` or removed by `removeTask()`. Next: atomically transition only RUNNING tasks admitted to that exact run into FAILED with an interrupted-run diagnostic and consistent counters; leave QUEUED tasks available for explicit retry, preserve SUCCESS/FAILED/CANCELED tasks and later enqueues, prevent stale failed runs from changing newer runs. Add deterministic app JVM tests and validate exact SHA via authoritative PR CI.
 
 ## Acceptance
-- No ACTIVE batch stranded when Android rejects foreground promotion after RUN admission.
-- A rejected or stale start fails only its matching run; later retry remains intact.
-- Preserve queued tasks, run IDs, error visibility, service lifecycle, and existing safe behavior.
-- Add deterministic JVM/Robolectric tests for success, foreground/security exceptions, and stale-run behavior.
-- Authoritative PR CI validates exact code/test SHA. No claim of physical device validation.
+- Only `RUNNING` tasks admitted to the current failed run become `FAILED` exactly once.
+- Counters and terminal error preserve coherent state; no automatic redo of possibly partially finished output.
+- Queued and already-terminal tasks, later enqueues and newer run IDs remain intact.
+- Add deterministic app JVM regression coverage; validate code/test SHA with PR CI.
+- Keep PR #1 draft/unmerged and `main` untouched.
 
-## Next executable action
-Introduce a small pure/testable foreground-promotion safety seam, use the run-scoped failure transition, add focused tests, and validate the exact feature-branch candidate. Do not mutate main or merge PR #1.
+## Next exact action
+Modify the CAS transition in `failRunIfCurrent` and add focused tests, then validate authoritative CI and synchronize all canonical docs after terminal result.

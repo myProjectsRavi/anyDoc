@@ -537,3 +537,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E065 — Foreground service promotion integrity
 #### Feature F067 — Run-scoped foreground promotion failure recovery
 - [ACTIVE / P1] `US-R065-P1-01A` — Handle `startForeground()` failures without stranding current run; preserve newer runs; deterministic JVM/Robolectric regressions and exact-head CI.
+
+
+## Cycle 065 closure — 2026-10-11 UTC
+- [COMPLETE / PR CI #598] `US-R065-P1-01A` — Recover rejected foreground promotion on matching run, app-scope terminal persistence and prompt service release. Five focused JVM tests; SHA `33d58689a282ea0c1c8832b95752c29a85df4221`; API `38148001273` SUCCESS all eight gates.
+- [NEXT / P1] `US-R066-P1-01A` — Terminalize interrupted RUNNING tasks on run failure without disturbing unrelated tasks.
+
+## Cycle 066 active
+### Epic E066 — Interrupted batch run terminal integrity
+#### Feature F068 — Terminalize interrupted RUNNING tasks on run failure
+- [ACTIVE / P1] `US-R066-P1-01A` — CAS-guard failed run, mark interrupted RUNNING tasks FAILED exactly once and update counters. Preserve queued/terminal tasks, stale-run isolation, and verify with app JVM regressions and PR CI.
