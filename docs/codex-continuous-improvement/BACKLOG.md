@@ -518,3 +518,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E063 — Batch queue cancellation scope integrity
 #### Feature F065 — Run-scoped queued task cancellation
 - [ACTIVE / P1] `US-R063-P1-01A` — Cancel only queued tasks in active run ID set; preserve later enqueue and terminal/running states; deterministic and concurrent app JVM regressions; exact-SHA PR CI.
+
+## Cycle 063 closure — 2026-10-11 UTC
+- [COMPLETE / PR CI #586] `US-R063-P1-01A` — Run-scoped cancellation and five JVM regressions. Exact SHA `b2cf41cb695c56370df583d59b4e3e81a364c249`; authoritative run API `38118363838` SUCCESS, eight gates.
+- [NEXT / P1] `US-R064-P1-01A` — Prevent cancel-before-worker-attachment from stranding the batch in processing state.
+
+## Cycle 064 active
+### Epic E064 — Batch queue cancel/start handoff integrity
+#### Feature F066 — Cancel-before-worker-start recovery
+- [ACTIVE / P1] `US-R064-P1-01A` — Correct pending-start/pre-dispatch cancellation and idempotent terminal cleanup; focused JVM/Robolectric tests and exact-SHA PR CI.

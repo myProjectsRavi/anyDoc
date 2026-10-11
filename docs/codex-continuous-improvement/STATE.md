@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-10_cycle-063`
+**Current report:** `2026-10-11_cycle-064`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 063
-**Current Epic:** `E063` — Batch queue cancellation scope integrity
-**Current Feature:** `F065` — Run-scoped queued task cancellation
-**Current User Story:** `US-R063-P1-01A` — Cancel only queued tasks belonging to the active run (ACTIVE)
-**Last completed cycle:** Cycle 062
-**State checkpoint timestamp:** 2026-10-10 UTC
+**Cycle:** 064
+**Current Epic:** `E064` — Batch queue cancel/start handoff integrity
+**Current Feature:** `F066` — Cancel-before-worker-start recovery
+**Current User Story:** `US-R064-P1-01A` — Prevent stuck processing when cancellation precedes worker attachment (ACTIVE)
+**Last completed cycle:** Cycle 063
+**State checkpoint timestamp:** 2026-10-11 UTC
 
 ## Current next executable step
-Cycle 062 E062/F064/US-R062-P1-01A COMPLETE: exact code/test SHA `d88c011fc4d04d3847b0be81416042f40f89eb37` passed authoritative PR CI #583 / API `38095021819` (SUCCESS, 2026-10-10 UTC), job `114339056845`; all eight gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). CAS task claims require active processing; rename/removal race tests activate processing. No emulator, physical-device, benchmark or crash-free claim.
-Cycle 063 E063/F065/US-R063-P1-01A ACTIVE / INCOMPLETE: `BatchQueueForegroundService.processQueue` retains `allowedTaskIds` from batch start, but its cancellation handler calls `BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()` without an ID filter, canceling queued tasks added after the run started. Next exact mutation: scope queued cancellation to active run IDs, preserve running/terminal and later-enqueued tasks, add app JVM deterministic/concurrency regressions, validate exact code/test SHA through authoritative PR CI. No Cycle 063 production/test mutation at activation. PR #1 remains draft/unmerged; main untouched.
+Cycle 063 `E063/F065/US-R063-P1-01A` COMPLETE: exact code/test SHA `b2cf41cb695c56370df583d59b4e3e81a364c249` passed authoritative PR CI #586 / API `38118363838` (SUCCESS, 2026-10-11 UTC), all eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). `markRemainingQueuedAsCanceled` now filters active-run task IDs; five app JVM regressions cover later enqueues, running/terminal preservation, empty eligible IDs and 100 concurrent enqueue/cancel cases. Paired push CI #585 / API `38118360741` was canceled by concurrency and is not validation evidence. No emulator, physical-device, benchmark or crash-free evidence.
+Cycle 064 `E064/F066/US-R064-P1-01A` ACTIVE / INCOMPLETE: cancel-before-worker-start race. Source: `BatchQueueViewModel.runQueue` calls `beginProcessing()` before posting `ACTION_RUN_QUEUE`; `cancelQueue` separately posts `ACTION_CANCEL_QUEUE`. `BatchQueueForegroundService.onStartCommand(ACTION_CANCEL_QUEUE)` only cancels `processingJob?` and removes foreground notification. If the cancel command arrives before the RUN command attaches a job, or a newly scheduled job is canceled before entering `processQueue`, the cleanup catch may never execute, leaving `isProcessing=true`. Next: design cancellation handoff that covers pending start and pre-dispatch cancellation without canceling later enqueues or double-finalizing, add focused deterministic JVM/Robolectric tests, validate exact code/test SHA through authoritative PR CI. No Cycle 064 production/test mutation at activation. Keep PR #1 draft/unmerged; never modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -211,3 +211,7 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 062 completion / Cycle 063 activation — 2026-10-10 UTC
 - Cycle 062 E062/F064/US-R062-P1-01A COMPLETE: exact code/test SHA `d88c011fc4d04d3847b0be81416042f40f89eb37` passed authoritative PR CI #583 / API `38095021819` (SUCCESS, 2026-10-10 UTC), job `114339056845`; all eight gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). CAS task claims require active processing; rename/removal race tests activate processing. No emulator, physical-device, benchmark or crash-free claim.
 - Cycle 063 E063/F065/US-R063-P1-01A ACTIVE / INCOMPLETE: `BatchQueueForegroundService.processQueue` retains `allowedTaskIds` from batch start, but its cancellation handler calls `BatchQueueRuntimeStore.markRemainingQueuedAsCanceled()` without an ID filter, canceling queued tasks added after the run started. Next exact mutation: scope queued cancellation to active run IDs, preserve running/terminal and later-enqueued tasks, add app JVM deterministic/concurrency regressions, validate exact code/test SHA through authoritative PR CI. No Cycle 063 production/test mutation at activation. PR #1 remains draft/unmerged; main untouched.
+
+## Cycle 063 completion / Cycle 064 activation — 2026-10-11 UTC
+- Cycle 063 `E063/F065/US-R063-P1-01A` COMPLETE: exact code/test SHA `b2cf41cb695c56370df583d59b4e3e81a364c249` passed authoritative PR CI #586 / API `38118363838` (SUCCESS, 2026-10-11 UTC), all eight gates (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). `markRemainingQueuedAsCanceled` now filters active-run task IDs; five app JVM regressions cover later enqueues, running/terminal preservation, empty eligible IDs and 100 concurrent enqueue/cancel cases. Paired push CI #585 / API `38118360741` was canceled by concurrency and is not validation evidence. No emulator, physical-device, benchmark or crash-free evidence.
+- Cycle 064 `E064/F066/US-R064-P1-01A` ACTIVE / INCOMPLETE: cancel-before-worker-start race. Source: `BatchQueueViewModel.runQueue` calls `beginProcessing()` before posting `ACTION_RUN_QUEUE`; `cancelQueue` separately posts `ACTION_CANCEL_QUEUE`. `BatchQueueForegroundService.onStartCommand(ACTION_CANCEL_QUEUE)` only cancels `processingJob?` and removes foreground notification. If the cancel command arrives before the RUN command attaches a job, or a newly scheduled job is canceled before entering `processQueue`, the cleanup catch may never execute, leaving `isProcessing=true`. Next: design cancellation handoff that covers pending start and pre-dispatch cancellation without canceling later enqueues or double-finalizing, add focused deterministic JVM/Robolectric tests, validate exact code/test SHA through authoritative PR CI. No Cycle 064 production/test mutation at activation. Keep PR #1 draft/unmerged; never modify main.
