@@ -556,3 +556,8 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E067 — Run-scoped persistence failure reporting
 #### Feature F069 — Suppress superseded terminal-save failures
 - [ACTIVE / P1] `US-R067-P1-01A` — Bind delayed terminal persistence error reporting to the original idle terminal snapshot; preserve newer/dismissed UI state. Add focused app JVM regressions and validate exact-SHA PR CI.
+
+
+## Cycle 067 completion / Cycle 068 activation — 2026-10-11 UTC
+- [COMPLETE / PR CI #606] `US-R067-P1-01A`: exact code/test SHA `3aa276af37760db53365ee720c3ac525ac469eec`; PR run `38172791603` SUCCESS (eight configured gates). Snapshot-scoped persistence errors preserve newer/dismissed state; no device or benchmark evidence.
+- [ACTIVE / P1] `US-R068-P1-01A` (`E068/F070`): fail-close the matching batch when per-task terminal checkpoint persistence fails; preserve terminal results, counters, queued work, newer runs and cancellation. Add JVM tests and exact-SHA PR CI.
