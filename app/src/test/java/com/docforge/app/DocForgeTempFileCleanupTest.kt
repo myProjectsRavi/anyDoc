@@ -143,6 +143,89 @@ class DocForgeTempFileCleanupTest {
         }
     }
 
+    @Test fun overlappingOwnersProtectStaleFileUntilFinalRelease() {
+        val stale = temp("docforge_shared_owners.tmp", ageMillis * 2L)
+        ActiveTempFileRegistry.register(stale)
+        ActiveTempFileRegistry.register(stale)
+        try {
+            ActiveTempFileRegistry.unregister(stale)
+            assertTrue(ActiveTempFileRegistry.isActive(stale))
+            assertFalse(ActiveTempFileRegistry.deleteIfInactive(stale))
+            DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+            assertTrue(stale.exists())
+        } finally {
+            ActiveTempFileRegistry.unregister(stale)
+        }
+        assertFalse(ActiveTempFileRegistry.isActive(stale))
+        DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+        assertFalse(stale.exists())
+    }
+
+    @Test fun unmatchedReleaseDoesNotAffectLaterOwner() {
+        val stale = temp("docforge_unmatched_release.tmp", ageMillis * 2L)
+        ActiveTempFileRegistry.unregister(stale)
+        ActiveTempFileRegistry.register(stale)
+        try {
+            assertTrue(ActiveTempFileRegistry.isActive(stale))
+            DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+            assertTrue(stale.exists())
+        } finally {
+            ActiveTempFileRegistry.unregister(stale)
+        }
+        assertFalse(ActiveTempFileRegistry.isActive(stale))
+        DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+        assertFalse(stale.exists())
+    }
+
+    @Test fun concurrentOwnersRetainProtectionAfterFirstOwnerReleases() {
+        val stale = temp("docforge_concurrent_owners.tmp", ageMillis * 2L)
+        val bothRegistered = CountDownLatch(2)
+        val releaseFirst = CountDownLatch(1)
+        val releaseSecond = CountDownLatch(1)
+        val firstReleased = CountDownLatch(1)
+        val secondReleased = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(2)
+        try {
+            val first = pool.submit {
+                ActiveTempFileRegistry.register(stale)
+                bothRegistered.countDown()
+                try {
+                    check(releaseFirst.await(5, TimeUnit.SECONDS))
+                } finally {
+                    ActiveTempFileRegistry.unregister(stale)
+                    firstReleased.countDown()
+                }
+            }
+            val second = pool.submit {
+                ActiveTempFileRegistry.register(stale)
+                bothRegistered.countDown()
+                try {
+                    check(releaseSecond.await(5, TimeUnit.SECONDS))
+                } finally {
+                    ActiveTempFileRegistry.unregister(stale)
+                    secondReleased.countDown()
+                }
+            }
+            assertTrue(bothRegistered.await(5, TimeUnit.SECONDS))
+            releaseFirst.countDown()
+            assertTrue(firstReleased.await(5, TimeUnit.SECONDS))
+            assertTrue(ActiveTempFileRegistry.isActive(stale))
+            DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+            assertTrue(stale.exists())
+            releaseSecond.countDown()
+            assertTrue(secondReleased.await(5, TimeUnit.SECONDS))
+            first.get(5, TimeUnit.SECONDS)
+            second.get(5, TimeUnit.SECONDS)
+            assertFalse(ActiveTempFileRegistry.isActive(stale))
+            DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+            assertFalse(stale.exists())
+        } finally {
+            releaseFirst.countDown()
+            releaseSecond.countDown()
+            pool.shutdownNow()
+        }
+    }
+
     @Test fun invalidAgeDoesNotDeleteFiles() {
         val stale = temp("docforge_stale.tmp", ageMillis * 2L)
         try {
