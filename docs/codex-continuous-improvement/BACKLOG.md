@@ -571,3 +571,13 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E069 — Batch conversion result integrity
 #### Feature F071 — Separate history persistence from conversion outcome
 - [ACTIVE / P1] `US-R069-P1-01A` — A failed history insert must not downgrade an already produced output to FAILED; retain cancellation and output/counter semantics, add app JVM regressions and exact-SHA PR CI.
+
+
+## Cycle 069 closure — 2026-10-12 UTC
+- [COMPLETE / PR CI #618] `US-R069-P1-01A` — History DAO insertion errors cannot downgrade a published conversion output. Exact SHA `5948a4b825fc23adcbb10ca54353af60fcbc8349`, API `38188235518` SUCCESS, eight gates. Six focused app JVM tests across helper/terminal behavior; no device evidence.
+- [NEXT / P1] `US-R070-P1-01A` — Preserve published output when optional history insertion is canceled.
+
+## Cycle 070 active
+### Epic E070 — Published batch output cancellation integrity
+#### Feature F072 — Commit conversion success before optional history
+- [ACTIVE / P1] `US-R070-P1-01A` — Mark successful conversion output before suspendable history persistence; propagate cancellation to remaining queued tasks without downgrading published result; add deterministic JVM tests and exact-SHA authoritative PR CI.

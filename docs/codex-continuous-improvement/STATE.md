@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-11_cycle-069`
+**Current report:** `2026-10-12_cycle-070`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 069
-**Current Epic:** `E069` — Batch conversion result integrity
-**Current Feature:** `F071` — Separate history persistence from conversion outcome
-**Current User Story:** `US-R069-P1-01A` — Do not downgrade published output when history insertion fails (ACTIVE)
-**Last completed cycle:** Cycle 068
-**State checkpoint timestamp:** 2026-10-11 UTC
+**Cycle:** 070
+**Current Epic:** `E070` — Published batch output cancellation integrity
+**Current Feature:** `F072` — Commit conversion success before optional history
+**Current User Story:** `US-R070-P1-01A` — Preserve published output when history insertion is canceled (ACTIVE)
+**Last completed cycle:** Cycle 069
+**State checkpoint timestamp:** 2026-10-12 UTC
 
 ## Current next executable step
-- Cycle 068 E068/F070/US-R068-P1-01A COMPLETE. Exact code/test SHA `7bcff3d9cc89d9ded303b3053b48b4cbc4b188b6` passed authoritative PR CI #610 / API `38176646082` SUCCESS on 2026-10-11 UTC; all eight gates passed. Six app JVM regressions. No device/emulator/benchmark evidence.
-- Cycle 069 E069/F071/US-R069-P1-01A ACTIVE / INCOMPLETE. History repository insertion after `executeTask` can fail and misclassify a published output as FAILED. Next: isolate history write failures, preserve SUCCESS output path/counters, cancellation and real conversion failures; add JVM tests and exact-SHA CI. PR #1 draft, main untouched.
+- Cycle 069 E069/F071/US-R069-P1-01A COMPLETE. Exact code/test SHA `5948a4b825fc23adcbb10ca54353af60fcbc8349` passed authoritative PR CI #618 / API `38188235518` SUCCESS on 2026-10-12 UTC, all eight configured gates. History DAO failures no longer downgrade completed conversion output. Six focused JVM tests across helper and terminal state. No device/emulator/benchmark evidence.
+- Cycle 070 E070/F072/US-R070-P1-01A ACTIVE / INCOMPLETE. Source: `convertWithBestEffortHistory` records history before `processQueue` calls `markTaskSuccess`. If history insertion is canceled after conversion returns, the service catches `CancellationException` while the task remains RUNNING and marks it CANCELED despite published output. Next: commit SUCCESS immediately when converter returns, before optional history suspension; preserve cancellation propagation and remaining-queue cancellation; add deterministic app JVM tests for canceled history, normal failure and exact-once counters, validate exact code/test SHA through authoritative PR CI. PR #1 draft; main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -234,3 +234,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 067 completion / Cycle 068 activation — 2026-10-11 UTC
 - Cycle 067 `E067/F069/US-R067-P1-01A` COMPLETE. Exact code/test SHA `3aa276af37760db53365ee720c3ac525ac469eec` passed authoritative PR workflow #606 / API `38172791603` on 2026-10-11 UTC (job `114568758180` SUCCESS). All eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, and Android lint. The terminal-save failure reporter uses the exact original terminal-state instance; later completed runs, user-dismissed errors, and same-message retries are not overwritten. Candidate `255a275c020ff88d31776e665694e5766d200fae` failed PR CI #605 / API `38172270865`; regression fixture was corrected in `3aa276af`. No emulator, device, benchmark, or crash-free evidence.
 - Cycle 068 `E068/F070/US-R068-P1-01A` ACTIVE / INCOMPLETE. Source: `BatchQueueForegroundService.processQueue` returns immediately when a per-task terminal `persistTerminalCheckpoint` fails, after `markTaskSuccess` or `markTaskFailure` but before `finishRunIfCurrent`; the runtime can retain `isProcessing=true` indefinitely and block further queue operations. Next: fail-close only the exact admitted run on terminal checkpoint failure, preserve already completed task results and queued work, avoid double-counting, attempt recovery persistence without overwriting a newer run, and add deterministic app JVM tests for success/failure checkpoint errors, stale runs, repeated callbacks, and cancellation propagation. Validate exact implementation SHA in authoritative PR CI. PR #1 remains draft/unmerged; never modify main.
+
+
+## Cycle 069 completion / Cycle 070 activation — 2026-10-12 UTC
+- Cycle 069 `E069/F071/US-R069-P1-01A` COMPLETE. Exact code/test SHA `5948a4b825fc23adcbb10ca54353af60fcbc8349` passed authoritative PR workflow #618 / API `38188235518` SUCCESS (2026-10-12 UTC), all eight gates: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. Ordinary history insertion errors no longer downgrade successful output; six focused JVM tests. No emulator/device/benchmark/crash-free evidence.
+- Cycle 070 `E070/F072/US-R070-P1-01A` ACTIVE / INCOMPLETE. After `executeTask` publishes output, cancellation during optional history insertion currently reaches the service cancellation handler before success terminalization and mislabels the published task CANCELED. Next exact mutation: transition the matching RUNNING task to SUCCESS immediately after conversion returns, before optional history I/O; still propagate cancellation to stop remaining tasks, keep counters and output path stable, add focused app JVM regressions, validate exact SHA. Keep PR #1 draft/unmerged and main untouched.
