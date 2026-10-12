@@ -590,3 +590,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E071 — Temporary-file cleanup integrity
 #### Feature F073 — Protect fresh temporary files during memory pressure
 - [ACTIVE / P1] `US-R071-P1-01A` — `DocForgeApp.onTrimMemory` currently requests zero-age cleanup, risking removal of freshly created `docforge_` files not yet registered as active. Introduce a conservative age floor and deterministic tests for fresh, stale, registered files; preserve stale cleanup. Exact-SHA PR CI required.
+
+
+## Cycle 071 closure / Cycle 072 activation — 2026-10-12 UTC
+- [COMPLETE / PR CI #632] `US-R071-P1-01A`: exact SHA `1454cde0de00b170fad27cb82a9fdf7b401b3bf6`, API `38270554697` SUCCESS, all eight configured gates. Thirty-minute cleanup floor and six focused JVM regressions. No device evidence.
+
+## Cycle 072 active
+### Epic E072 — Temporary-file registry synchronization
+#### Feature F074 — Atomic active-file guard during cleanup
+- [ACTIVE / P1] `US-R072-P1-01A` — Eliminate the check-then-delete race between `ActiveTempFileRegistry.isActive` and stale-file deletion. Synchronize registration with deletion, add deterministic concurrent tests, preserve existing age floor, validate exact-SHA authoritative PR CI. PR #1 draft; main untouched.

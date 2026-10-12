@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-12_cycle-071`
+**Current report:** `2026-10-12_cycle-072`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 071
-**Current Epic:** `E071` — Temporary-file cleanup integrity
-**Current Feature:** `F073` — Protect fresh temporary files during memory pressure
-**Current User Story:** `US-R071-P1-01A` — Preserve fresh in-flight temp files during memory trimming (ACTIVE)
-**Last completed cycle:** Cycle 070
+**Cycle:** 072
+**Current Epic:** `E072` — Temporary-file registry synchronization
+**Current Feature:** `F074` — Make stale-file deletion atomic with active registration
+**Current User Story:** `US-R072-P1-01A` — Prevent registered temp-file deletion races (ACTIVE)
+**Last completed cycle:** Cycle 071
 **State checkpoint timestamp:** 2026-10-12 UTC
 
 ## Current next executable step
-- Cycle 070 `E070/F072/US-R070-P1-01A` COMPLETE. Exact code/test SHA `149918edaafee92f2e916c26dbfb9b5b104093a5` passed authoritative PR GitHub Actions #629 / API `38263750211` SUCCESS on 2026-10-12 UTC (job `114862633733`); all eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. The service commits SUCCESS before optional history I/O, and regressions cover history cancellation, conversion cancellation, output preservation, pending-task cancellation and counters. Paired push #628 / API `38263745167` was canceled by concurrency, not validation. No emulator, physical-device, benchmark or crash-free evidence.
-- Cycle 071 `E071/F073/US-R071-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `DocForgeApp.onTrimMemory` schedules `cleanStaleTempFiles(maxAgeMs = 0L)`, which deletes any `docforge_`-prefixed cache file older than the current millisecond unless it is already in `ActiveTempFileRegistry`; registration is opt-in and not atomic with cleanup. A newly created/unregistered in-flight file may be removed during memory pressure. Next: introduce a conservative age floor for memory-trim cleanup, preserve stale-file reclamation and active-file protection, add deterministic JVM/Robolectric boundary tests for fresh/stale/active temp files and cancellation, then validate exact code/test SHA through authoritative PR CI. Do not change main; PR #1 stays draft.
+- Cycle 071 `E071/F073/US-R071-P1-01A` COMPLETE. Exact code/test SHA `1454cde0de00b170fad27cb82a9fdf7b401b3bf6` passed authoritative PR Actions #632 / API `38270554697` on 2026-10-12 UTC (job `114883847211`), all eight configured gates: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. `DocForgeApp` now applies a 30-minute age floor to startup and memory-trim cleanup; six deterministic app JVM tests cover fresh, stale, exact-boundary, active, unrelated/future, and invalid-age cases. Paired push #631 / API `38270548258` was canceled by concurrency and is not validation evidence. No emulator, physical-device, benchmark, or crash-free evidence.
+- Cycle 072 `E072/F074/US-R072-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `DocForgeTempFileCleanup.clean()` calls `ActiveTempFileRegistry.isActive(file)` then separately calls `file.delete()`; concurrent `register(file)` can interleave between the check and deletion, allowing a newly registered in-use stale temp file to be removed. Next: make the active check and deletion atomic with registry registration/unregistration, preserve 30-minute age threshold and existing cleanup behavior, add deterministic JVM concurrency regressions for registered-file protection and the check/delete race, validate exact code/test SHA in authoritative PR CI. Do not modify main; keep PR #1 draft.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -244,3 +244,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 070 completion / Cycle 071 activation — 2026-10-12 UTC
 - Cycle 070 `E070/F072/US-R070-P1-01A` COMPLETE. Exact code/test SHA `149918edaafee92f2e916c26dbfb9b5b104093a5` passed authoritative PR GitHub Actions #629 / API `38263750211` SUCCESS on 2026-10-12 UTC (job `114862633733`); all eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. The service commits SUCCESS before optional history I/O, and regressions cover history cancellation, conversion cancellation, output preservation, pending-task cancellation and counters. Paired push #628 / API `38263745167` was canceled by concurrency, not validation. No emulator, physical-device, benchmark or crash-free evidence.
 - Cycle 071 `E071/F073/US-R071-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `DocForgeApp.onTrimMemory` schedules `cleanStaleTempFiles(maxAgeMs = 0L)`, which deletes any `docforge_`-prefixed cache file older than the current millisecond unless it is already in `ActiveTempFileRegistry`; registration is opt-in and not atomic with cleanup. A newly created/unregistered in-flight file may be removed during memory pressure. Next: introduce a conservative age floor for memory-trim cleanup, preserve stale-file reclamation and active-file protection, add deterministic JVM/Robolectric boundary tests for fresh/stale/active temp files and cancellation, then validate exact code/test SHA through authoritative PR CI. Do not change main; PR #1 stays draft.
+
+
+## Cycle 071 completion / Cycle 072 activation — 2026-10-12 UTC
+- Cycle 071 `E071/F073/US-R071-P1-01A` COMPLETE. Exact code/test SHA `1454cde0de00b170fad27cb82a9fdf7b401b3bf6` passed authoritative PR Actions #632 / API `38270554697` on 2026-10-12 UTC (job `114883847211`), all eight configured gates: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. `DocForgeApp` now applies a 30-minute age floor to startup and memory-trim cleanup; six deterministic app JVM tests cover fresh, stale, exact-boundary, active, unrelated/future, and invalid-age cases. Paired push #631 / API `38270548258` was canceled by concurrency and is not validation evidence. No emulator, physical-device, benchmark, or crash-free evidence.
+- Cycle 072 `E072/F074/US-R072-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `DocForgeTempFileCleanup.clean()` calls `ActiveTempFileRegistry.isActive(file)` then separately calls `file.delete()`; concurrent `register(file)` can interleave between the check and deletion, allowing a newly registered in-use stale temp file to be removed. Next: make the active check and deletion atomic with registry registration/unregistration, preserve 30-minute age threshold and existing cleanup behavior, add deterministic JVM concurrency regressions for registered-file protection and the check/delete race, validate exact code/test SHA in authoritative PR CI. Do not modify main; keep PR #1 draft.
