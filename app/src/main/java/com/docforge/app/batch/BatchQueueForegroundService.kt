@@ -235,7 +235,7 @@ class BatchQueueForegroundService : Service() {
                 )
 
                 try {
-                    val outcome = convertWithBestEffortHistory(
+                    convertWithBestEffortHistory(
                         convert = { executeTask(task) },
                         recordHistory = { published ->
                             dependencies.historyRepository.insert(
@@ -248,13 +248,15 @@ class BatchQueueForegroundService : Service() {
                                     outputSizeBytes = published.outputSizeBytes
                                 )
                             )
+                        },
+                        onPublished = { published ->
+                            BatchQueueRuntimeStore.markTaskSuccess(
+                                taskId = task.id,
+                                outputPath = published.outputPath,
+                                outputSizeBytes = published.outputSizeBytes,
+                                expectedRunId = runId
+                            )
                         }
-                    )
-                    BatchQueueRuntimeStore.markTaskSuccess(
-                        taskId = task.id,
-                        outputPath = outcome.outputPath,
-                        outputSizeBytes = outcome.outputSizeBytes,
-                        expectedRunId = runId
                     )
                     if (!persistBatchTaskTerminalCheckpoint(
                             persist = { persistQueueSnapshot() },
