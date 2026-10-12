@@ -41,6 +41,24 @@ class BatchQueueHistoryTest {
         }
     }
 
+    @Test fun publishedCallbackRunsBeforeHistoryCancellation() = runBlocking {
+        val events = mutableListOf<String>()
+        try {
+            convertWithBestEffortHistory(
+                convert = { "converted.pdf" },
+                recordHistory = {
+                    events += "history"
+                    throw CancellationException("history canceled")
+                },
+                onPublished = { events += "published:$it" }
+            )
+            fail("Expected cancellation")
+        } catch (expected: CancellationException) {
+            assertEquals("history canceled", expected.message)
+        }
+        assertEquals(listOf("published:converted.pdf", "history"), events)
+    }
+
     @Test fun historyCancellationIsNotSilenced() = runBlocking {
         try {
             convertWithBestEffortHistory(
