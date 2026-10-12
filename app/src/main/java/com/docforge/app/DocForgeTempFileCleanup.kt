@@ -17,8 +17,8 @@ internal object DocForgeTempFileCleanup {
             val modifiedAt = file.lastModified()
             if (modifiedAt <= 0L || modifiedAt > nowMillis) return@forEach
             if (nowMillis - modifiedAt < minimumAgeMillis) return@forEach
-            if (ActiveTempFileRegistry.isActive(file)) return@forEach
-            runCatching { file.delete() }
+            // Registration and deletion must be one atomic registry operation.
+            runCatching { ActiveTempFileRegistry.deleteIfInactive(file) }
         }
     }
 }

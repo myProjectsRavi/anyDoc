@@ -1,26 +1,40 @@
 package com.docforge.core.domain.io
 
 import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Process-local registry for temporary files that are actively in use.
+ * Process-local registry for temporary files currently used by conversions.
  *
- * Cache cleanup may delete stale AnyDoc temporary files, but it must never delete a file while
- * an operation is still reading or writing it. Entries intentionally live only for the current
- * process: after process death there can be no in-flight operation, so leftovers are safe for the
- * next startup cleanup to reclaim.
+ * Registration and cleanup deletion share one lock. Cleanup must not delete a
+ * file after its owner has registered it but before the owner unregisters it.
+ * Registration after deletion cannot resurrect the file; callers must register
+ * before starting work with a temporary file.
  */
 object ActiveTempFileRegistry {
-    private val activePaths = ConcurrentHashMap.newKeySet<String>()
+    private val lock = Any()
+    private val activePaths = HashSet<String>()
 
     fun register(file: File) {
-        activePaths += file.absolutePath
+        synchronized(lock) {
+            activePaths.add(file.absolutePath)
+        }
     }
 
     fun unregister(file: File) {
-        activePaths -= file.absolutePath
+        synchronized(lock) {
+            activePaths.remove(file.absolutePath)
+        }
     }
 
-    fun isActive(file: File): Boolean = file.absolutePath in activePaths
+    fun isActive(file: File): Boolean = synchronized(lock) {
+        file.absolutePath in activePaths
+    }
+
+    /**
+     * One critical section covers the active check and physical deletion.
+     * A successful registration cannot interleave between them.
+     */
+    fun deleteIfInactive(file: File): Boolean = synchronized(lock) {
+        if (file.absolutePath in activePaths) false else file.delete()
+    }
 }
