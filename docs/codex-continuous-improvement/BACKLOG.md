@@ -599,3 +599,11 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E072 — Temporary-file registry synchronization
 #### Feature F074 — Atomic active-file guard during cleanup
 - [ACTIVE / P1] `US-R072-P1-01A` — Eliminate the check-then-delete race between `ActiveTempFileRegistry.isActive` and stale-file deletion. Synchronize registration with deletion, add deterministic concurrent tests, preserve existing age floor, validate exact-SHA authoritative PR CI. PR #1 draft; main untouched.
+
+## Cycle 072 closure / Cycle 073 activation — 2026-10-12 UTC
+- [COMPLETE / PR CI #637] `US-R072-P1-01A`: exact code/test SHA `4d4a9173ef9c996632d954c700b4f46f08bf66b2`, API `38297024163` SUCCESS, all eight gates. Atomic registration/deletion and deterministic JVM regression coverage. No device evidence.
+
+## Cycle 073 active
+### Epic E073 — Shared temporary-file ownership safety
+#### Feature F075 — Reference-count overlapping temp-file owners
+- [ACTIVE / P1] `US-R073-P1-01A` — Prevent the first unregister from unprotecting a path still registered by another owner. Preserve atomic deletion guard; add deterministic JVM tests for nested/concurrent registrations, final release, and cleanup. Exact-SHA PR CI required; PR #1 draft, main untouched.
