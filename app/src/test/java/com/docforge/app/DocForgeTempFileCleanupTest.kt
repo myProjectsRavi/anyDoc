@@ -53,6 +53,19 @@ class DocForgeTempFileCleanupTest {
         }
     }
 
+    @Test fun staleFileBecomesReclaimableAfterItsOwnerUnregisters() {
+        val stale = temp("docforge_released.tmp", ageMillis * 2L)
+        ActiveTempFileRegistry.register(stale)
+        try {
+            DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+            assertTrue(stale.exists())
+        } finally {
+            ActiveTempFileRegistry.unregister(stale)
+        }
+        DocForgeTempFileCleanup.clean(folder.root, nowMillis, ageMillis)
+        assertFalse(stale.exists())
+    }
+
     @Test fun unrelatedFilesAndFutureTimestampArePreserved() {
         val unrelated = temp("keep_user_data.txt", ageMillis * 2L)
         val future = temp("docforge_future.tmp", -60_000L)
