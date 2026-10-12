@@ -3,13 +3,11 @@ package com.docforge.app
 import android.app.Application
 import android.content.ComponentCallbacks2
 import android.os.StrictMode
-import com.docforge.core.domain.io.ActiveTempFileRegistry
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.io.File
 
 @HiltAndroidApp
 class DocForgeApp : Application() {
@@ -51,7 +49,7 @@ class DocForgeApp : Application() {
             ComponentCallbacks2.TRIM_MEMORY_MODERATE,
             ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
                 appScope.launch {
-                    cleanStaleTempFiles(maxAgeMs = 0L)
+                    cleanStaleTempFiles(maxAgeMs = TEMP_FILE_MAX_AGE_MS)
                 }
             }
         }
@@ -65,23 +63,8 @@ class DocForgeApp : Application() {
 
     private fun cleanStaleTempFiles(maxAgeMs: Long) {
         val now = System.currentTimeMillis()
-        val cutoff = now - maxAgeMs
-        cacheDir.listFiles()
-            ?.filter { file ->
-                file.name.startsWith(TEMP_FILE_PREFIX) &&
-                    file.lastModified() < cutoff &&
-                    !ActiveTempFileRegistry.isActive(file)
-            }
-            ?.forEach { file -> runCatching { file.delete() } }
-
-        val externalCache = externalCacheDir
-        externalCache?.listFiles()
-            ?.filter { file ->
-                file.name.startsWith(TEMP_FILE_PREFIX) &&
-                    file.lastModified() < cutoff &&
-                    !ActiveTempFileRegistry.isActive(file)
-            }
-            ?.forEach { file -> runCatching { file.delete() } }
+        DocForgeTempFileCleanup.clean(cacheDir, now, maxAgeMs)
+        DocForgeTempFileCleanup.clean(externalCacheDir, now, maxAgeMs)
     }
 
     companion object {
