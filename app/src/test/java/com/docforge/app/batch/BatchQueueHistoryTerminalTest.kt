@@ -133,7 +133,7 @@ class BatchQueueHistoryTerminalTest {
             convertWithBestEffortHistory(
                 convert = { throw CancellationException("converter canceled") },
                 recordHistory = { _: Pair<String, Long> -> fail("History must not run") },
-                onPublished = { published ->
+                onPublished = { published: Pair<String, Long> ->
                     BatchQueueRuntimeStore.markTaskSuccess(
                         task.id, published.first, published.second, run.runId
                     )
