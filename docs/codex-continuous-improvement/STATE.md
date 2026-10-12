@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-12_cycle-070`
+**Current report:** `2026-10-12_cycle-071`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 070
-**Current Epic:** `E070` — Published batch output cancellation integrity
-**Current Feature:** `F072` — Commit conversion success before optional history
-**Current User Story:** `US-R070-P1-01A` — Preserve published output when history insertion is canceled (ACTIVE)
-**Last completed cycle:** Cycle 069
+**Cycle:** 071
+**Current Epic:** `E071` — Temporary-file cleanup integrity
+**Current Feature:** `F073` — Protect fresh temporary files during memory pressure
+**Current User Story:** `US-R071-P1-01A` — Preserve fresh in-flight temp files during memory trimming (ACTIVE)
+**Last completed cycle:** Cycle 070
 **State checkpoint timestamp:** 2026-10-12 UTC
 
 ## Current next executable step
-- Cycle 069 E069/F071/US-R069-P1-01A COMPLETE. Exact code/test SHA `5948a4b825fc23adcbb10ca54353af60fcbc8349` passed authoritative PR CI #618 / API `38188235518` SUCCESS on 2026-10-12 UTC, all eight configured gates. History DAO failures no longer downgrade completed conversion output. Six focused JVM tests across helper and terminal state. No device/emulator/benchmark evidence.
-- Cycle 070 E070/F072/US-R070-P1-01A ACTIVE / INCOMPLETE. Source: `convertWithBestEffortHistory` records history before `processQueue` calls `markTaskSuccess`. If history insertion is canceled after conversion returns, the service catches `CancellationException` while the task remains RUNNING and marks it CANCELED despite published output. Next: commit SUCCESS immediately when converter returns, before optional history suspension; preserve cancellation propagation and remaining-queue cancellation; add deterministic app JVM tests for canceled history, normal failure and exact-once counters, validate exact code/test SHA through authoritative PR CI. PR #1 draft; main untouched.
+- Cycle 070 `E070/F072/US-R070-P1-01A` COMPLETE. Exact code/test SHA `149918edaafee92f2e916c26dbfb9b5b104093a5` passed authoritative PR GitHub Actions #629 / API `38263750211` SUCCESS on 2026-10-12 UTC (job `114862633733`); all eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. The service commits SUCCESS before optional history I/O, and regressions cover history cancellation, conversion cancellation, output preservation, pending-task cancellation and counters. Paired push #628 / API `38263745167` was canceled by concurrency, not validation. No emulator, physical-device, benchmark or crash-free evidence.
+- Cycle 071 `E071/F073/US-R071-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `DocForgeApp.onTrimMemory` schedules `cleanStaleTempFiles(maxAgeMs = 0L)`, which deletes any `docforge_`-prefixed cache file older than the current millisecond unless it is already in `ActiveTempFileRegistry`; registration is opt-in and not atomic with cleanup. A newly created/unregistered in-flight file may be removed during memory pressure. Next: introduce a conservative age floor for memory-trim cleanup, preserve stale-file reclamation and active-file protection, add deterministic JVM/Robolectric boundary tests for fresh/stale/active temp files and cancellation, then validate exact code/test SHA through authoritative PR CI. Do not change main; PR #1 stays draft.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -239,3 +239,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 069 completion / Cycle 070 activation — 2026-10-12 UTC
 - Cycle 069 `E069/F071/US-R069-P1-01A` COMPLETE. Exact code/test SHA `5948a4b825fc23adcbb10ca54353af60fcbc8349` passed authoritative PR workflow #618 / API `38188235518` SUCCESS (2026-10-12 UTC), all eight gates: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. Ordinary history insertion errors no longer downgrade successful output; six focused JVM tests. No emulator/device/benchmark/crash-free evidence.
 - Cycle 070 `E070/F072/US-R070-P1-01A` ACTIVE / INCOMPLETE. After `executeTask` publishes output, cancellation during optional history insertion currently reaches the service cancellation handler before success terminalization and mislabels the published task CANCELED. Next exact mutation: transition the matching RUNNING task to SUCCESS immediately after conversion returns, before optional history I/O; still propagate cancellation to stop remaining tasks, keep counters and output path stable, add focused app JVM regressions, validate exact SHA. Keep PR #1 draft/unmerged and main untouched.
+
+
+## Cycle 070 completion / Cycle 071 activation — 2026-10-12 UTC
+- Cycle 070 `E070/F072/US-R070-P1-01A` COMPLETE. Exact code/test SHA `149918edaafee92f2e916c26dbfb9b5b104093a5` passed authoritative PR GitHub Actions #629 / API `38263750211` SUCCESS on 2026-10-12 UTC (job `114862633733`); all eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. The service commits SUCCESS before optional history I/O, and regressions cover history cancellation, conversion cancellation, output preservation, pending-task cancellation and counters. Paired push #628 / API `38263745167` was canceled by concurrency, not validation. No emulator, physical-device, benchmark or crash-free evidence.
+- Cycle 071 `E071/F073/US-R071-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `DocForgeApp.onTrimMemory` schedules `cleanStaleTempFiles(maxAgeMs = 0L)`, which deletes any `docforge_`-prefixed cache file older than the current millisecond unless it is already in `ActiveTempFileRegistry`; registration is opt-in and not atomic with cleanup. A newly created/unregistered in-flight file may be removed during memory pressure. Next: introduce a conservative age floor for memory-trim cleanup, preserve stale-file reclamation and active-file protection, add deterministic JVM/Robolectric boundary tests for fresh/stale/active temp files and cancellation, then validate exact code/test SHA through authoritative PR CI. Do not change main; PR #1 stays draft.

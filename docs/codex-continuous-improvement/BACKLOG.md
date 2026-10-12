@@ -581,3 +581,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E070 — Published batch output cancellation integrity
 #### Feature F072 — Commit conversion success before optional history
 - [ACTIVE / P1] `US-R070-P1-01A` — Mark successful conversion output before suspendable history persistence; propagate cancellation to remaining queued tasks without downgrading published result; add deterministic JVM tests and exact-SHA authoritative PR CI.
+
+
+## Cycle 070 closure / Cycle 071 activation — 2026-10-12 UTC
+- [COMPLETE / PR CI #629] `US-R070-P1-01A`: exact code/test SHA `149918edaafee92f2e916c26dbfb9b5b104093a5`, API `38263750211` SUCCESS, all eight configured gates; published conversion success precedes optional history suspension. No device evidence.
+
+## Cycle 071 active
+### Epic E071 — Temporary-file cleanup integrity
+#### Feature F073 — Protect fresh temporary files during memory pressure
+- [ACTIVE / P1] `US-R071-P1-01A` — `DocForgeApp.onTrimMemory` currently requests zero-age cleanup, risking removal of freshly created `docforge_` files not yet registered as active. Introduce a conservative age floor and deterministic tests for fresh, stale, registered files; preserve stale cleanup. Exact-SHA PR CI required.
