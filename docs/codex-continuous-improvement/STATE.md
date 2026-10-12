@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-12_cycle-073`
+**Current report:** `2026-10-12_cycle-074`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 073
-**Current Epic:** `E073` — Shared temporary-file ownership safety
-**Current Feature:** `F075` — Reference-count overlapping temp-file owners
-**Current User Story:** `US-R073-P1-01A` — Preserve protection until final owner unregisters (ACTIVE)
-**Last completed cycle:** Cycle 072
+**Cycle:** 074
+**Current Epic:** `E074` — Temporary-file path identity safety
+**Current Feature:** `F076` — Canonical active-file registry keys
+**Current User Story:** `US-R074-P1-01A` — Preserve active-file protection across path aliases (ACTIVE)
+**Last completed cycle:** Cycle 073
 **State checkpoint timestamp:** 2026-10-12 UTC
 
 ## Current next executable step
-- Cycle 072 `E072/F074/US-R072-P1-01A` COMPLETE. Exact code/test SHA `4d4a9173ef9c996632d954c700b4f46f08bf66b2` passed authoritative PR Actions #637 / API `38297024163` (job `114970450569`) on 2026-10-12 UTC; all eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. `ActiveTempFileRegistry.deleteIfInactive` now guards deletion with the same lock as registration/unregistration; deterministic concurrent and post-unregister regression tests were added. Paired push run `38297018801` was cancelled by concurrency and is not validation evidence. No emulator, physical-device, benchmark, or crash-free claim.
-- Cycle 073 `E073/F075/US-R073-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `ActiveTempFileRegistry.register` stores paths in a `HashSet` and `unregister` removes the path unconditionally. Two overlapping owners of the same temporary path can both register; the first unregister removes protection while the second is still using the file, allowing stale cleanup to delete it. Next exact mutation: replace the path set with synchronized positive reference counts, decrement on unregister without underflow, preserve `isActive` and atomic `deleteIfInactive`, and add deterministic JVM tests for two owners, intermediate unregister, final unregister/reclamation, and concurrent owner interleavings. Validate exact implementation SHA via authoritative PR CI. PR #1 draft/unmerged; main untouched.
+- Cycle 073 COMPLETE: `647cd4e02e0933dd3d3c6588454fa602df38e999` passed authoritative PR CI #640 / API `38316986661`, job `115036112549`, all eight configured gates on 2026-10-12 UTC. Shared-owner reference counting and three JVM regressions validated. No device/emulator/benchmark claim.
+- Cycle 074 ACTIVE: lexical path aliases bypass `ActiveTempFileRegistry` absolute-path identity and may allow cleanup to delete a registered stale file. Canonicalize all four registry operations, preserve ref-counts and atomic deletion, add JVM regressions, then validate exact implementation SHA. Do not modify main; PR #1 draft/unmerged.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
