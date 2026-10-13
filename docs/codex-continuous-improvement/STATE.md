@@ -5,7 +5,7 @@
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
 **Current report:** `2026-10-12_cycle-074`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 074
+**Cycle:** 075
 **Current Epic:** `E074` — Temporary-file path identity safety
 **Current Feature:** `F076` — Canonical active-file registry keys
 **Current User Story:** `US-R074-P1-01A` — Preserve active-file protection across path aliases (ACTIVE)
