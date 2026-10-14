@@ -6,15 +6,15 @@
 **Current report:** `2026-10-13_cycle-075`
 **Report status:** ACTIVE / INCOMPLETE
 **Cycle:** 075
-**Current Epic:** `E074` — Temporary-file path identity safety
-**Current Feature:** `F076` — Canonical active-file registry keys
-**Current User Story:** `US-R074-P1-01A` — Preserve active-file protection across path aliases (ACTIVE)
-**Last completed cycle:** Cycle 073
-**State checkpoint timestamp:** 2026-10-12 UTC
+**Current Epic:** `E075` — Temporary cache-file ownership safety
+**Current Feature:** `F077` — Owner-aware cache-copy cleanup
+**Current User Story:** `US-R075-P1-01A` — Preserve overlapping owners during cache-copy cleanup (ACTIVE)
+**Last completed cycle:** Cycle 074
+**State checkpoint timestamp:** 2026-10-14 UTC
 
 ## Current next executable step
-- Cycle 073 COMPLETE: `647cd4e02e0933dd3d3c6588454fa602df38e999` passed authoritative PR CI #640 / API `38316986661`, job `115036112549`, all eight configured gates on 2026-10-12 UTC. Shared-owner reference counting and three JVM regressions validated. No device/emulator/benchmark claim.
-- Cycle 074 ACTIVE: lexical path aliases bypass `ActiveTempFileRegistry` absolute-path identity and may allow cleanup to delete a registered stale file. Canonicalize all four registry operations, preserve ref-counts and atomic deletion, add JVM regressions, then validate exact implementation SHA. Do not modify main; PR #1 draft/unmerged.
+- Cycle 074 COMPLETE: exact code/test SHA `4c552177c69acd8d2e776e3c3c79b3bdf16a352c`, authoritative draft-PR CI #648 / API `38390851641` SUCCESS, eight configured gates. No device or benchmark evidence.
+- Cycle 075 ACTIVE / INCOMPLETE: `E075 / F077 / US-R075-P1-01A`. `PdfIoUtils.kt` unregisters and deletes a cache copy outside the registry's atomic owner guard; a concurrent owner can lose its file, and failed copy cleanup may unregister twice. Next: publish owner-aware release and single-release failure handling with focused JVM tests, then run authoritative PR CI on the exact code/test SHA. No production/test commit before this checkpoint. PR #1 stays draft/unmerged; never modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
