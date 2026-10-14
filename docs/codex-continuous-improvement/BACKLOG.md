@@ -607,3 +607,7 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E073 — Shared temporary-file ownership safety
 #### Feature F075 — Reference-count overlapping temp-file owners
 - [ACTIVE / P1] `US-R073-P1-01A` — Prevent the first unregister from unprotecting a path still registered by another owner. Preserve atomic deletion guard; add deterministic JVM tests for nested/concurrent registrations, final release, and cleanup. Exact-SHA PR CI required; PR #1 draft, main untouched.
+
+## Cycle 074 closure / Cycle 075 activation — 2026-10-14 UTC
+- [COMPLETE / PR CI #648] `US-R074-P1-01A` (`E074/F076`): code/test SHA `4c552177c69acd8d2e776e3c3c79b3bdf16a352c`; authoritative PR Actions API `38390851641` SUCCESS, eight gates.
+- [ACTIVE / P1] `US-R075-P1-01A` (`E075/F077`): protect overlapping owners during `PdfIoUtils` cache-copy cleanup, avoid double unregister on copy failure, preserve cancellation and original errors; add focused JVM regressions and validate exact code/test SHA through draft-PR CI. No production mutation before activation. Main untouched.
