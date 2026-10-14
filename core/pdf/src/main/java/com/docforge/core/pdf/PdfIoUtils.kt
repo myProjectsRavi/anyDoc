@@ -25,6 +25,12 @@ internal const val CACHE_COPY_FREE_SPACE_RESERVE_BYTES = 32L * 1024L * 1024L
 internal const val CACHE_COPY_SPACE_MULTIPLIER = 2L
 private val SAFE_EXTENSION_REGEX = Regex("[a-z0-9]{1,8}")
 
+private fun validateOutputName(baseName: String, extension: String) {
+    fun valid(part: String) = part.isNotBlank() && part != "." && part != ".." &&
+        part.none { it == '/' || it == '\\' || Character.isISOControl(it) }
+    require(valid(baseName) && valid(extension)) { "Invalid output name." }
+}
+
 internal suspend fun Context.copyUriToCacheFile(
     uri: Uri,
     prefix: String,
@@ -137,6 +143,7 @@ internal fun loadPdfDocument(file: File, password: String): PDDocument {
 }
 
 fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
+    validateOutputName(baseName, extension)
     val candidate = File(directory, "$baseName.$extension")
     if (!candidate.exists()) return candidate
     var counter = 1
@@ -201,6 +208,7 @@ suspend fun <T> withStagedOutputFiles(
     directory: File,
     requests: List<StagedOutputRequest<T>>
 ): List<StagedOutputResult<T>> {
+    requests.forEach { validateOutputName(it.baseName, it.extension) }
     require(directory.exists() || directory.mkdirs()) {
         "Unable to create output directory: ${directory.absolutePath}"
     }
