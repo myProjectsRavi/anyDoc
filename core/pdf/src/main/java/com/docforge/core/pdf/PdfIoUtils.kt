@@ -142,14 +142,16 @@ internal fun loadPdfDocument(file: File, password: String): PDDocument {
     return PDDocument.load(file, password, pdfMemoryUsageSetting())
 }
 
+private fun File.isOccupiedOutputName(): Boolean = exists() || Files.isSymbolicLink(toPath())
+
 fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
     validateOutputName(baseName, extension)
     val candidate = File(directory, "$baseName.$extension")
-    if (!candidate.exists()) return candidate
+    if (!candidate.isOccupiedOutputName()) return candidate
     var counter = 1
     while (true) {
         val numbered = File(directory, "${baseName}_$counter.$extension")
-        if (!numbered.exists()) return numbered
+        if (!numbered.isOccupiedOutputName()) return numbered
         counter++
     }
 }
@@ -288,7 +290,7 @@ private fun moveStagedFileWithoutOverwrite(
             File(directory, "${baseName}_$counter.$extension")
         }
 
-        if (candidate.exists()) {
+        if (candidate.isOccupiedOutputName()) {
             counter++
             continue
         }

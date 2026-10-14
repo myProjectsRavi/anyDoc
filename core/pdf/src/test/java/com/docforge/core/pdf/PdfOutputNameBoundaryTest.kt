@@ -123,4 +123,63 @@ class PdfOutputNameBoundaryTest {
             directory.deleteRecursively()
         }
     }
+
+    @Test
+    fun resolverSkipsDanglingSymlinkInsteadOfFollowingItOnWrite() {
+        val root = Files.createTempDirectory("anydoc-dangling-resolve").toFile()
+        val directory = File(root, "output").apply { mkdirs() }
+        val outside = File(root, "outside.pdf")
+        val link = File(directory, "report.pdf")
+        try {
+            Files.createSymbolicLink(link.toPath(), outside.toPath())
+            assertFalse(link.exists()) // File.exists follows the dangling link.
+            val allocated = resolveNonConflictingFile(directory, "report", "pdf")
+            assertEquals("report_1.pdf", allocated.name)
+            allocated.writeText("safe")
+            assertFalse(outside.exists())
+            assertEquals("safe", allocated.readText())
+            assertEquals(true, Files.isSymbolicLink(link.toPath()))
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun resolverSkipsNumberedDanglingSymlink() {
+        val root = Files.createTempDirectory("anydoc-dangling-numbered").toFile()
+        val directory = File(root, "output").apply { mkdirs() }
+        val outside = File(root, "outside.pdf")
+        val link = File(directory, "report_1.pdf")
+        try {
+            File(directory, "report.pdf").writeText("original")
+            Files.createSymbolicLink(link.toPath(), outside.toPath())
+            val allocated = resolveNonConflictingFile(directory, "report", "pdf")
+            assertEquals("report_2.pdf", allocated.name)
+            assertEquals("original", File(directory, "report.pdf").readText())
+            assertFalse(outside.exists())
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun stagedOutputSkipsDanglingSymlinkWithoutCreatingExternalFile() = runBlocking {
+        val root = Files.createTempDirectory("anydoc-dangling-staged").toFile()
+        val directory = File(root, "output").apply { mkdirs() }
+        val outside = File(root, "outside.pdf")
+        val link = File(directory, "report.pdf")
+        try {
+            Files.createSymbolicLink(link.toPath(), outside.toPath())
+            val result = withStagedOutputFile(directory, "report", "pdf") { stage ->
+                stage.writeText("staged")
+            }
+            assertEquals("report_1.pdf", result.outputFile.name)
+            assertEquals("staged", result.outputFile.readText())
+            assertFalse(outside.exists())
+            assertEquals(true, Files.isSymbolicLink(link.toPath()))
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
 }
