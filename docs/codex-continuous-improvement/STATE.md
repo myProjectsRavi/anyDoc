@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-14_cycle-076`
+**Current report:** `2026-10-14_cycle-077`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 076
-**Current Epic:** `E076` — Staged output directory-boundary safety
-**Current Feature:** `F078` — Validate staged output name components
-**Current User Story:** `US-R076-P1-01A` — Reject output-name path traversal before staged publication (ACTIVE)
-**Last completed cycle:** Cycle 075
+**Cycle:** 077
+**Current Epic:** `E077` — Symlink-safe output allocation
+**Current Feature:** `F079` — Treat symlink destinations as occupied
+**Current User Story:** `US-R077-P1-01A` — Prevent output allocation through dangling symlinks (ACTIVE)
+**Last completed cycle:** Cycle 076
 **State checkpoint timestamp:** 2026-10-14 UTC
 
 ## Current next executable step
-- Cycle 075 COMPLETE: exact implementation/test SHA `f48811a01b211c0317f579d7f7c286160763af78` passed authoritative draft-PR CI #663 / API `38506712853` on 2026-10-14 UTC; all eight configured gates SUCCESS. Twelve focused JVM regression tests are committed, including 200 concurrent ownership iterations. No emulator, physical device, benchmark or crash-free guarantee.
-- Cycle 076 ACTIVE / INCOMPLETE: `E076 / F078 / US-R076-P1-01A`. Source evidence: `PdfIoUtils.kt` constructs destination paths from unchecked `baseName` and `extension` in `moveStagedFileWithoutOverwrite` and `resolveNonConflictingFile`; path separators or `..` can escape the intended directory. Next: validate name components before staging/publication, preserve legitimate names and conflict numbering, add deterministic core PDF JVM tests for traversal, absolute paths and safe names, then validate exact implementation SHA through draft-PR CI. PR #1 stays draft/unmerged; never modify main.
+- Cycle 076 `E076/F078/US-R076-P1-01A` COMPLETE. Exact production/test SHA `a5c6300b352726fdc2796baad9e0c67c8ed8057b` passed authoritative draft-PR GitHub Actions run #672 / API `38641360760` on 2026-10-14 UTC. All eight configured gates passed: core PDF JVM tests, converter JVM tests, scanner JVM tests, PDF tools signature JVM tests, app JVM tests, debug assembly, unsigned release/R8 assembly and Android lint. Output-name components reject separators, parent-only names and ISO controls before staging or directory creation; staged output publication is synchronized within this process. Five focused committed JVM tests cover unsafe names, safe conflict numbering, early batch rejection, duplicate names and 72 concurrent same-name publishers. The paired push run #671 was cancelled by concurrency, not a test failure. No emulator, physical-device, benchmark, cross-process publication guarantee or crash-free claim.
+- Cycle 077 `E077/F079/US-R077-P1-01A` ACTIVE / INCOMPLETE. Evidence: `resolveNonConflictingFile` uses `File.exists()` to select a destination; a dangling symbolic link reports false, so a caller opening that returned path for writing can follow the link outside the intended directory. A standalone Java 21 filesystem reproduction created an outside file through such a dangling link; this is local evidence, not Android CI. Next exact mutation: treat symbolic-link path entries (including dangling links) as occupied during direct and staged output name allocation; preserve ordinary numbered collision behavior and prevent outside writes; add deterministic core PDF JVM symlink regressions, then obtain authoritative exact-SHA draft-PR CI. Keep PR #1 draft/unmerged; never modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -258,3 +258,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 075 completion / Cycle 076 activation — 2026-10-14 UTC
 - Cycle 075 `E075/F077/US-R075-P1-01A` COMPLETE: exact code/test SHA `f48811a01b211c0317f579d7f7c286160763af78`; authoritative PR run #663 / API `38506712853` SUCCESS on 2026-10-14 UTC. All eight configured gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Owner-aware cache-copy cleanup, single-release error handling, and 12 focused JVM tests committed. Paired push run #662 was cancelled by concurrency and is not validation evidence. No emulator, device, benchmark or crash-free claim.
 - Cycle 076 `E076/F078/US-R076-P1-01A` ACTIVE / INCOMPLETE. Source: unchecked output filename components in `PdfIoUtils.kt` can create paths outside `directory` when callers supply separators or parent components. Next exact mutation: reject unsafe `baseName` and `extension` before creating staging files or selecting destination, preserve safe filename and numbered conflict behavior, add core PDF JVM regressions, validate exact code/test SHA via authoritative draft-PR CI. No Cycle 076 production/test mutation at activation. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 076 completion / Cycle 077 activation — 2026-10-14 UTC
+- Cycle 076 `E076/F078/US-R076-P1-01A` COMPLETE. Exact production/test SHA `a5c6300b352726fdc2796baad9e0c67c8ed8057b` passed authoritative draft-PR GitHub Actions run #672 / API `38641360760` on 2026-10-14 UTC. All eight configured gates passed: core PDF JVM tests, converter JVM tests, scanner JVM tests, PDF tools signature JVM tests, app JVM tests, debug assembly, unsigned release/R8 assembly and Android lint. Output-name components reject separators, parent-only names and ISO controls before staging or directory creation; staged output publication is synchronized within this process. Five focused committed JVM tests cover unsafe names, safe conflict numbering, early batch rejection, duplicate names and 72 concurrent same-name publishers. The paired push run #671 was cancelled by concurrency, not a test failure. No emulator, physical-device, benchmark, cross-process publication guarantee or crash-free claim.
+- Cycle 077 `E077/F079/US-R077-P1-01A` ACTIVE / INCOMPLETE. Evidence: `resolveNonConflictingFile` uses `File.exists()` to select a destination; a dangling symbolic link reports false, so a caller opening that returned path for writing can follow the link outside the intended directory. A standalone Java 21 filesystem reproduction created an outside file through such a dangling link; this is local evidence, not Android CI. Next exact mutation: treat symbolic-link path entries (including dangling links) as occupied during direct and staged output name allocation; preserve ordinary numbered collision behavior and prevent outside writes; add deterministic core PDF JVM symlink regressions, then obtain authoritative exact-SHA draft-PR CI. Keep PR #1 draft/unmerged; never modify main.

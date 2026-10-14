@@ -611,3 +611,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ## Cycle 074 closure / Cycle 075 activation — 2026-10-14 UTC
 - [COMPLETE / PR CI #648] `US-R074-P1-01A` (`E074/F076`): code/test SHA `4c552177c69acd8d2e776e3c3c79b3bdf16a352c`; authoritative PR Actions API `38390851641` SUCCESS, eight gates.
 - [ACTIVE / P1] `US-R075-P1-01A` (`E075/F077`): protect overlapping owners during `PdfIoUtils` cache-copy cleanup, avoid double unregister on copy failure, preserve cancellation and original errors; add focused JVM regressions and validate exact code/test SHA through draft-PR CI. No production mutation before activation. Main untouched.
+
+
+## Cycle 076 closure — 2026-10-14 UTC
+- [COMPLETE / PR CI #672] `US-R076-P1-01A` — Output name validation and same-process staged-publication serialization. Exact code/test SHA `a5c6300b352726fdc2796baad9e0c67c8ed8057b`; authoritative PR Actions `38641360760` SUCCESS, all eight gates. Five focused JVM regressions committed. No device or cross-process guarantee.
+
+## Cycle 077 active
+### Epic E077 — Symlink-safe output allocation
+#### Feature F079 — Treat symlink destinations as occupied
+- [ACTIVE / P1] `US-R077-P1-01A` — Evidence: `resolveNonConflictingFile` uses `File.exists()` to select a destination; a dangling symbolic link reports false, so a caller opening that returned path for writing can follow the link outside the intended directory. A standalone Java 21 filesystem reproduction created an outside file through such a dangling link; this is local evidence, not Android CI. Next exact mutation: treat symbolic-link path entries (including dangling links) as occupied during direct and staged output name allocation; preserve ordinary numbered collision behavior and prevent outside writes; add deterministic core PDF JVM symlink regressions, then obtain authoritative exact-SHA draft-PR CI. Keep PR #1 draft/unmerged; never modify main.
