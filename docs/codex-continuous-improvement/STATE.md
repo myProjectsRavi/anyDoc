@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-13_cycle-075`
+**Current report:** `2026-10-14_cycle-076`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 075
-**Current Epic:** `E075` — Temporary cache-file ownership safety
-**Current Feature:** `F077` — Owner-aware cache-copy cleanup
-**Current User Story:** `US-R075-P1-01A` — Preserve overlapping owners during cache-copy cleanup (ACTIVE)
-**Last completed cycle:** Cycle 074
+**Cycle:** 076
+**Current Epic:** `E076` — Staged output directory-boundary safety
+**Current Feature:** `F078` — Validate staged output name components
+**Current User Story:** `US-R076-P1-01A` — Reject output-name path traversal before staged publication (ACTIVE)
+**Last completed cycle:** Cycle 075
 **State checkpoint timestamp:** 2026-10-14 UTC
 
 ## Current next executable step
-- Cycle 074 COMPLETE: exact code/test SHA `4c552177c69acd8d2e776e3c3c79b3bdf16a352c`, authoritative draft-PR CI #648 / API `38390851641` SUCCESS, eight configured gates. No device or benchmark evidence.
-- Cycle 075 ACTIVE / INCOMPLETE: `E075 / F077 / US-R075-P1-01A`. `PdfIoUtils.kt` unregisters and deletes a cache copy outside the registry's atomic owner guard; a concurrent owner can lose its file, and failed copy cleanup may unregister twice. Next: publish owner-aware release and single-release failure handling with focused JVM tests, then run authoritative PR CI on the exact code/test SHA. No production/test commit before this checkpoint. PR #1 stays draft/unmerged; never modify main.
+- Cycle 075 COMPLETE: exact implementation/test SHA `f48811a01b211c0317f579d7f7c286160763af78` passed authoritative draft-PR CI #663 / API `38506712853` on 2026-10-14 UTC; all eight configured gates SUCCESS. Twelve focused JVM regression tests are committed, including 200 concurrent ownership iterations. No emulator, physical device, benchmark or crash-free guarantee.
+- Cycle 076 ACTIVE / INCOMPLETE: `E076 / F078 / US-R076-P1-01A`. Source evidence: `PdfIoUtils.kt` constructs destination paths from unchecked `baseName` and `extension` in `moveStagedFileWithoutOverwrite` and `resolveNonConflictingFile`; path separators or `..` can escape the intended directory. Next: validate name components before staging/publication, preserve legitimate names and conflict numbering, add deterministic core PDF JVM tests for traversal, absolute paths and safe names, then validate exact implementation SHA through draft-PR CI. PR #1 stays draft/unmerged; never modify main.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -253,3 +253,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 072 completion / Cycle 073 activation — 2026-10-12 UTC
 - Cycle 072 `E072/F074/US-R072-P1-01A` COMPLETE. Exact code/test SHA `4d4a9173ef9c996632d954c700b4f46f08bf66b2` passed authoritative PR Actions #637 / API `38297024163` (job `114970450569`) on 2026-10-12 UTC; all eight configured gates passed: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. `ActiveTempFileRegistry.deleteIfInactive` now guards deletion with the same lock as registration/unregistration; deterministic concurrent and post-unregister regression tests were added. Paired push run `38297018801` was cancelled by concurrency and is not validation evidence. No emulator, physical-device, benchmark, or crash-free claim.
 - Cycle 073 `E073/F075/US-R073-P1-01A` ACTIVE / INCOMPLETE. Source evidence: `ActiveTempFileRegistry.register` stores paths in a `HashSet` and `unregister` removes the path unconditionally. Two overlapping owners of the same temporary path can both register; the first unregister removes protection while the second is still using the file, allowing stale cleanup to delete it. Next exact mutation: replace the path set with synchronized positive reference counts, decrement on unregister without underflow, preserve `isActive` and atomic `deleteIfInactive`, and add deterministic JVM tests for two owners, intermediate unregister, final unregister/reclamation, and concurrent owner interleavings. Validate exact implementation SHA via authoritative PR CI. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 075 completion / Cycle 076 activation — 2026-10-14 UTC
+- Cycle 075 `E075/F077/US-R075-P1-01A` COMPLETE: exact code/test SHA `f48811a01b211c0317f579d7f7c286160763af78`; authoritative PR run #663 / API `38506712853` SUCCESS on 2026-10-14 UTC. All eight configured gates passed (core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Owner-aware cache-copy cleanup, single-release error handling, and 12 focused JVM tests committed. Paired push run #662 was cancelled by concurrency and is not validation evidence. No emulator, device, benchmark or crash-free claim.
+- Cycle 076 `E076/F078/US-R076-P1-01A` ACTIVE / INCOMPLETE. Source: unchecked output filename components in `PdfIoUtils.kt` can create paths outside `directory` when callers supply separators or parent components. Next exact mutation: reject unsafe `baseName` and `extension` before creating staging files or selecting destination, preserve safe filename and numbered conflict behavior, add core PDF JVM regressions, validate exact code/test SHA via authoritative draft-PR CI. No Cycle 076 production/test mutation at activation. PR #1 draft/unmerged; main untouched.
