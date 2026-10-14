@@ -241,12 +241,14 @@ suspend fun <T> withStagedOutputFiles(
         try {
             val results = prepared.map { item ->
                 currentCoroutineContext().ensureActive()
-                val outputFile = moveStagedFileWithoutOverwrite(
-                    stagedFile = item.stagedFile,
-                    directory = directory,
-                    baseName = item.request.baseName,
-                    extension = item.request.extension
-                )
+                val outputFile = synchronized(stagedOutputPublicationLock) {
+                    moveStagedFileWithoutOverwrite(
+                        stagedFile = item.stagedFile,
+                        directory = directory,
+                        baseName = item.request.baseName,
+                        extension = item.request.extension
+                    )
+                }
                 published += outputFile
                 StagedOutputResult(outputFile = outputFile, value = item.value)
             }
@@ -268,6 +270,9 @@ suspend fun <T> withStagedOutputFiles(
         }
     }
 }
+
+/** Same-process publication lock prevents two staged writers selecting the same destination. */
+private val stagedOutputPublicationLock = Any()
 
 private fun moveStagedFileWithoutOverwrite(
     stagedFile: File,
