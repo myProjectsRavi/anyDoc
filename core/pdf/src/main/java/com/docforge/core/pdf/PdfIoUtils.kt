@@ -34,7 +34,7 @@ internal suspend fun Context.copyUriToCacheFile(
     preflightCacheCopy(uri)
     val tempFile = File.createTempFile(prefix, suffix, cacheDir)
     ActiveTempFileRegistry.register(tempFile)
-    return try {
+    return withRegisteredCacheCopy(tempFile, keepRegistered) {
         val input = contentResolver.openInputStream(uri) ?: error("Unable to open input: $uri")
         input.use { source ->
             Channels.newChannel(source).use { sourceChannel ->
@@ -59,14 +59,6 @@ internal suspend fun Context.copyUriToCacheFile(
             }
         }
         tempFile
-    } catch (t: Throwable) {
-        ActiveTempFileRegistry.unregister(tempFile)
-        tempFile.delete()
-        throw t
-    } finally {
-        if (!keepRegistered) {
-            ActiveTempFileRegistry.unregister(tempFile)
-        }
     }
 }
 
@@ -82,12 +74,7 @@ internal suspend inline fun <T> Context.withUriCopiedToCacheFile(
         suffix = suffix,
         keepRegistered = true
     )
-    return try {
-        block(tempFile)
-    } finally {
-        ActiveTempFileRegistry.unregister(tempFile)
-        tempFile.delete()
-    }
+    return withScopedCacheCopy(tempFile, block)
 }
 
 internal fun canStartUnknownSizeCacheCopy(availableBytes: Long): Boolean =
