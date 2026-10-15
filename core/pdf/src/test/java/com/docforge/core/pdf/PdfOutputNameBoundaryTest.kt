@@ -182,4 +182,102 @@ class PdfOutputNameBoundaryTest {
         }
     }
 
+
+    @Test
+    fun directResolverRejectsSymlinkedLeafDirectory() {
+        val root = Files.createTempDirectory("anydoc-dir-link-resolve").toFile()
+        val target = File(root, "outside").apply { mkdirs() }
+        val selected = File(root, "selected")
+        try {
+            Files.createSymbolicLink(selected.toPath(), target.toPath())
+            reject { resolveNonConflictingFile(selected, "report", "pdf") }
+            assertEquals(emptyList<String>(), target.listFiles().orEmpty().map { it.name })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun stagedWriterDoesNotRunForSymlinkedLeafDirectory() = runBlocking {
+        val root = Files.createTempDirectory("anydoc-dir-link-stage").toFile()
+        val target = File(root, "outside").apply { mkdirs() }
+        val selected = File(root, "selected")
+        var writerCalls = 0
+        try {
+            Files.createSymbolicLink(selected.toPath(), target.toPath())
+            reject {
+                runBlocking {
+                    withStagedOutputFile(selected, "report", "pdf") { staged ->
+                        writerCalls++
+                        staged.writeText("unsafe")
+                    }
+                }
+            }
+            assertEquals(0, writerCalls)
+            assertEquals(emptyList<String>(), target.listFiles().orEmpty().map { it.name })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun relativeSymlinkedLeafDirectoryIsRejectedBeforeWriting() {
+        val root = Files.createTempDirectory("anydoc-dir-relative-link").toFile()
+        val target = File(root, "outside").apply { mkdirs() }
+        val selected = File(root, "selected")
+        var writerCalls = 0
+        try {
+            Files.createSymbolicLink(selected.toPath(), target.toPath().fileName)
+            reject {
+                runBlocking {
+                    withStagedOutputFile(selected, "report", "pdf") { stage ->
+                        writerCalls++
+                        stage.writeText("unsafe")
+                    }
+                }
+            }
+            assertEquals(0, writerCalls)
+            assertEquals(emptyList<String>(), target.listFiles().orEmpty().map { it.name })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun danglingSymlinkedLeafDirectoryIsRejectedBeforeWriting() {
+        val root = Files.createTempDirectory("anydoc-dir-dangling-link").toFile()
+        val target = File(root, "missing")
+        val selected = File(root, "selected")
+        var writerCalls = 0
+        try {
+            Files.createSymbolicLink(selected.toPath(), target.toPath())
+            reject {
+                runBlocking {
+                    withStagedOutputFile(selected, "report", "pdf") { stage ->
+                        writerCalls++
+                        stage.writeText("unsafe")
+                    }
+                }
+            }
+            assertEquals(0, writerCalls)
+            assertFalse(target.exists())
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun regularDirectoryStillPublishesAfterLeafGuard() = runBlocking {
+        val directory = Files.createTempDirectory("anydoc-dir-regular").toFile()
+        try {
+            val result = withStagedOutputFile(directory, "report", "pdf") { stage ->
+                stage.writeText("expected")
+            }
+            assertEquals("report.pdf", result.outputFile.name)
+            assertEquals("expected", result.outputFile.readText())
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
 }

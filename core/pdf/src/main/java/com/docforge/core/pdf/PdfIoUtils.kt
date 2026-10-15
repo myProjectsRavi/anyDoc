@@ -142,10 +142,17 @@ internal fun loadPdfDocument(file: File, password: String): PDDocument {
     return PDDocument.load(file, password, pdfMemoryUsageSetting())
 }
 
+private fun requireNonSymlinkOutputDirectory(directory: File) {
+    require(!Files.isSymbolicLink(directory.toPath())) {
+        "Output directory must not be a symbolic link."
+    }
+}
+
 private fun File.isOccupiedOutputName(): Boolean = exists() || Files.isSymbolicLink(toPath())
 
 fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
     validateOutputName(baseName, extension)
+    requireNonSymlinkOutputDirectory(directory)
     val candidate = File(directory, "$baseName.$extension")
     if (!candidate.isOccupiedOutputName()) return candidate
     var counter = 1
@@ -211,6 +218,7 @@ suspend fun <T> withStagedOutputFiles(
     requests: List<StagedOutputRequest<T>>
 ): List<StagedOutputResult<T>> {
     requests.forEach { validateOutputName(it.baseName, it.extension) }
+    requireNonSymlinkOutputDirectory(directory)
     require(directory.exists() || directory.mkdirs()) {
         "Unable to create output directory: ${directory.absolutePath}"
     }
