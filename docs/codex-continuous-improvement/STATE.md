@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-15_cycle-078`
+**Current report:** `2026-10-15_cycle-079`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 078
-**Current Epic:** `E078` — Output-directory symlink boundary
-**Current Feature:** `F080` — Reject symlinked output directories before staging
-**Current User Story:** `US-R078-P1-01A` — Prevent staged output directory symlink redirection (ACTIVE)
-**Last completed cycle:** Cycle 077
+**Cycle:** 079
+**Current Epic:** `E079` — Staging publication integrity
+**Current Feature:** `F081` — Validate staged entries before publication
+**Current User Story:** `US-R079-P1-01A` — Validate staged output file type (ACTIVE)
+**Last completed cycle:** Cycle 078
 **State checkpoint timestamp:** 2026-10-15 UTC
 
 ## Current next executable step
-- Cycle 077 E077/F079/US-R077-P1-01A COMPLETE. Exact code/test SHA `218e818d53ab3aaad45906fedf3e1912f79f7fd7` passed authoritative draft-PR Actions run #675 / API `38648563229` (2026-10-14 UTC): all eight configured gates SUCCESS (core PDF, converter, scanner, PDF tools signature, app JVM, debug APK, unsigned release/R8, Android lint). Production skips dangling symlink entries in direct and staged output-name allocation; three core PDF JVM regression tests committed. Paired push run `38648557689` was cancelled by workflow concurrency and is not test evidence. No device, emulator, benchmark, crash-free or post-allocation race guarantee.
-- Cycle 078 E078/F080/US-R078-P1-01A ACTIVE / INCOMPLETE. Evidence: `withStagedOutputFiles` accepts `directory.exists()` and creates a staging file inside `directory`; when that leaf output directory is a symbolic link to another directory, staging and publication follow the link into the target. A standalone Java 21 filesystem probe reproduced redirected staging. Next exact mutation: reject a symbolic-link leaf output directory before creating directories or executing any staged writer, apply the same boundary to direct name resolution, add deterministic core PDF JVM tests for no-writer/no-outside-mutation and normal directory behavior, then validate exact code/test SHA via draft-PR CI. This is a leaf-directory boundary, not a claim of protection against ancestor symlinks or post-check directory swaps. PR #1 draft/unmerged; main untouched.
+- Cycle 078 COMPLETE: code/test SHA `2667e64ceaf2953b5410948ce3d95b54764634fa` passed PR CI #680 / API `38671818333`, eight configured gates.
+- Cycle 079 ACTIVE / INCOMPLETE: E079/F081/US-R079-P1-01A. Next: validate staged entries without following links after writers and before publication; add regression tests; obtain exact-SHA authoritative PR CI. No production mutation at activation. PR #1 draft, main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
