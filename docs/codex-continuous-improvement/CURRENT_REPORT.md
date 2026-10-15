@@ -20,3 +20,7 @@ Cycle 077 activation (2026-10-14 UTC): Cycle 077 `E077/F079/US-R077-P1-01A` ACTI
 
 
 Cycle 077 COMPLETE. Exact validated SHA `218e818d53ab3aaad45906fedf3e1912f79f7fd7`; Actions `38648563229` SUCCESS, eight gates. Cycle 078 ACTIVE: E078/F080/US-R078-P1-01A. Next: reject symbolic-link leaf output directories before staging, add focused core PDF tests, run exact-SHA CI. PR #1 draft; main unchanged.
+
+Cycle 078 COMPLETE (2026-10-15 UTC): exact code/test SHA `2667e64ceaf2953b5410948ce3d95b54764634fa` passed authoritative PR CI #680 / API `38671818333`, all eight configured gates. Documentation HEAD `7644ea3b075d6f178e28113920d1ff2afd46f5d9` passed PR CI #681 / API `38676573303` (documentation only). Five focused symlinked output-directory tests committed; no device/emulator or post-check swap guarantee.
+
+Cycle 079 candidate E079/F081/US-R079-P1-01A: reject staging-file symbolic-link substitutions before publication. Canonical activation in STATE.md is required before production/test mutation. Add NOFOLLOW_LINKS validation after each writer and before publication, clean rejected stage entries without following links, add direct/dangling/batch JVM regressions, and obtain exact-SHA authoritative CI. PR #1 stays draft/unmerged; main untouched.
