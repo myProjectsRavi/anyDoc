@@ -13,6 +13,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.channels.Channels
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.LinkOption
 import java.nio.file.Files
 
 internal const val FILE_CHANNEL_COPY_CHUNK_BYTES = 8L * 1024L * 1024L
@@ -150,6 +151,12 @@ private fun requireNonSymlinkOutputDirectory(directory: File) {
 
 private fun File.isOccupiedOutputName(): Boolean = exists() || Files.isSymbolicLink(toPath())
 
+private fun requireRegularStagedOutput(stagedFile: File) {
+    require(Files.isRegularFile(stagedFile.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+        "Staged output must be a regular file."
+    }
+}
+
 fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
     validateOutputName(baseName, extension)
     requireNonSymlinkOutputDirectory(directory)
@@ -232,21 +239,20 @@ suspend fun <T> withStagedOutputFiles(
             try {
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
-                require(stagedFile.isFile) { "Staged output was not created." }
+                requireRegularStagedOutput(stagedFile)
                 prepared += PreparedStagedOutput(
                     stagedFile = stagedFile,
                     request = request,
                     value = value
                 )
             } catch (t: Throwable) {
-                if (stagedFile.exists()) {
-                    stagedFile.delete()
-                }
+                stagedFile.delete()
                 throw t
             }
         }
 
         currentCoroutineContext().ensureActive()
+        prepared.forEach { requireRegularStagedOutput(it.stagedFile) }
         val published = mutableListOf<File>()
         try {
             val results = prepared.map { item ->
@@ -274,9 +280,7 @@ suspend fun <T> withStagedOutputFiles(
         }
     } finally {
         prepared.forEach { item ->
-            if (item.stagedFile.exists()) {
-                item.stagedFile.delete()
-            }
+            item.stagedFile.delete()
         }
     }
 }
@@ -304,6 +308,7 @@ private fun moveStagedFileWithoutOverwrite(
         }
 
         try {
+            requireRegularStagedOutput(stagedFile)
             Files.move(stagedFile.toPath(), candidate.toPath())
             return candidate
         } catch (_: FileAlreadyExistsException) {

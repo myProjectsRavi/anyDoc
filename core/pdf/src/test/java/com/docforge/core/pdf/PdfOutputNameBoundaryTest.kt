@@ -280,4 +280,169 @@ class PdfOutputNameBoundaryTest {
         }
     }
 
+
+    @Test
+    fun rejectsAbsoluteStagedSymlinkWithoutTouchingTarget() {
+        val root = Files.createTempDirectory("anydoc-stage-link").toFile()
+        val output = File(root, "out").apply { mkdirs() }
+        val external = File(root, "external.txt").apply { writeText("preserve") }
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        Files.createSymbolicLink(stage.toPath(), external.toPath())
+                    }
+                }
+            }
+            assertEquals("preserve", external.readText())
+            assertFalse(File(output, "report.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun rejectsRelativeStagedSymlinkWithoutTouchingTarget() {
+        val root = Files.createTempDirectory("anydoc-stage-relative").toFile()
+        val output = File(root, "out").apply { mkdirs() }
+        val external = File(root, "external.txt").apply { writeText("preserve") }
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        val relative = stage.parentFile.toPath().relativize(external.toPath())
+                        Files.createSymbolicLink(stage.toPath(), relative)
+                    }
+                }
+            }
+            assertEquals("preserve", external.readText())
+            assertFalse(File(output, "report.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun rejectsAndRemovesDanglingStagedSymlink() {
+        val root = Files.createTempDirectory("anydoc-stage-dangling").toFile()
+        val output = File(root, "out").apply { mkdirs() }
+        val missing = File(root, "missing.txt")
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        Files.createSymbolicLink(stage.toPath(), missing.toPath())
+                    }
+                }
+            }
+            assertFalse(missing.exists())
+            assertFalse(File(output, "report.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun rejectsStagedDirectoryInsteadOfPublishingIt() {
+        val output = Files.createTempDirectory("anydoc-stage-directory").toFile()
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        assertEquals(true, stage.mkdir())
+                    }
+                }
+            }
+            assertFalse(File(output, "report.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            output.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun rejectsMissingStagedFile() {
+        val output = Files.createTempDirectory("anydoc-stage-missing").toFile()
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                    }
+                }
+            }
+            assertFalse(File(output, "report.pdf").exists())
+            assertEquals(emptyList<String>(), output.listFiles().orEmpty().map { it.name })
+        } finally {
+            output.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun rejectsEarlierBatchStageReplacedByLaterWriter() {
+        val root = Files.createTempDirectory("anydoc-stage-batch").toFile()
+        val output = File(root, "out").apply { mkdirs() }
+        val external = File(root, "external.txt").apply { writeText("preserve") }
+        var firstStage: File? = null
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFiles(
+                        output,
+                        listOf(
+                            StagedOutputRequest("first", "pdf") { stage ->
+                                firstStage = stage
+                                stage.writeText("first")
+                            },
+                            StagedOutputRequest("second", "pdf") { stage ->
+                                firstStage!!.delete()
+                                Files.createSymbolicLink(firstStage!!.toPath(), external.toPath())
+                                stage.writeText("second")
+                            }
+                        )
+                    )
+                }
+            }
+            assertEquals("preserve", external.readText())
+            assertFalse(File(output, "first.pdf").exists())
+            assertFalse(File(output, "second.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun writerErrorAfterLinkSubstitutionPreservesOriginalErrorAndTarget() {
+        val root = Files.createTempDirectory("anydoc-stage-error").toFile()
+        val output = File(root, "out").apply { mkdirs() }
+        val external = File(root, "external.txt").apply { writeText("preserve") }
+        try {
+            var caught = false
+            try {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        Files.createSymbolicLink(stage.toPath(), external.toPath())
+                        throw IllegalStateException("writer failed")
+                    }
+                }
+            } catch (e: IllegalStateException) {
+                caught = e.message == "writer failed"
+            }
+            assertEquals(true, caught)
+            assertEquals("preserve", external.readText())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
 }
