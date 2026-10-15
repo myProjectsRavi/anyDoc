@@ -628,3 +628,9 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E078 — Output-directory symlink boundary
 #### Feature F080 — Reject symlinked leaf output directories before staging
 - [ACTIVE / P1] `US-R078-P1-01A`: reject a symbolic-link leaf output directory before creating directories or invoking any staged writer; apply the same boundary to direct output-name resolution. Add focused core PDF JVM tests for absolute, relative and dangling links, no outside mutation, and normal directory output. Validate exact code/test SHA via draft-PR CI. This guard does not claim ancestor-symlink or post-check swap protection. Keep PR #1 draft and main unchanged.
+
+## Cycle 078 closure / Cycle 079 active — 2026-10-15 UTC
+- [COMPLETE / PR CI #680] `US-R078-P1-01A` (`E078/F080`): code/test SHA `2667e64ceaf2953b5410948ce3d95b54764634fa` passed authoritative draft-PR Actions API `38671818333`, all eight gates. Leaf output directory symlink rejection and five focused core PDF tests; no device, emulator or post-check swap guarantee.
+### Epic E079 — Staging publication integrity
+#### Feature F081 — Validate staged entries before publication
+- [ACTIVE / P1] `US-R079-P1-01A`: reject staging-file symbolic-link and nonregular-file substitutions using NOFOLLOW_LINKS after each writer and before publication; preserve external targets and normal staged-output behavior. Add focused core PDF JVM regressions, validate exact code/test SHA through authoritative draft-PR CI. Residual hard-link aliasing, post-validation substitution and nonempty-directory cleanup need explicit follow-up. PR #1 draft/unmerged; main untouched.
