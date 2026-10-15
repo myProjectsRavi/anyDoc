@@ -615,3 +615,10 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 - Draft-PR Actions run #688 / API `38786478388`: SUCCESS on documentation-only SHA `ee20a18e0c1b48cf72e079eca54c966785d2805f`; this is not validation of the prepared staging-file correction.
 - The authorized contents-API write for the staged-file regular-entry guard was rejected by connector safety checks. Do not infer a production fix or code CI from the documentation run.
 - Next: publish the bounded guard and focused core PDF regressions when permitted, validate the exact code/test SHA in draft-PR CI, then synchronize canonical state, current report, backlog, validation and Cycle 079 report. Residual post-check substitution, hard-link aliasing and nonempty-directory cleanup remain unaddressed.
+
+
+## Cycle 079 authoritative validation / Cycle 080 activation — 2026-10-15 UTC
+- Code/test SHA: `c4b2420499add93a3ea41a7027cdacf9414b901a`.
+- Draft-PR Actions #691 / API `38803553526`: SUCCESS, job `116659166895`; core PDF, converter, scanner, PDF tools signature, app JVM tests, debug APK, unsigned release/R8, Android lint all SUCCESS. Push #690 / API `38803546956` CANCELLED by concurrency and not used as test evidence.
+- Seven core PDF JVM staging-entry regression tests committed with NOFOLLOW_LINKS validation. No physical device, emulator, benchmark, cross-process race or hard-link safety claim.
+- Cycle 080 ACTIVE before production mutation: `E080/F082/US-R080-P1-01A`. Source: shallow `stagedFile.delete()` leaves a nonempty substituted staging directory. Next: no-follow cleanup and focused JVM regressions; exact-SHA PR CI required. PR #1 remains draft; main untouched.
