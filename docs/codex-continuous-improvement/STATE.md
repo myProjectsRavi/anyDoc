@@ -3,18 +3,18 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-15_cycle-079`
+**Current report:** `2026-10-15_cycle-080`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 079
-**Current Epic:** `E079` — Staging publication integrity
-**Current Feature:** `F081` — Validate staged entries before publication
-**Current User Story:** `US-R079-P1-01A` — Validate staged output file type (ACTIVE)
-**Last completed cycle:** Cycle 078
+**Cycle:** 080
+**Current Epic:** `E080` — Failure-safe staged-entry cleanup
+**Current Feature:** `F082` — Clean substituted staging directories
+**Current User Story:** `US-R080-P1-01A` — Remove nonempty substituted staging directories without following links (ACTIVE)
+**Last completed cycle:** Cycle 079
 **State checkpoint timestamp:** 2026-10-15 UTC
 
 ## Current next executable step
-- Cycle 078 COMPLETE: code/test SHA `2667e64ceaf2953b5410948ce3d95b54764634fa` passed PR CI #680 / API `38671818333`, eight configured gates.
-- Cycle 079 ACTIVE / INCOMPLETE: E079/F081/US-R079-P1-01A. Next: validate staged entries without following links after writers and before publication; add regression tests; obtain exact-SHA authoritative PR CI. No production mutation at activation. PR #1 draft, main untouched.
+- Cycle 079 COMPLETE: exact code/test SHA `c4b2420499add93a3ea41a7027cdacf9414b901a` passed authoritative draft-PR GitHub Actions #691 / API `38803553526` on 2026-10-15 UTC, job `116659166895`; all eight gates SUCCESS. Seven core PDF JVM regression tests and NOFOLLOW_LINKS staging guard. Paired push #690 was cancelled by workflow concurrency, not used as completion evidence. Residual post-check swap and hard-link aliasing are NOT resolved.
+- Cycle 080 ACTIVE / INCOMPLETE: E080/F082/US-R080-P1-01A. Source evidence: `PdfIoUtils.kt` catches writer errors and finally cleans with `stagedFile.delete()`, which fails for a nonempty substituted directory and leaves orphaned staging content. Next: implement narrowly scoped no-follow staged-entry cleanup for failed writers and prepared batch stages, add deterministic core PDF JVM tests for nested directories, nested symlinks, target preservation, and normal success, then obtain authoritative exact-SHA draft-PR CI. Do not follow symlinks or claim to fix post-validation swaps/hard links. PR #1 draft/unmerged; main untouched.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -268,3 +268,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 077 completion / Cycle 078 activation — 2026-10-15 UTC
 - Cycle 077 E077/F079/US-R077-P1-01A COMPLETE. Exact code/test SHA `218e818d53ab3aaad45906fedf3e1912f79f7fd7` passed authoritative draft-PR Actions run #675 / API `38648563229` (2026-10-14 UTC): all eight configured gates SUCCESS (core PDF, converter, scanner, PDF tools signature, app JVM, debug APK, unsigned release/R8, Android lint). Production skips dangling symlink entries in direct and staged output-name allocation; three core PDF JVM regression tests committed. Paired push run `38648557689` was cancelled by workflow concurrency and is not test evidence. No device, emulator, benchmark, crash-free or post-allocation race guarantee.
 - Cycle 078 E078/F080/US-R078-P1-01A ACTIVE / INCOMPLETE. Evidence: `withStagedOutputFiles` accepts `directory.exists()` and creates a staging file inside `directory`; when that leaf output directory is a symbolic link to another directory, staging and publication follow the link into the target. A standalone Java 21 filesystem probe reproduced redirected staging. Next exact mutation: reject a symbolic-link leaf output directory before creating directories or executing any staged writer, apply the same boundary to direct name resolution, add deterministic core PDF JVM tests for no-writer/no-outside-mutation and normal directory behavior, then validate exact code/test SHA via draft-PR CI. This is a leaf-directory boundary, not a claim of protection against ancestor symlinks or post-check directory swaps. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 079 completion / Cycle 080 activation — 2026-10-15 UTC
+- Cycle 079 `E079/F081/US-R079-P1-01A` COMPLETE: code/test SHA `c4b2420499add93a3ea41a7027cdacf9414b901a`, draft-PR Actions #691 / API `38803553526` SUCCESS, job `116659166895`, eight configured gates passed. Seven committed core PDF JVM tests. Push #690 / API `38803546956` CANCELLED by concurrency. No emulator, physical device, benchmark, race-free or hard-link guarantee.
+- Cycle 080 `E080/F082/US-R080-P1-01A` ACTIVE / INCOMPLETE before production mutation: remove orphaned nonempty substituted staging directories using no-follow cleanup; preserve symlink targets and published outputs; test nested files/symlinks and batch failure. Known distinct follow-ups: post-check substitution race and hard-link aliasing. Next exact action: implement cleanup helper and core PDF JVM tests, validate exact candidate through draft-PR Actions, then synchronize all cycle documents. PR #1 stays draft; main untouched.
