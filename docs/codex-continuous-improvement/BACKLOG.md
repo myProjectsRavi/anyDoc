@@ -620,3 +620,11 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E077 — Symlink-safe output allocation
 #### Feature F079 — Treat symlink destinations as occupied
 - [ACTIVE / P1] `US-R077-P1-01A` — Evidence: `resolveNonConflictingFile` uses `File.exists()` to select a destination; a dangling symbolic link reports false, so a caller opening that returned path for writing can follow the link outside the intended directory. A standalone Java 21 filesystem reproduction created an outside file through such a dangling link; this is local evidence, not Android CI. Next exact mutation: treat symbolic-link path entries (including dangling links) as occupied during direct and staged output name allocation; preserve ordinary numbered collision behavior and prevent outside writes; add deterministic core PDF JVM symlink regressions, then obtain authoritative exact-SHA draft-PR CI. Keep PR #1 draft/unmerged; never modify main.
+
+
+## Cycle 077 closure / Cycle 078 active — 2026-10-15 UTC
+- [COMPLETE / PR CI #675] `US-R077-P1-01A` (`E077/F079`): exact code/test SHA `218e818d53ab3aaad45906fedf3e1912f79f7fd7` passed authoritative PR Actions API `38648563229`, all eight configured gates. Three core PDF JVM regressions cover dangling symlink output-name allocation. No device/emulator or post-allocation race guarantee.
+
+### Epic E078 — Output-directory symlink boundary
+#### Feature F080 — Reject symlinked leaf output directories before staging
+- [ACTIVE / P1] `US-R078-P1-01A`: reject a symbolic-link leaf output directory before creating directories or invoking any staged writer; apply the same boundary to direct output-name resolution. Add focused core PDF JVM tests for absolute, relative and dangling links, no outside mutation, and normal directory output. Validate exact code/test SHA via draft-PR CI. This guard does not claim ancestor-symlink or post-check swap protection. Keep PR #1 draft and main unchanged.
