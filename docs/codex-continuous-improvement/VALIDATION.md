@@ -608,3 +608,10 @@ Current source audit confirms `PdfSigner.signMultiple()` allocates a collision-s
 ## Cycle 077 validation / Cycle 078 activation
 - E077/F079/US-R077-P1-01A COMPLETE: SHA `218e818d53ab3aaad45906fedf3e1912f79f7fd7`, PR Actions `38648563229` SUCCESS (eight gates). Three core PDF symlink regression tests. No device evidence.
 - E078/F080/US-R078-P1-01A ACTIVE: leaf output directory symbolic-link redirection reproduced in standalone Java filesystem probe; Android CI for Cycle 078 not yet run. Next: guard directory before staging, add JVM regressions, validate exact code SHA. PR #1 draft; main untouched.
+
+
+## Cycle 079 validation checkpoint — 2026-10-15 UTC
+- `E079/F081/US-R079-P1-01A` remains ACTIVE / INCOMPLETE. No production or test change is published for this cycle.
+- Draft-PR Actions run #688 / API `38786478388`: SUCCESS on documentation-only SHA `ee20a18e0c1b48cf72e079eca54c966785d2805f`; this is not validation of the prepared staging-file correction.
+- The authorized contents-API write for the staged-file regular-entry guard was rejected by connector safety checks. Do not infer a production fix or code CI from the documentation run.
+- Next: publish the bounded guard and focused core PDF regressions when permitted, validate the exact code/test SHA in draft-PR CI, then synchronize canonical state, current report, backlog, validation and Cycle 079 report. Residual post-check substitution, hard-link aliasing and nonempty-directory cleanup remain unaddressed.
