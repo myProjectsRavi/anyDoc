@@ -151,6 +151,27 @@ private fun requireNonSymlinkOutputDirectory(directory: File) {
 
 private fun File.isOccupiedOutputName(): Boolean = exists() || Files.isSymbolicLink(toPath())
 
+/** Remove generated staging entries without traversing symbolic links or buffering a directory tree. */
+private fun deleteStagedEntry(stagedFile: File) {
+    val path = stagedFile.toPath()
+    if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) return
+    Files.walkFileTree(path, object : java.nio.file.SimpleFileVisitor<java.nio.file.Path>() {
+        override fun visitFile(
+            file: java.nio.file.Path,
+            attrs: java.nio.file.attribute.BasicFileAttributes
+        ): java.nio.file.FileVisitResult {
+            Files.deleteIfExists(file)
+            return java.nio.file.FileVisitResult.CONTINUE
+        }
+
+        override fun postVisitDirectory(dir: java.nio.file.Path, exc: java.io.IOException?): java.nio.file.FileVisitResult {
+            if (exc != null) throw exc
+            Files.deleteIfExists(dir)
+            return java.nio.file.FileVisitResult.CONTINUE
+        }
+    })
+}
+
 private fun requireRegularStagedOutput(stagedFile: File) {
     require(Files.isRegularFile(stagedFile.toPath(), LinkOption.NOFOLLOW_LINKS)) {
         "Staged output must be a regular file."
@@ -246,7 +267,8 @@ suspend fun <T> withStagedOutputFiles(
                     value = value
                 )
             } catch (t: Throwable) {
-                stagedFile.delete()
+                runCatching { deleteStagedEntry(stagedFile) }
+                    .exceptionOrNull()?.let(t::addSuppressed)
                 throw t
             }
         }
@@ -280,7 +302,7 @@ suspend fun <T> withStagedOutputFiles(
         }
     } finally {
         prepared.forEach { item ->
-            item.stagedFile.delete()
+            runCatching { deleteStagedEntry(item.stagedFile) }
         }
     }
 }
