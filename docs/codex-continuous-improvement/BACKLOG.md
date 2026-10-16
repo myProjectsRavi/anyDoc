@@ -655,3 +655,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E083 — Output-directory ancestry integrity
 #### Feature F085 — Bound ancestor symlink redirection
 - [ACTIVE / P1] `US-R083-P1-01A` — Reproduce ancestor-symlink redirection; assess Android storage alias compatibility; implement narrowly bounded guard and focused JVM tests; exact-SHA draft-PR CI. Main untouched; PR #1 draft.
+
+
+## Cycle 083 closure / Cycle 084 activation — 2026-10-16 UTC
+- [COMPLETE / PR CI #726] `US-R083-P1-01A` (`E083/F085`): lexical ancestor symlink guard, Android-supplied root canonicalization and four core PDF JVM regressions. Exact code/test SHA `90de62ed6d9d95d06851b639f3cba36589f8539c` passed draft-PR Actions API `38898836103`, job `116966393599`, all eight gates. CI #724 failed due duplicate Kotlin suppression annotation and was repaired before #726. No emulator/device or cross-process race-freedom claim.
+### Epic E084 — Settings output-folder symlink integrity
+#### Feature F086 — Reject linked output-folder leaves at resolution
+- [ACTIVE / P1] `US-R084-P1-01A` — `DocForgeSettingsStore.resolveOutputDirectory` currently accepts symlinked configured child folders via `File.isDirectory` (public and fallback), which follows links. Add bounded NOFOLLOW guard to prevent resolver returning a symlinked leaf; preserve canonicalized platform roots and normal output paths. Add focused core-domain JVM regressions, validate exact code/test SHA in draft PR CI. No code mutation before canonical activation. PR #1 stays draft; main untouched.

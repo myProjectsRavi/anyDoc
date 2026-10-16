@@ -19,3 +19,10 @@ The complete earlier validation log remains in Git history at commit `7593c9044a
 - Story `E082/F084/US-R082-P1-01A` COMPLETE. Exact code/test SHA `5adbc2022c21dff292e39fef469f848e27888876` passed draft-PR Actions #708 / API `38887203020` (job `116928271059`) on 2026-10-16 UTC, all eight configured gates SUCCESS: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint.
 - Four committed core PDF JVM regressions cover ordinary publication, known hard-link rejection, pre-rename substitution and unavailable-count semantics. No device, emulator, benchmark or complete TOCTOU protection evidence. `unix:nlink` unsupported providers remain a residual risk.
 - Cycle 083 `E083/F085/US-R083-P1-01A` ACTIVE / INCOMPLETE. Next: reproduce ancestor-symlink redirection, assess Android storage path compatibility and validate only a bounded compatible fix by exact-SHA draft-PR CI.
+
+
+## Cycle 083 authoritative completion / Cycle 084 activation — 2026-10-16 UTC
+- `E083/F085/US-R083-P1-01A` COMPLETE for bounded lexical ancestor mitigation. Exact code/test SHA `90de62ed6d9d95d06851b639f3cba36589f8539c` passed draft-PR Actions #726 / API `38898836103`, job `116966393599`: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint SUCCESS.
+- Prior #724 / API `38898512930` FAILED at Kotlin compilation due duplicate suppression annotation in `DocForgeSettings.kt`; repaired in `90de62ed6d9d95d06851b639f3cba36589f8539c`. Superseded/cancelled workflow runs are not acceptance evidence.
+- Four committed core PDF JVM regressions cover symlinked ancestors, relative ancestor link rejection, normal collision numbering and canonicalized platform-root alias simulation. Android storage alias compatibility on physical device/emulator remains unverified; no cross-process race guarantee.
+- `E084/F086/US-R084-P1-01A` ACTIVE / INCOMPLETE before code mutation: output settings resolver can accept symlinked child folder via `isDirectory`. Next: NOFOLLOW leaf guard, focused domain JVM tests, exact-SHA PR CI; draft PR stays open, main untouched.
