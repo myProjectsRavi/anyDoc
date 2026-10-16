@@ -69,7 +69,6 @@ object DocForgeSettingsStore {
 
     fun resolveOutputDirectory(context: Context, bucket: DocForgeOutputBucket): File {
         val folderName = readOutputFolderName(context, bucket)
-        @Suppress("DEPRECATION")
         // Resolve only Android-supplied storage roots. Android may use legitimate
         // symlink aliases for shared storage; never canonicalize the user-controlled
         // child folder, which must still pass the staged-output symlink guard.
