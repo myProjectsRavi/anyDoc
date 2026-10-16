@@ -648,3 +648,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E082 — Staging hard-link alias integrity
 #### Feature F084 — Detect hard-linked staged outputs
 - [ACTIVE / P1] `US-R082-P1-01A` — Prove hard-link swap case, verify API 26+ support for link count / secure file handles, commit compatible regression-backed mitigation, run exact-head PR CI. Post-check races and ancestor swaps remain separately tracked.
+
+## Cycle 082 closure / Cycle 083 active — 2026-10-16 UTC
+- [COMPLETE / PR CI #708] `US-R082-P1-01A` (`E082/F084`): exact code/test SHA `5adbc2022c21dff292e39fef469f848e27888876`, API `38887203020` SUCCESS, all eight configured gates. Four core PDF JVM tests. Known hard-link aliases rejected where `unix:nlink` is supported; no device evidence or full race-safety claim.
+
+### Epic E083 — Output-directory ancestry integrity
+#### Feature F085 — Bound ancestor symlink redirection
+- [ACTIVE / P1] `US-R083-P1-01A` — Reproduce ancestor-symlink redirection; assess Android storage alias compatibility; implement narrowly bounded guard and focused JVM tests; exact-SHA draft-PR CI. Main untouched; PR #1 draft.
