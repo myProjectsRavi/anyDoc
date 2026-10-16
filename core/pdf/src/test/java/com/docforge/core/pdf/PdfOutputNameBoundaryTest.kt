@@ -297,7 +297,10 @@ class PdfOutputNameBoundaryTest {
             }
             assertEquals("preserve", external.readText())
             assertFalse(File(output, "report.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals(true, Files.isSymbolicLink(foreignStages.single().toPath()))
+            assertEquals(external.toPath(), Files.readSymbolicLink(foreignStages.single().toPath()))
         } finally {
             root.deleteRecursively()
         }
@@ -320,7 +323,10 @@ class PdfOutputNameBoundaryTest {
             }
             assertEquals("preserve", external.readText())
             assertFalse(File(output, "report.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals(true, Files.isSymbolicLink(foreignStages.single().toPath()))
+            assertEquals(external.toPath(), foreignStages.single().toPath().parent.resolve(Files.readSymbolicLink(foreignStages.single().toPath())).normalize())
         } finally {
             root.deleteRecursively()
         }
@@ -342,7 +348,10 @@ class PdfOutputNameBoundaryTest {
             }
             assertFalse(missing.exists())
             assertFalse(File(output, "report.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals(true, Files.isSymbolicLink(foreignStages.single().toPath()))
+            assertEquals(missing.toPath(), Files.readSymbolicLink(foreignStages.single().toPath()))
         } finally {
             root.deleteRecursively()
         }
@@ -361,7 +370,9 @@ class PdfOutputNameBoundaryTest {
                 }
             }
             assertFalse(File(output, "report.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals(true, foreignStages.single().isDirectory)
         } finally {
             output.deleteRecursively()
         }
@@ -413,7 +424,10 @@ class PdfOutputNameBoundaryTest {
             assertEquals("preserve", external.readText())
             assertFalse(File(output, "first.pdf").exists())
             assertFalse(File(output, "second.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals(true, Files.isSymbolicLink(foreignStages.single().toPath()))
+            assertEquals(firstStage!!.toPath(), foreignStages.single().toPath())
         } finally {
             root.deleteRecursively()
         }
@@ -439,7 +453,9 @@ class PdfOutputNameBoundaryTest {
             }
             assertEquals(true, caught)
             assertEquals("preserve", external.readText())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals(true, Files.isSymbolicLink(foreignStages.single().toPath()))
         } finally {
             root.deleteRecursively()
         }
@@ -461,7 +477,9 @@ class PdfOutputNameBoundaryTest {
                 }
             }
             assertFalse(File(output, "report.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals("partial", File(foreignStages.single(), "one/two/payload.bin").readText())
         } finally {
             output.deleteRecursively()
         }
@@ -485,7 +503,11 @@ class PdfOutputNameBoundaryTest {
                 }
             }
             assertEquals("preserve", externalFile.readText())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals("partial", File(foreignStages.single(), "partial.txt").readText())
+            assertEquals(true, Files.isSymbolicLink(File(foreignStages.single(), "link").toPath()))
+            assertEquals(external.toPath(), Files.readSymbolicLink(File(foreignStages.single(), "link").toPath()))
         } finally {
             root.deleteRecursively()
         }
@@ -523,7 +545,10 @@ class PdfOutputNameBoundaryTest {
             assertEquals(true, failedAsExpected)
             assertFalse(File(output, "first.pdf").exists())
             assertFalse(File(output, "second.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals(firstStage!!.toPath(), foreignStages.single().toPath())
+            assertEquals("partial", File(firstStage!!, "nested/partial").readText())
         } finally {
             output.deleteRecursively()
         }
@@ -549,7 +574,9 @@ class PdfOutputNameBoundaryTest {
             }
             assertEquals(true, cancelled)
             assertFalse(File(output, "report.pdf").exists())
-            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+            val foreignStages = output.listFiles().orEmpty().filter { it.name.startsWith(".anydoc_stage_") }
+            assertEquals(1, foreignStages.size)
+            assertEquals("partial", File(foreignStages.single(), "nested/partial").readText())
         } finally {
             output.deleteRecursively()
         }
