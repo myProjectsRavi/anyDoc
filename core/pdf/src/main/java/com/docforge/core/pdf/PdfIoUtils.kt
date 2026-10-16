@@ -144,8 +144,15 @@ internal fun loadPdfDocument(file: File, password: String): PDDocument {
 }
 
 private fun requireNonSymlinkOutputDirectory(directory: File) {
-    require(!Files.isSymbolicLink(directory.toPath())) {
-        "Output directory must not be a symbolic link."
+    // Examine each lexical component, not the canonical path: resolving first would
+    // erase evidence that a parent redirects staging to a different directory.
+    // NOFOLLOW checks are best-effort and do not make later path operations race-free.
+    var component = directory.toPath().toAbsolutePath().normalize()
+    while (component != null) {
+        require(!Files.isSymbolicLink(component)) {
+            "Output directory must not contain a symbolic-link component."
+        }
+        component = component.parent
     }
 }
 
