@@ -44,3 +44,8 @@ The complete earlier validation log remains in Git history at commit `7593c9044a
 
 ## Cycle 086 activation — 2026-10-16 UTC
 - `E086/F088/US-R086-P1-01A` ACTIVE before production/test mutation. Host-only Kotlin/JVM rollback replacement reproduction passed 4/4 assertions; it is not Android CI. Baseline code/test SHA `af624de8ee4f7e1a50dd1be12e2a460aec2b267a` passed authoritative PR CI #740 / API `38909368135`. Next: identity-aware rollback and focused core PDF JVM tests, exact-SHA CI. No device/emulator/race-freedom claim.
+
+
+## Cycle 086 authoritative completion / Cycle 087 activation — 2026-10-16 UTC
+- Exact code/test SHA `58a62f6c1e277cab3e921c8e1c78c07cfd069e39` passed authoritative draft-PR GitHub Actions #743 / API `38915971783`, job `117025709017`, on 2026-10-16 UTC. All nine gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, and Android lint. Paired push #742 was cancelled and is not validation evidence. Six committed core PDF JVM regressions cover unchanged output, replacement regular file, symlink, directory, unknown identity, and missing output. No emulator, physical device, benchmark or atomic race-freedom evidence.
+- `E087/F089/US-R087-P0-01A` ACTIVE / INCOMPLETE before code mutation. Repro: post-move validation failure recursively cleans the candidate, including a substituted directory's children. Earlier isolated Kotlin/JVM probe passed 5/5; not Android CI. Next: narrow non-destructive cleanup and deterministic core PDF tests, authoritative exact-SHA CI. No device/emulator/benchmark or complete TOCTOU guarantee.

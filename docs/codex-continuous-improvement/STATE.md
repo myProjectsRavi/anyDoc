@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-16_cycle-086`
+**Current report:** `2026-10-16_cycle-087`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 086
-**Current Epic:** `E086` — Published-output rollback identity safety
-**Current Feature:** `F088` — Avoid deleting replaced outputs during batch rollback
-**Current User Story:** `US-R086-P1-01A` — Guard rollback against destination replacement (ACTIVE)
-**Last completed cycle:** Cycle 085
+**Cycle:** 087
+**Current Epic:** `E087` — Non-destructive failed-publication cleanup
+**Current Feature:** `F089` — Preserve substituted entries after post-move validation failure
+**Current User Story:** `US-R087-P0-01A` — Prevent recursive deletion of substituted published directories (ACTIVE)
+**Last completed cycle:** Cycle 086
 **State checkpoint timestamp:** 2026-10-16 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** inspect `withStagedOutputFiles` rollback and implement bounded identity-aware deletion with deterministic JVM regression tests; exact-SHA draft-PR CI required.
+- **Next exact step:** implement bounded non-destructive post-move failure cleanup in `publishCheckedStagedOutput` with deterministic JVM tests; exact-SHA draft-PR CI required.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -44,3 +44,8 @@
 ## Cycle 086 activation — 2026-10-16 UTC
 - `E086/F088/US-R086-P1-01A` ACTIVE / INCOMPLETE before production mutation. Source evidence: `withStagedOutputFiles` unconditionally calls `Files.deleteIfExists(outputFile.toPath())` on each published destination during rollback after a later failure. If another actor replaces a previously published entry before rollback, this can unlink an unrelated replacement. Host-only Kotlin/JVM reproduction 4/4 assertions passed; not Android CI. Exact starting code/test SHA `af624de8ee4f7e1a50dd1be12e2a460aec2b267a` / PR CI #740 SUCCESS.
 - Scope: investigate bounded identity-aware rollback (NOFOLLOW file attributes and available file keys) and deterministic core PDF JVM regression coverage. Preserve original errors, avoid deleting unrelated replacement entries, and document residual races/unknown identities; do not claim cross-process atomicity. Next: inspect and test rollback paths, then implement the smallest safe mitigation and exact-SHA CI. PR #1 remains draft; main untouched.
+
+
+## Cycle 086 authoritative completion / Cycle 087 activation — 2026-10-16 UTC
+- `E086/F088/US-R086-P1-01A` COMPLETE. Exact code/test SHA `58a62f6c1e277cab3e921c8e1c78c07cfd069e39` passed authoritative draft-PR GitHub Actions #743 / API `38915971783`, job `117025709017`, on 2026-10-16 UTC. All nine gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, and Android lint. Paired push #742 was cancelled and is not validation evidence. Six committed core PDF JVM regressions cover unchanged output, replacement regular file, symlink, directory, unknown identity, and missing output. No emulator, physical device, benchmark or atomic race-freedom evidence.
+- Cycle 087 `E087/F089/US-R087-P0-01A` ACTIVE / INCOMPLETE before production/test mutation. Source: `publishCheckedStagedOutput` calls `deleteStagedEntry(candidate)` after a post-move validation failure. If the staged path is substituted with a nonempty directory in the testable pre-move window, `Files.move` places that foreign directory at the candidate path and recursive cleanup deletes its contents. Preserve foreign entries rather than recursively delete unowned data. Do not claim atomic protection against concurrent replacement or imply a rejected symlink is safe to use. Starting code/test SHA `58a62f6c1e277cab3e921c8e1c78c07cfd069e39`, authoritative PR CI #743 SUCCESS. Next: review precise cleanup ownership, add focused JVM regressions for substituted directory/symlink/regular file, implement smallest safe guard, obtain exact-SHA CI, then reconcile canonical docs. PR #1 draft/unmerged; main untouched.

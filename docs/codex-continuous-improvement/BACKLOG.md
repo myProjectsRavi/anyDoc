@@ -681,4 +681,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 
 ### Epic E086 — Published-output rollback identity safety
 #### Feature F088 — Avoid deleting replaced outputs during batch rollback
-- [ACTIVE / P1] `US-R086-P1-01A` — Unconditional `Files.deleteIfExists(outputFile.toPath())` during batch rollback can remove a different file substituted at that path after publication. Host-only reproduction 4/4 confirms the hazard; add bounded NOFOLLOW identity-aware rollback and deterministic JVM tests, exact-SHA PR CI. No cross-process atomicity claim. PR #1 draft, main untouched.
+- [COMPLETE / PR CI #743] `US-R086-P1-01A` — Unconditional `Files.deleteIfExists(outputFile.toPath())` during batch rollback can remove a different file substituted at that path after publication. Host-only reproduction 4/4 confirms the hazard; add bounded NOFOLLOW identity-aware rollback and deterministic JVM tests, exact-SHA PR CI. No cross-process atomicity claim. PR #1 draft, main untouched.
+
+
+## Cycle 086 closure / Cycle 087 activation — 2026-10-16 UTC
+- [COMPLETE / PR CI #743] `US-R086-P1-01A` (`E086/F088`): Exact code/test SHA `58a62f6c1e277cab3e921c8e1c78c07cfd069e39` passed authoritative draft-PR GitHub Actions #743 / API `38915971783`, job `117025709017`, on 2026-10-16 UTC. All nine gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, and Android lint. Paired push #742 was cancelled and is not validation evidence. Six committed core PDF JVM regressions cover unchanged output, replacement regular file, symlink, directory, unknown identity, and missing output. No emulator, physical device, benchmark or atomic race-freedom evidence.
+
+### Epic E087 — Non-destructive failed-publication cleanup
+#### Feature F089 — Preserve foreign entries after rejected post-move publication
+- [ACTIVE / P0] `US-R087-P0-01A` — `publishCheckedStagedOutput` currently calls recursive `deleteStagedEntry(candidate)` after post-move rejection. A substituted nonempty directory can be moved to the final path then recursively erased, losing unrelated content. Add ownership-aware, non-recursive fail-closed cleanup and deterministic core PDF JVM tests; preserve ordinary publish/collision behavior. Validate exact code/test SHA via draft-PR CI. Remaining TOCTOU and foreign-path exposure risks must be documented; PR #1 draft, main untouched.
