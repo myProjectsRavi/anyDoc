@@ -172,10 +172,34 @@ private fun deleteStagedEntry(stagedFile: File) {
     })
 }
 
+/**
+ * Best-effort hard-link alias check. Android API 26 exposes java.nio.file but a
+ * provider may not implement the unix:nlink attribute; absence is NOT proof of
+ * link uniqueness. Unsupported attributes are tracked as a residual limitation.
+ */
+internal fun stagedHardLinkCount(file: File): Long? {
+    val path = file.toPath()
+    return try {
+        (Files.getAttribute(path, "unix:nlink", LinkOption.NOFOLLOW_LINKS) as? Number)?.toLong()
+    } catch (_: UnsupportedOperationException) {
+        null
+    } catch (_: IllegalArgumentException) {
+        null
+    }
+}
+
+private fun requireNoKnownStagedHardLinks(file: File) {
+    val count = stagedHardLinkCount(file)
+    require(count == null || count == 1L) {
+        "Staged output has multiple hard links."
+    }
+}
+
 private fun requireRegularStagedOutput(stagedFile: File) {
     require(Files.isRegularFile(stagedFile.toPath(), LinkOption.NOFOLLOW_LINKS)) {
         "Staged output must be a regular file."
     }
+    requireNoKnownStagedHardLinks(stagedFile)
 }
 
 fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
@@ -330,6 +354,7 @@ internal fun publishCheckedStagedOutput(
         source, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS
     )
     require(sourceAttributes.isRegularFile) { "Staged output must be a regular file." }
+    requireNoKnownStagedHardLinks(stagedFile)
     beforeMove()
     // Do not use ATOMIC_MOVE here: implementations may replace existing destinations.
     Files.move(source, target)
@@ -340,6 +365,7 @@ internal fun publishCheckedStagedOutput(
         require(publishedAttributes.isRegularFile) {
             "Published output must be a regular file."
         }
+        requireNoKnownStagedHardLinks(candidate)
         val sourceKey = sourceAttributes.fileKey()
         val publishedKey = publishedAttributes.fileKey()
         require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
