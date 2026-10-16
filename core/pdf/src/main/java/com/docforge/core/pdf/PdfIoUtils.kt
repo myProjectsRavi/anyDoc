@@ -251,6 +251,8 @@ class StagedOutputRequest<T>(
     val block: suspend (stagedFile: File) -> T
 )
 
+private data class PublishedStagedOutput(val outputFile: File, val fileKey: Any?)
+
 private data class PreparedStagedOutput<T>(
     val stagedFile: File,
     val request: StagedOutputRequest<T>,
@@ -323,11 +325,11 @@ suspend fun <T> withStagedOutputFiles(
 
         currentCoroutineContext().ensureActive()
         prepared.forEach { requireRegularStagedOutput(it.stagedFile) }
-        val published = mutableListOf<File>()
+        val published = mutableListOf<PublishedStagedOutput>()
         try {
             val results = prepared.map { item ->
                 currentCoroutineContext().ensureActive()
-                val outputFile = synchronized(stagedOutputPublicationLock) {
+                val publishedOutput = synchronized(stagedOutputPublicationLock) {
                     moveStagedFileWithoutOverwrite(
                         stagedFile = item.stagedFile,
                         directory = directory,
@@ -335,15 +337,15 @@ suspend fun <T> withStagedOutputFiles(
                         extension = item.request.extension
                     )
                 }
-                published += outputFile
-                StagedOutputResult(outputFile = outputFile, value = item.value)
+                published += publishedOutput
+                StagedOutputResult(outputFile = publishedOutput.outputFile, value = item.value)
             }
             currentCoroutineContext().ensureActive()
             return results
         } catch (t: Throwable) {
-            published.asReversed().forEach { outputFile ->
+            published.asReversed().forEach { publishedOutput ->
                 runCatching {
-                    Files.deleteIfExists(outputFile.toPath())
+                    rollbackPublishedOutputIfUnchanged(publishedOutput.outputFile, publishedOutput.fileKey)
                 }.exceptionOrNull()?.let(t::addSuppressed)
             }
             throw t
@@ -353,6 +355,24 @@ suspend fun <T> withStagedOutputFiles(
             runCatching { deleteStagedEntry(item.stagedFile) }
         }
     }
+}
+
+/**
+ * Roll back only a regular entry whose NOFOLLOW file identity still matches the entry
+ * recorded at publication. Unknown file keys fail closed: leave the output rather than
+ * risk deleting an unrelated replacement. This is not an atomic check-and-unlink;
+ * independently mutable paths can still change between the check and deletion.
+ */
+internal fun rollbackPublishedOutputIfUnchanged(outputFile: File, expectedFileKey: Any?): Boolean {
+    if (expectedFileKey == null) return false
+    val path = outputFile.toPath()
+    val attributes = try {
+        Files.readAttributes(path, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+    } catch (_: java.nio.file.NoSuchFileException) {
+        return false
+    }
+    if (!attributes.isRegularFile || attributes.fileKey() != expectedFileKey) return false
+    return Files.deleteIfExists(path)
 }
 
 /** Same-process publication lock prevents two staged writers selecting the same destination. */
@@ -371,7 +391,7 @@ internal fun publishCheckedStagedOutput(
     stagedFile: File,
     candidate: File,
     beforeMove: () -> Unit = {}
-) {
+): Any? {
     val source = stagedFile.toPath()
     val target = candidate.toPath()
     val sourceAttributes = Files.readAttributes(
@@ -382,7 +402,7 @@ internal fun publishCheckedStagedOutput(
     beforeMove()
     // Do not use ATOMIC_MOVE here: implementations may replace existing destinations.
     Files.move(source, target)
-    try {
+    return try {
         val publishedAttributes = Files.readAttributes(
             target, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS
         )
@@ -395,6 +415,7 @@ internal fun publishCheckedStagedOutput(
         require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
             "Staged output changed before publication."
         }
+        publishedKey
     } catch (failure: Throwable) {
         // Only the entry just moved by this invocation is targeted; never traverse symlinks.
         runCatching { deleteStagedEntry(candidate) }
@@ -408,7 +429,7 @@ private fun moveStagedFileWithoutOverwrite(
     directory: File,
     baseName: String,
     extension: String
-): File {
+): PublishedStagedOutput {
     var counter = 0
     while (counter < 10_000) {
         val candidate = if (counter == 0) {
@@ -423,8 +444,8 @@ private fun moveStagedFileWithoutOverwrite(
         }
 
         try {
-            publishCheckedStagedOutput(stagedFile, candidate)
-            return candidate
+            val publishedKey = publishCheckedStagedOutput(stagedFile, candidate)
+            return PublishedStagedOutput(candidate, publishedKey)
         } catch (_: FileAlreadyExistsException) {
             // Another writer won the race after exists(); choose the next non-conflicting name.
             counter++
