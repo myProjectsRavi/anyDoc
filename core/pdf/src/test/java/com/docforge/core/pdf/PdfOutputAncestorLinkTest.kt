@@ -73,4 +73,34 @@ class PdfOutputAncestorLinkTest {
             root.deleteRecursively()
         }
     }
+    @Test
+    fun canonicalPlatformBaseAllowsAliasWithoutAllowingLinkedOutputFolder() = runBlocking {
+        val root = Files.createTempDirectory("anydoc-platform-alias").toFile()
+        try {
+            val realBase = File(root, "platform-base").apply { mkdirs() }
+            val alias = File(root, "platform-alias")
+            Files.createSymbolicLink(alias.toPath(), realBase.toPath())
+            val canonicalBase = alias.canonicalFile
+            val output = File(canonicalBase, "AnyDoc").apply { mkdirs() }
+            val success = withStagedOutputFile(output, "report", "pdf") {
+                it.writeText("safe")
+            }
+            assertEquals("safe", success.outputFile.readText())
+
+            val unexpected = File(root, "unexpected").apply { mkdirs() }
+            val linkedOutput = File(canonicalBase, "Linked")
+            Files.createSymbolicLink(linkedOutput.toPath(), unexpected.toPath())
+            rejects {
+                runBlocking {
+                    withStagedOutputFile(linkedOutput, "report", "pdf") {
+                        it.writeText("unsafe")
+                    }
+                }
+            }
+            assertEquals(emptyList<String>(), unexpected.listFiles().orEmpty().map { it.name })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
 }
