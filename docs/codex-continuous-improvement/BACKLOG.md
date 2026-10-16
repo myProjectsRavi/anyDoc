@@ -639,3 +639,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ## Cycle 079 closure / Cycle 080 activation — 2026-10-15 UTC
 - Cycle 079 `E079/F081/US-R079-P1-01A` COMPLETE. Exact production/test SHA `c4b2420499add93a3ea41a7027cdacf9414b901a` passed authoritative draft-PR CI #691 / API `38803553526`, job `116659166895`, all eight gates: core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. Seven committed core PDF JVM regressions. Paired push #690 / API `38803546956` was cancelled by concurrency and is not completion evidence. No emulator, device, benchmark, hard-link protection, or post-check race guarantee.
 - Cycle 080 `E080/F082/US-R080-P1-01A` ACTIVE / INCOMPLETE. Evidence: `PdfIoUtils.kt` calls `stagedFile.delete()` for cleanup, which cannot remove a nonempty substituted directory, leaving orphaned staging content. Next: add no-follow recursive cleanup restricted to generated staging paths and focused core PDF JVM tests covering nested directories, nested symlinks, target preservation, batch failure and normal output, then exact-SHA draft-PR CI. Distinct remaining work: post-check substitution race and hard-link aliasing. PR #1 stays draft/unmerged; main untouched.
+
+
+## Cycle 081 completion / Cycle 082 activation — 2026-10-16 UTC
+- [COMPLETE / PR CI #705] `US-R081-P1-01A` — Publication-time NOFOLLOW recheck and available file-key comparison after rename, fail-closed cleanup for detected substitutions; six core PDF JVM regressions. Exact code/test SHA `cf43b166f91f2f02838461121288b84b48b38ba2`, authoritative PR API `38883604993` SUCCESS all eight gates. Push #704 cancelled by concurrency.
+- [ACTIVE / P1] `US-R082-P1-01A` — Audit and mitigate staging hard-link aliasing without relying on unsupported Android filesystem facilities.
+
+### Epic E082 — Staging hard-link alias integrity
+#### Feature F084 — Detect hard-linked staged outputs
+- [ACTIVE / P1] `US-R082-P1-01A` — Prove hard-link swap case, verify API 26+ support for link count / secure file handles, commit compatible regression-backed mitigation, run exact-head PR CI. Post-check races and ancestor swaps remain separately tracked.

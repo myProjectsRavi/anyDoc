@@ -3,19 +3,20 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-16_cycle-081`
+**Current report:** `2026-10-16_cycle-082`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 081
-**Current Epic:** `E081` — Publication-time staging integrity
-**Current Feature:** `F083` — Guard post-validation staging substitution
-**Current User Story:** `US-R081-P1-01A` — Prevent post-validation staged-entry substitution during publication (ACTIVE)
-**Last completed cycle:** Cycle 080
+**Cycle:** 082
+**Current Epic:** `E082` — Staging hard-link alias integrity
+**Current Feature:** `F084` — Detect hard-linked staged outputs
+**Current User Story:** `US-R082-P1-01A` — Reject unsafe hard-linked staging entries (ACTIVE)
+**Last completed cycle:** Cycle 081
 **State checkpoint timestamp:** 2026-10-16 UTC
 
 ## Current next executable step
-- Cycle 080 COMPLETE: exact code/test SHA `5c1bda17219cdaf139631f46f2d9174fbd81cd37` passed authoritative draft-PR Actions #700 / API `38874374439` on 2026-10-16 UTC, all eight gates SUCCESS. Five core PDF JVM tests cover nested staging cleanup, nested symlink target preservation, failed batch cleanup, cancellation, and ordinary publication. Production no-follow cleanup first committed at `22069d6d`.
-- Cycle 081 ACTIVE / INCOMPLETE: E081/F083/US-R081-P1-01A. Next: audit the validation-to-move window in `moveStagedFileWithoutOverwrite`, assess Android-supported atomic/no-follow options and design deterministic adversarial regression coverage. Do not claim full TOCTOU closure without proof. Hard-link aliasing and ancestor swaps remain separate.
-- Only `codex/anydoc-continuous-improvement`; PR #1 draft/unmerged; main untouched. No emulator/device/benchmark evidence.
+- Cycle 081 `E081/F083/US-R081-P1-01A` COMPLETE. Exact code/test commit `cf43b166f91f2f02838461121288b84b48b38ba2` passed authoritative draft-PR Actions #705 / API `38883604993` on 2026-10-16 UTC: core PDF JVM, converter JVM, scanner JVM, PDF-tools JVM, app JVM, debug APK, unsigned release/R8 and Android lint all SUCCESS. `publishCheckedStagedOutput` revalidates the renamed output with NOFOLLOW_LINKS, compares available source/published file keys, and cleans up a substituted symlink or directory on detected failure. Six committed JVM regressions cover absolute/dangling symlink swaps, replacement regular file identity when available, substituted nested directory, normal publication, and existing destination. Paired push #704 was cancelled due to concurrency, not a failure. This is a bounded mitigation, not total TOCTOU, ancestor-swap, or hard-link protection. No emulator/physical-device/benchmark evidence.
+- Cycle 082 `E082/F084/US-R082-P1-01A` ACTIVE / INCOMPLETE: staged output validation checks regular-file type and optional fileKey, but an adversary can replace the staged path with a hard link to another regular file. The moved output can then alias an unrelated file even though both checks pass. Next: verify whether reliable hard-link counts or secure file handle protections are available on Android API 26+, reproduce the alias case in deterministic core PDF JVM tests, implement only a compatible fail-closed or otherwise narrowly bounded mitigation, and validate exact SHA in authoritative draft-PR CI. Preserve normal staging/collision behavior. Track residual ancestor substitution and post-check races separately; do not claim race freedom or protection absent evidence.
+- Work only on `codex/anydoc-continuous-improvement`; PR #1 draft/unmerged; main untouched.
+
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -278,3 +279,8 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 080 completion / Cycle 081 activation — 2026-10-16 UTC
 - Cycle 080 E080/F082/US-R080-P1-01A COMPLETE: production fix `22069d6d7746a0c92b386f0046ad56a1d09bb45d` and five committed core PDF JVM regression tests at exact combined SHA `5c1bda17219cdaf139631f46f2d9174fbd81cd37`. Authoritative draft-PR Actions #700 / API `38874374439` SUCCESS on this SHA: all eight gates passed (core PDF, converter, scanner, PDF tools signature, app JVM, debug APK, unsigned release/R8, lint). Paired push #699 / API `38874367806` CANCELLED by concurrency, not validation evidence. No emulator, physical-device, benchmark, race-free or hard-link guarantee.
 - Cycle 081 E081/F083/US-R081-P1-01A ACTIVE / INCOMPLETE: guard against staging-file post-validation substitution during publication. Evidence: `moveStagedFileWithoutOverwrite` checks `Files.isRegularFile(..., NOFOLLOW_LINKS)` before `Files.move(stagedFile.toPath(), candidate.toPath())`; an entry may change between the check and move, so a symlink could become a published output. Scope: assess Android-compatible safe publication primitives, establish a deterministic adversarial test seam, implement a bounded mitigation that does not claim race elimination without proof, and validate exact code/test SHA in authoritative draft-PR CI. Hard-link aliasing and ancestor-directory swaps remain separate. No Cycle 081 production/test mutation at activation. PR #1 stays draft/unmerged; main untouched.
+
+
+## Cycle 081 completion / Cycle 082 activation — 2026-10-16 UTC
+- Cycle 081 `E081/F083/US-R081-P1-01A` COMPLETE. Exact code/test commit `cf43b166f91f2f02838461121288b84b48b38ba2` passed authoritative draft-PR Actions #705 / API `38883604993` on 2026-10-16 UTC: core PDF JVM, converter JVM, scanner JVM, PDF-tools JVM, app JVM, debug APK, unsigned release/R8 and Android lint all SUCCESS. `publishCheckedStagedOutput` revalidates the renamed output with NOFOLLOW_LINKS, compares available source/published file keys, and cleans up a substituted symlink or directory on detected failure. Six committed JVM regressions cover absolute/dangling symlink swaps, replacement regular file identity when available, substituted nested directory, normal publication, and existing destination. Paired push #704 was cancelled due to concurrency, not a failure. This is a bounded mitigation, not total TOCTOU, ancestor-swap, or hard-link protection. No emulator/physical-device/benchmark evidence.
+- Cycle 082 `E082/F084/US-R082-P1-01A` ACTIVE / INCOMPLETE: staged output validation checks regular-file type and optional fileKey, but an adversary can replace the staged path with a hard link to another regular file. The moved output can then alias an unrelated file even though both checks pass. Next: verify whether reliable hard-link counts or secure file handle protections are available on Android API 26+, reproduce the alias case in deterministic core PDF JVM tests, implement only a compatible fail-closed or otherwise narrowly bounded mitigation, and validate exact SHA in authoritative draft-PR CI. Preserve normal staging/collision behavior. Track residual ancestor substitution and post-check races separately; do not claim race freedom or protection absent evidence.
