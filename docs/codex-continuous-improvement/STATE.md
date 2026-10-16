@@ -3,12 +3,12 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-16_cycle-087`
-**Report status:** COMPLETE
-**Cycle:** 087
-**Current Epic:** `E087` — Non-destructive failed-publication cleanup
-**Current Feature:** `F089` — Preserve substituted entries after post-move validation failure
-**Current User Story:** `US-R087-P0-01A` — Prevent recursive deletion of substituted published directories (COMPLETE)
+**Current report:** `2026-10-16_cycle-088`
+**Report status:** ACTIVE / INCOMPLETE
+**Cycle:** 088
+**Current Epic:** `E088` — Staged-entry cleanup ownership
+**Current Feature:** `F090` — Non-destructive staging cleanup
+**Current User Story:** `US-R088-P0-01A` — Preserve foreign staging-path entries during cleanup (ACTIVE)
 **Last completed cycle:** Cycle 087
 **State checkpoint timestamp:** 2026-10-16 UTC
 
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** inspect backlog and source for a distinct remaining evidence-backed P0/P1 finding, activate the next cycle before code mutation, and continue exact-SHA PR CI; no unverified global release claims.
+- **Next exact step:** reproduce foreign directory swap into a staged file path on writer failure/finally cleanup; make cleanup non-recursive and identity-aware; add JVM tests and exact-SHA PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -55,3 +55,8 @@
 - `E087/F089/US-R087-P0-01A` COMPLETE for bounded identity-aware, non-recursive failed-publication cleanup. Exact code/test head `b455c28156d5566d788e09876ed127df10e44f13` passed draft-PR Actions #748 / API `38943994491`, job `117118776491`. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8 and Android lint.
 - Source `publishCheckedStagedOutput` now attempts `rollbackPublishedOutputIfUnchanged(candidate, sourceAttributes.fileKey())` after failed post-move validation rather than recursively deleting a substituted directory; file-key unknown or mismatched entries remain in place. JVM swap regressions confirm preservation of substituted nonempty directory children, links and regular files, alongside normal publication and occupied-name behavior. Final hard-link alias expectation adjusted in `b455c281` after #746 failure; #748 passed.
 - Remaining limitations: foreign entries may remain visible at the candidate path after rejection; no atomic filesystem identity-and-unlink, full TOCTOU safety, Android emulator/device evidence or race-free guarantee. No reviewer approval implied. PR #1 draft/unmerged; `main` unchanged.
+
+
+## Cycle 088 activation — 2026-10-16 UTC
+- **ACTIVE / INCOMPLETE:** `E088/F090/US-R088-P0-01A` — Prevent recursive removal of foreign directories substituted at a staged-file path during writer failure or final cleanup. Source evidence: `PdfIoUtils.deleteStagedEntry` calls `Files.walkFileTree(path)` and is invoked from both the per-writer catch and final prepared-output cleanup. These calls operate on a mutable file path; an unrelated nonempty directory substituted after staging could be traversed and deleted. Distinct from Cycle 087's post-move candidate cleanup.
+- First action: inspect staging ownership and existing cleanup tests; reproduce the exact writer-failure/finally substitution boundaries with deterministic JVM regressions; implement only bounded non-recursive or identity-checked cleanup, retaining normal cancellation cleanup. Validate via draft-PR exact-SHA CI. Preserve remaining foreign entries rather than recursively deleting unrelated contents. Never imply atomic race safety, device testing, or global LGTM. PR #1 draft; main untouched.
