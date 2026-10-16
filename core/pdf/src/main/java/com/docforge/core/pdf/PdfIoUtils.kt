@@ -159,24 +159,18 @@ private fun requireNonSymlinkOutputDirectory(directory: File) {
 private fun File.isOccupiedOutputName(): Boolean = exists() || Files.isSymbolicLink(toPath())
 
 /** Remove generated staging entries without traversing symbolic links or buffering a directory tree. */
-private fun deleteStagedEntry(stagedFile: File) {
+/** Never recurse into an entry substituted at a staging path. Missing identity fails closed. */
+internal fun deleteOwnedStagedEntry(stagedFile: File, expectedFileKey: Any?): Boolean {
+    if (expectedFileKey == null) return false
     val path = stagedFile.toPath()
-    if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) return
-    Files.walkFileTree(path, object : java.nio.file.SimpleFileVisitor<java.nio.file.Path>() {
-        override fun visitFile(
-            file: java.nio.file.Path,
-            attrs: java.nio.file.attribute.BasicFileAttributes
-        ): java.nio.file.FileVisitResult {
-            Files.deleteIfExists(file)
-            return java.nio.file.FileVisitResult.CONTINUE
-        }
-
-        override fun postVisitDirectory(dir: java.nio.file.Path, exc: java.io.IOException?): java.nio.file.FileVisitResult {
-            if (exc != null) throw exc
-            Files.deleteIfExists(dir)
-            return java.nio.file.FileVisitResult.CONTINUE
-        }
-    })
+    val attributes = try {
+        Files.readAttributes(path, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+    } catch (_: java.nio.file.NoSuchFileException) {
+        return false
+    }
+    if (!attributes.isRegularFile || attributes.fileKey() != expectedFileKey) return false
+    // Path-based delete is best-effort, not atomic with the identity check.
+    return Files.deleteIfExists(path)
 }
 
 /**
@@ -255,6 +249,7 @@ private data class PublishedStagedOutput(val outputFile: File, val fileKey: Any?
 
 private data class PreparedStagedOutput<T>(
     val stagedFile: File,
+    val stagedFileKey: Any?,
     val request: StagedOutputRequest<T>,
     val value: T
 )
@@ -307,17 +302,22 @@ suspend fun <T> withStagedOutputFiles(
         requests.forEach { request ->
             currentCoroutineContext().ensureActive()
             val stagedFile = File.createTempFile(".anydoc_stage_", ".part", directory)
+            val stagedFileKey = Files.readAttributes(
+                stagedFile.toPath(), java.nio.file.attribute.BasicFileAttributes::class.java,
+                LinkOption.NOFOLLOW_LINKS
+            ).fileKey()
             try {
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
                 requireRegularStagedOutput(stagedFile)
                 prepared += PreparedStagedOutput(
                     stagedFile = stagedFile,
+                    stagedFileKey = stagedFileKey,
                     request = request,
                     value = value
                 )
             } catch (t: Throwable) {
-                runCatching { deleteStagedEntry(stagedFile) }
+                runCatching { deleteOwnedStagedEntry(stagedFile, stagedFileKey) }
                     .exceptionOrNull()?.let(t::addSuppressed)
                 throw t
             }
@@ -352,7 +352,7 @@ suspend fun <T> withStagedOutputFiles(
         }
     } finally {
         prepared.forEach { item ->
-            runCatching { deleteStagedEntry(item.stagedFile) }
+            runCatching { deleteOwnedStagedEntry(item.stagedFile, item.stagedFileKey) }
         }
     }
 }
