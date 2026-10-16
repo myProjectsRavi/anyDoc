@@ -70,13 +70,26 @@ object DocForgeSettingsStore {
     fun resolveOutputDirectory(context: Context, bucket: DocForgeOutputBucket): File {
         val folderName = readOutputFolderName(context, bucket)
         @Suppress("DEPRECATION")
+        // Resolve only Android-supplied storage roots. Android may use legitimate
+        // symlink aliases for shared storage; never canonicalize the user-controlled
+        // child folder, which must still pass the staged-output symlink guard.
+        @Suppress("DEPRECATION")
         val publicBase = Environment.getExternalStoragePublicDirectory(bucket.mediaDirectory)
-        val publicDir = File(publicBase, folderName)
-        if (publicDir.exists() || publicDir.mkdirs()) {
-            return publicDir
+        val canonicalPublicBase = runCatching { publicBase.canonicalFile }.getOrNull()
+        if (canonicalPublicBase != null) {
+            val publicDir = File(canonicalPublicBase, folderName)
+            if (publicDir.isDirectory || (!publicDir.exists() && publicDir.mkdirs())) {
+                return publicDir
+            }
         }
         val fallbackBase = context.getExternalFilesDir(bucket.mediaDirectory) ?: context.filesDir
-        return File(fallbackBase, folderName).apply { mkdirs() }
+        val canonicalFallbackBase = runCatching { fallbackBase.canonicalFile }.getOrNull()
+            ?: error("Unable to resolve application output storage root.")
+        return File(canonicalFallbackBase, folderName).apply {
+            require(isDirectory || (!exists() && mkdirs())) {
+                "Unable to create application output directory."
+            }
+        }
     }
 
     /**
