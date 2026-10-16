@@ -17,11 +17,11 @@ class PdfStagedPublicationSwapTest {
             block()
             fail("Expected substituted staging entry to be rejected")
         } catch (_: IllegalArgumentException) {
-            // The moved entry must have been removed before surfacing the failure.
+            // The original publication failure must be surfaced without destroying foreign entries.
         }
     }
 
-    @Test fun symlinkSwappedAfterValidationIsNotLeftPublished() {
+    @Test fun symlinkSwappedAfterValidationPreservesForeignLink() {
         val root = Files.createTempDirectory("anydoc-stage-swap").toFile()
         val stage = File(root, ".anydoc_stage_swap.part")
         val final = File(root, "report.pdf")
@@ -34,7 +34,8 @@ class PdfStagedPublicationSwapTest {
                     Files.createSymbolicLink(stage.toPath(), outside.toPath())
                 }
             }
-            assertFalse(Files.exists(final.toPath(), LinkOption.NOFOLLOW_LINKS))
+            assertTrue(Files.isSymbolicLink(final.toPath()))
+            assertEquals(outside.toPath(), Files.readSymbolicLink(final.toPath()))
             assertFalse(Files.exists(stage.toPath(), LinkOption.NOFOLLOW_LINKS))
             assertEquals("keep", outside.readText())
         } finally {
@@ -56,7 +57,8 @@ class PdfStagedPublicationSwapTest {
                 }
             }
             assertFalse(outside.exists())
-            assertFalse(Files.exists(final.toPath(), LinkOption.NOFOLLOW_LINKS))
+            assertTrue(Files.isSymbolicLink(final.toPath()))
+            assertEquals(outside.toPath(), Files.readSymbolicLink(final.toPath()))
             assertFalse(Files.exists(stage.toPath(), LinkOption.NOFOLLOW_LINKS))
         } finally {
             root.deleteRecursively()
@@ -84,13 +86,14 @@ class PdfStagedPublicationSwapTest {
                     Files.move(replacement.toPath(), stage.toPath())
                 }
             }
-            assertFalse(Files.exists(final.toPath(), LinkOption.NOFOLLOW_LINKS))
+            assertEquals("substituted", final.readText())
+            assertFalse(Files.exists(stage.toPath(), LinkOption.NOFOLLOW_LINKS))
         } finally {
             root.deleteRecursively()
         }
     }
 
-    @Test fun substitutedNonemptyDirectoryIsRemovedWithoutLeavingPublishedPath() {
+    @Test fun substitutedNonemptyDirectoryPreservesForeignContents() {
         val root = Files.createTempDirectory("anydoc-stage-dir-swap").toFile()
         val stage = File(root, ".anydoc_stage_swap.part")
         val final = File(root, "report.pdf")
@@ -101,12 +104,33 @@ class PdfStagedPublicationSwapTest {
                 publishCheckedStagedOutput(stage, final) {
                     assertTrue(stage.delete())
                     assertTrue(stage.mkdir())
-                    File(stage, "payload.txt").writeText("discard")
+                    File(stage, "payload.txt").writeText("preserve")
                     Files.createSymbolicLink(File(stage, "link").toPath(), external.toPath())
                 }
             }
-            assertFalse(Files.exists(final.toPath(), LinkOption.NOFOLLOW_LINKS))
+            assertTrue(Files.isDirectory(final.toPath(), LinkOption.NOFOLLOW_LINKS))
+            assertEquals("preserve", File(final, "payload.txt").readText())
+            assertTrue(Files.isSymbolicLink(File(final, "link").toPath()))
             assertEquals("keep", external.readText())
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test fun ownedRegularStageIsRemovedAfterPostMoveHardLinkRejection() {
+        val root = Files.createTempDirectory("anydoc-stage-owned-rejection").toFile()
+        val stage = File(root, ".anydoc_stage_owned.part")
+        val final = File(root, "report.pdf")
+        val alias = File(root, "alias.pdf")
+        try {
+            stage.writeText("owned")
+            reject {
+                publishCheckedStagedOutput(stage, final) {
+                    Files.createLink(alias.toPath(), stage.toPath())
+                }
+            }
+            assertFalse(Files.exists(final.toPath(), LinkOption.NOFOLLOW_LINKS))
+            assertEquals("owned", alias.readText())
         } finally {
             root.deleteRecursively()
         }

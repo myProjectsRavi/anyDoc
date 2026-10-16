@@ -417,8 +417,10 @@ internal fun publishCheckedStagedOutput(
         }
         publishedKey
     } catch (failure: Throwable) {
-        // Only the entry just moved by this invocation is targeted; never traverse symlinks.
-        runCatching { deleteStagedEntry(candidate) }
+        // A substituted entry may have been moved to the candidate path. Never recursively
+        // delete it: remove only our original regular file when its identity is still known.
+        // This check is best-effort, not atomic against a concurrent path replacement.
+        runCatching { rollbackPublishedOutputIfUnchanged(candidate, sourceAttributes.fileKey()) }
             .exceptionOrNull()?.let(failure::addSuppressed)
         throw failure
     }
