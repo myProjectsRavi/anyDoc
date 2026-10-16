@@ -1,19 +1,19 @@
-# Cycle 088 — Staged-entry cleanup ownership
+# Cycle 089 — Staged-file identity continuity
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E088 / F090 / US-R088-P0-01A
-**Previous cycle:** Cycle 087 COMPLETE, code/test SHA `b455c28156d5566d788e09876ed127df10e44f13`, GitHub Actions #748 / API `38943994491` SUCCESS (nine gates).
+**Epic / Feature / Story:** E089 / F091 / US-R089-P1-01A
+**Previous cycle:** Cycle 088 COMPLETE, exact code/test SHA `c37dfae34f3d29f0d2cbbfa71769d7dc121473af`, authoritative draft-PR Actions #758 / API `38958983854` attempt 2 SUCCESS (nine gates).
 
-## Source evidence
-`PdfIoUtils.deleteStagedEntry` invokes recursive `Files.walkFileTree`, and its callers in writer failure and final cleanup can operate on a substituted mutable staging path. A foreign directory moved there may be deleted recursively. Cycle 087 addressed a different post-move destination cleanup path.
+## Evidence
+The staging API captures the initial `stagedFileKey`, but its post-writer `requireRegularStagedOutput` does not compare that identity to the initial key. The later publication identity comparison starts after the writer, so a replaced regular file can pass when it has one hard link.
 
 ## Acceptance criteria
-- Deterministic JVM regressions prove foreign nonempty staging directory contents survive writer failure and final cleanup.
-- Owned regular staged files are cleaned up on failure/cancellation, without following or traversing third-party directory trees.
-- Preserve primary failures and suppressed cleanup errors where applicable; do not claim atomic race freedom.
-- Exact code/test SHA passes all configured draft-PR CI gates.
-- Reconcile STATE, BACKLOG, VALIDATION, CURRENT_REPORT and this report; keep PR #1 draft and main untouched.
+- Deterministic core PDF JVM test reproduces regular-file substitution after staging and before publication.
+- Reject known original-key mismatches without deleting foreign replacements; normal writer and collision behavior preserved.
+- Unknown file keys and non-atomic path races explicitly documented.
+- Exact combined production/test SHA passes all configured draft-PR CI gates.
+- Synchronize STATE, CURRENT_REPORT, BACKLOG, VALIDATION and cycle report after terminal CI; keep PR #1 draft and main untouched.
 
 ## Exact next step
-Inspect cleanup tests and staged-file lifecycle; design bounded non-recursive / file-key-based cleanup before code mutation; run focused and complete CI.
+Inspect `withStagedOutputFiles` and `requireRegularStagedOutput`, add a focused regression, then implement the smallest compatible check and run authoritative CI.
