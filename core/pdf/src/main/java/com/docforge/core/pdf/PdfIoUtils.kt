@@ -310,6 +310,49 @@ suspend fun <T> withStagedOutputFiles(
 /** Same-process publication lock prevents two staged writers selecting the same destination. */
 private val stagedOutputPublicationLock = Any()
 
+/**
+ * Check the published path after renaming: the staged entry can be replaced between the
+ * original NOFOLLOW check and Files.move. Renaming a symlink moves the link itself; do not
+ * allow it to remain as a user-visible output. Where available, fileKey also detects a
+ * substituted regular file. The optional hook exercises that exact window in JVM tests.
+ *
+ * This narrows, but does not eliminate, races involving independently mutable filesystem
+ * paths. Ancestor swaps and hard-link aliases require separate mitigations.
+ */
+internal fun publishCheckedStagedOutput(
+    stagedFile: File,
+    candidate: File,
+    beforeMove: () -> Unit = {}
+) {
+    val source = stagedFile.toPath()
+    val target = candidate.toPath()
+    val sourceAttributes = Files.readAttributes(
+        source, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS
+    )
+    require(sourceAttributes.isRegularFile) { "Staged output must be a regular file." }
+    beforeMove()
+    // Do not use ATOMIC_MOVE here: implementations may replace existing destinations.
+    Files.move(source, target)
+    try {
+        val publishedAttributes = Files.readAttributes(
+            target, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS
+        )
+        require(publishedAttributes.isRegularFile) {
+            "Published output must be a regular file."
+        }
+        val sourceKey = sourceAttributes.fileKey()
+        val publishedKey = publishedAttributes.fileKey()
+        require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
+            "Staged output changed before publication."
+        }
+    } catch (failure: Throwable) {
+        // Only the entry just moved by this invocation is targeted; never traverse symlinks.
+        runCatching { deleteStagedEntry(candidate) }
+            .exceptionOrNull()?.let(failure::addSuppressed)
+        throw failure
+    }
+}
+
 private fun moveStagedFileWithoutOverwrite(
     stagedFile: File,
     directory: File,
@@ -330,8 +373,7 @@ private fun moveStagedFileWithoutOverwrite(
         }
 
         try {
-            requireRegularStagedOutput(stagedFile)
-            Files.move(stagedFile.toPath(), candidate.toPath())
+            publishCheckedStagedOutput(stagedFile, candidate)
             return candidate
         } catch (_: FileAlreadyExistsException) {
             // Another writer won the race after exists(); choose the next non-conflicting name.
