@@ -673,3 +673,12 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E085 — Portable staging hard-link checks
 #### Feature F087 — Android link-count fallback when NIO attributes are unavailable
 - [ACTIVE / P1] `US-R085-P1-01A` — `PdfIoUtils.stagedHardLinkCount` returns unknown when NIO `unix:nlink` is unsupported, allowing a known class of staged hard-link aliases to escape detection. Add Android `Os.lstat(...).st_nlink` fallback and deterministic JVM fallback-selection regressions; preserve unknown-provider limitations and validate exact code/test SHA in draft-PR CI. Cycle 084 complete at `0fe410393b950317fcaa390ada107fb4624f080e` / CI #734. PR #1 stays draft; main untouched.
+
+## Cycle 085 authoritative completion — 2026-10-16 UTC
+- `E085/F087/US-R085-P1-01A` COMPLETE. Exact production/test SHA `af624de8ee4f7e1a50dd1be12e2a460aec2b267a` passed authoritative draft-PR Actions #740 / API `38909368135`, job `117001519196`, all nine gates SUCCESS: domain JVM, core PDF JVM, converter JVM, scanner JVM, PDF tools JVM, app JVM, debug APK, unsigned release/R8 and Android lint. Push #739 was cancelled by concurrency and is not validation evidence.
+- Production `PdfIoUtils.stagedHardLinkCount` now falls back to Android `Os.lstat(...).st_nlink` when NIO `unix:nlink` is unavailable. Four committed JVM fallback-selection tests passed in core PDF CI. Host-only Kotlin probe 5/5 passed with synthetic Android stubs, not device validation.
+- Residual: if both providers cannot report a link count, unknown remains unknown; neither lookup eliminates filesystem TOCTOU races. No emulator, physical-device, OEM compatibility or benchmark evidence claimed. PR #1 draft/unmerged; main unchanged.
+
+### Epic E086 — Published-output rollback identity safety
+#### Feature F088 — Avoid deleting replaced outputs during batch rollback
+- [ACTIVE / P1] `US-R086-P1-01A` — Unconditional `Files.deleteIfExists(outputFile.toPath())` during batch rollback can remove a different file substituted at that path after publication. Host-only reproduction 4/4 confirms the hazard; add bounded NOFOLLOW identity-aware rollback and deterministic JVM tests, exact-SHA PR CI. No cross-process atomicity claim. PR #1 draft, main untouched.

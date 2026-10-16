@@ -1,20 +1,20 @@
 # Current Report
 
-**ID:** `2026-10-16_cycle-085`
+**ID:** `2026-10-16_cycle-086`
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E085 / F087 / US-R085-P1-01A
-**Previous cycle:** 084 COMPLETE; exact code/test SHA `0fe410393b950317fcaa390ada107fb4624f080e`, draft-PR CI #734 SUCCESS (nine gates).
+**Epic / Feature / Story:** E086 / F088 / US-R086-P1-01A
+**Previous cycle:** 085 COMPLETE, exact code/test SHA `af624de8ee4f7e1a50dd1be12e2a460aec2b267a`, authoritative draft-PR CI #740 / API `38909368135` SUCCESS, nine gates.
 
 ## Source evidence
-`stagedHardLinkCount` in `PdfIoUtils.kt` queries `Files.getAttribute(path, "unix:nlink", NOFOLLOW_LINKS)` and returns null when unsupported. `requireNoKnownStagedHardLinks` accepts null, so the check can miss aliases on Android filesystems/providers without NIO unix attributes. Android API 21+ provides `Os.lstat` with `StructStat.st_nlink`, potentially providing an additional count source. This does not solve path substitution races.
+`withStagedOutputFiles` records published paths, then on a later publication failure rolls them back using unconditional `Files.deleteIfExists(outputFile.toPath())`. A distinct file placed at the same path before rollback would be deleted even though it was not published by this invocation. A host-only Kotlin/JVM reproduction verified this path-replacement hazard (4/4 assertions); this is not Android or cross-process validation.
 
 ## Acceptance criteria
-- Add Android `Os.lstat(...).st_nlink` fallback only when NIO count is unavailable; do not treat unknown counts as proof of safety.
-- Preserve known hard-link rejection and normal staged publication.
-- Add focused core PDF JVM tests covering fallback selection, known primary counts, and unavailable counts; do not claim Android runtime validation from JVM tests.
-- Obtain authoritative draft-PR CI on exact combined code/test SHA; inspect and fix failures.
-- Synchronize STATE, CURRENT_REPORT, BACKLOG, VALIDATION and this cycle report after terminal CI. Keep PR #1 draft/unmerged; never modify main.
+- Identify and document the exact rollback mutation and existing staged-output tests.
+- Add a narrowly scoped identity-aware rollback check using NOFOLLOW attributes and available file keys, without following symbolic links or deleting a different file; explicitly handle unknown identities conservatively.
+- Add deterministic core PDF JVM regression tests for replaced destination, unchanged output, and failure/cancellation preservation.
+- Validate exact combined production/test SHA through authoritative draft-PR CI; diagnose and repair failures.
+- After terminal CI, synchronize STATE, CURRENT_REPORT, BACKLOG, VALIDATION, and this report. Keep PR #1 draft/unmerged; never modify main.
 
 ## Active checkpoint
-Activated before production mutation from branch HEAD `49bf794533caa8d39631c1b53f709e3fa7dcc1d0`. Next: implement the smallest safe fallback and focused tests. No Cycle 085 production/test commit or CI evidence claimed yet.
+Activated before Cycle 086 production/test mutation from code/test baseline `af624de8ee4f7e1a50dd1be12e2a460aec2b267a`. Next: inspect rollback behavior and tests, implement the smallest safe correction, then authoritative CI. No Cycle 086 production commit or CI validation claimed yet.
