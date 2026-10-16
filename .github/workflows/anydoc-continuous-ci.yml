@@ -43,6 +43,9 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Core domain unit tests
+        run: ./gradlew --no-daemon :core:domain:testDebugUnitTest
+
       - name: Core PDF unit tests
         run: ./gradlew --no-daemon :core:pdf:testDebugUnitTest
 
