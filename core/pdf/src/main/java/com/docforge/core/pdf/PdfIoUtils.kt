@@ -180,20 +180,37 @@ private fun deleteStagedEntry(stagedFile: File) {
 }
 
 /**
- * Best-effort hard-link alias check. Android API 26 exposes java.nio.file but a
- * provider may not implement the unix:nlink attribute; absence is NOT proof of
- * link uniqueness. Unsupported attributes are tracked as a residual limitation.
+ * Prefer the NIO no-follow link count when available. Some Android providers
+ * omit unix:nlink even though the platform lstat API can report st_nlink.
+ * Neither path lookup is atomic with a later rename; unknown counts remain unknown.
  */
-internal fun stagedHardLinkCount(file: File): Long? {
-    val path = file.toPath()
+private fun readNioStagedHardLinkCount(file: File): Long? {
     return try {
-        (Files.getAttribute(path, "unix:nlink", LinkOption.NOFOLLOW_LINKS) as? Number)?.toLong()
+        (Files.getAttribute(file.toPath(), "unix:nlink", LinkOption.NOFOLLOW_LINKS) as? Number)?.toLong()
     } catch (_: UnsupportedOperationException) {
         null
     } catch (_: IllegalArgumentException) {
         null
     }
 }
+
+private fun readAndroidStagedHardLinkCount(file: File): Long? {
+    return try {
+        android.system.Os.lstat(file.absolutePath).st_nlink
+    } catch (_: android.system.ErrnoException) {
+        null
+    }
+}
+
+/**
+ * The injectable readers allow JVM tests to exercise the Android fallback path
+ * without claiming that host unit tests execute Android's Os implementation.
+ */
+internal fun stagedHardLinkCount(
+    file: File,
+    readNioCount: (File) -> Long? = ::readNioStagedHardLinkCount,
+    readAndroidCount: (File) -> Long? = ::readAndroidStagedHardLinkCount
+): Long? = readNioCount(file) ?: readAndroidCount(file)
 
 private fun requireNoKnownStagedHardLinks(file: File) {
     val count = stagedHardLinkCount(file)
