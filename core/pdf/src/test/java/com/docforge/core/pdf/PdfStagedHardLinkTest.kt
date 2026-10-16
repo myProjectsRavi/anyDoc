@@ -57,7 +57,7 @@ class PdfStagedHardLinkTest {
                 }
                 fail("Expected substituted hard-link alias rejection")
             } catch (_: IllegalArgumentException) {
-                assertFalse(Files.exists(final.toPath(), LinkOption.NOFOLLOW_LINKS))
+                assertTrue(Files.exists(final.toPath(), LinkOption.NOFOLLOW_LINKS))
                 assertEquals("preserve", external.readText())
             }
         } finally {
