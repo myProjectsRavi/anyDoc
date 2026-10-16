@@ -445,4 +445,130 @@ class PdfOutputNameBoundaryTest {
         }
     }
 
+
+    @Test
+    fun removesNestedDirectorySubstitutedForStagingFile() {
+        val output = Files.createTempDirectory("anydoc-stage-nested").toFile()
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        val nested = File(stage, "one/two")
+                        assertEquals(true, nested.mkdirs())
+                        File(nested, "payload.bin").writeText("partial")
+                    }
+                }
+            }
+            assertFalse(File(output, "report.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            output.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun nestedStagingSymlinkCleanupPreservesExternalDirectory() {
+        val root = Files.createTempDirectory("anydoc-stage-nested-link").toFile()
+        val output = File(root, "out").apply { mkdirs() }
+        val external = File(root, "outside").apply { mkdirs() }
+        val externalFile = File(external, "keep.txt").apply { writeText("preserve") }
+        try {
+            reject {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        assertEquals(true, stage.mkdir())
+                        Files.createSymbolicLink(File(stage, "link").toPath(), external.toPath())
+                        File(stage, "partial.txt").writeText("partial")
+                    }
+                }
+            }
+            assertEquals("preserve", externalFile.readText())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun failedBatchRemovesEarlierStageSubstitutedWithNestedDirectory() {
+        val output = Files.createTempDirectory("anydoc-stage-batch-nested").toFile()
+        var firstStage: File? = null
+        try {
+            var failedAsExpected = false
+            try {
+                runBlocking {
+                    withStagedOutputFiles(
+                        output,
+                        listOf(
+                            StagedOutputRequest("first", "pdf") { stage ->
+                                firstStage = stage
+                                stage.writeText("first")
+                            },
+                            StagedOutputRequest("second", "pdf") { stage ->
+                                firstStage!!.delete()
+                                val nested = File(firstStage!!, "nested")
+                                assertEquals(true, nested.mkdirs())
+                                File(nested, "partial").writeText("partial")
+                                stage.writeText("second")
+                                throw IllegalStateException("writer failed")
+                            }
+                        )
+                    )
+                }
+            } catch (e: IllegalStateException) {
+                failedAsExpected = e.message == "writer failed"
+            }
+            assertEquals(true, failedAsExpected)
+            assertFalse(File(output, "first.pdf").exists())
+            assertFalse(File(output, "second.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            output.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun cancellationAfterDirectorySubstitutionCleansStage() {
+        val output = Files.createTempDirectory("anydoc-stage-cancel-dir").toFile()
+        try {
+            var cancelled = false
+            try {
+                runBlocking {
+                    withStagedOutputFile(output, "report", "pdf") { stage ->
+                        stage.delete()
+                        val nested = File(stage, "nested")
+                        assertEquals(true, nested.mkdirs())
+                        File(nested, "partial").writeText("partial")
+                        throw kotlinx.coroutines.CancellationException("cancelled")
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                cancelled = e.message == "cancelled"
+            }
+            assertEquals(true, cancelled)
+            assertFalse(File(output, "report.pdf").exists())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            output.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun regularStageStillPublishesAfterCleanupHardening() {
+        val output = Files.createTempDirectory("anydoc-stage-regular").toFile()
+        try {
+            val result = runBlocking {
+                withStagedOutputFile(output, "report", "pdf") { stage ->
+                    stage.writeText("completed")
+                }
+            }
+            assertEquals("completed", result.outputFile.readText())
+            assertFalse(output.listFiles().orEmpty().any { it.name.startsWith(".anydoc_stage_") })
+        } finally {
+            output.deleteRecursively()
+        }
+    }
+
 }
