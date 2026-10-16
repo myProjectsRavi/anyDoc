@@ -3,18 +3,19 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never implement/merge autonomous continuous-improvement work directly on `main`.
-**Current report:** `2026-10-15_cycle-080`
+**Current report:** `2026-10-16_cycle-081`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 080
-**Current Epic:** `E080` — Failure-safe staged-entry cleanup
-**Current Feature:** `F082` — Clean substituted staging directories
-**Current User Story:** `US-R080-P1-01A` — Remove nonempty substituted staging directories without following links (ACTIVE)
-**Last completed cycle:** Cycle 079
-**State checkpoint timestamp:** 2026-10-15 UTC
+**Cycle:** 081
+**Current Epic:** `E081` — Publication-time staging integrity
+**Current Feature:** `F083` — Guard post-validation staging substitution
+**Current User Story:** `US-R081-P1-01A` — Prevent post-validation staged-entry substitution during publication (ACTIVE)
+**Last completed cycle:** Cycle 080
+**State checkpoint timestamp:** 2026-10-16 UTC
 
 ## Current next executable step
-- Cycle 079 COMPLETE: exact code/test SHA `c4b2420499add93a3ea41a7027cdacf9414b901a` passed authoritative draft-PR GitHub Actions #691 / API `38803553526` on 2026-10-15 UTC, job `116659166895`; all eight gates SUCCESS. Seven core PDF JVM regression tests and NOFOLLOW_LINKS staging guard. Paired push #690 was cancelled by workflow concurrency, not used as completion evidence. Residual post-check swap and hard-link aliasing are NOT resolved.
-- Cycle 080 ACTIVE / INCOMPLETE: E080/F082/US-R080-P1-01A. Source evidence: `PdfIoUtils.kt` catches writer errors and finally cleans with `stagedFile.delete()`, which fails for a nonempty substituted directory and leaves orphaned staging content. Next: implement narrowly scoped no-follow staged-entry cleanup for failed writers and prepared batch stages, add deterministic core PDF JVM tests for nested directories, nested symlinks, target preservation, and normal success, then obtain authoritative exact-SHA draft-PR CI. Do not follow symlinks or claim to fix post-validation swaps/hard links. PR #1 draft/unmerged; main untouched.
+- Cycle 080 COMPLETE: exact code/test SHA `5c1bda17219cdaf139631f46f2d9174fbd81cd37` passed authoritative draft-PR Actions #700 / API `38874374439` on 2026-10-16 UTC, all eight gates SUCCESS. Five core PDF JVM tests cover nested staging cleanup, nested symlink target preservation, failed batch cleanup, cancellation, and ordinary publication. Production no-follow cleanup first committed at `22069d6d`.
+- Cycle 081 ACTIVE / INCOMPLETE: E081/F083/US-R081-P1-01A. Next: audit the validation-to-move window in `moveStagedFileWithoutOverwrite`, assess Android-supported atomic/no-follow options and design deterministic adversarial regression coverage. Do not claim full TOCTOU closure without proof. Hard-link aliasing and ancestor swaps remain separate.
+- Only `codex/anydoc-continuous-improvement`; PR #1 draft/unmerged; main untouched. No emulator/device/benchmark evidence.
 
 ## Git checkpoint
 - Baseline `main`: `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`
@@ -273,3 +274,7 @@ Inspect comparison raster sizing and lifetimes, add an overflow-safe combined-me
 ## Cycle 079 completion / Cycle 080 activation — 2026-10-15 UTC
 - Cycle 079 `E079/F081/US-R079-P1-01A` COMPLETE: code/test SHA `c4b2420499add93a3ea41a7027cdacf9414b901a`, draft-PR Actions #691 / API `38803553526` SUCCESS, job `116659166895`, eight configured gates passed. Seven committed core PDF JVM tests. Push #690 / API `38803546956` CANCELLED by concurrency. No emulator, physical device, benchmark, race-free or hard-link guarantee.
 - Cycle 080 `E080/F082/US-R080-P1-01A` ACTIVE / INCOMPLETE before production mutation: remove orphaned nonempty substituted staging directories using no-follow cleanup; preserve symlink targets and published outputs; test nested files/symlinks and batch failure. Known distinct follow-ups: post-check substitution race and hard-link aliasing. Next exact action: implement cleanup helper and core PDF JVM tests, validate exact candidate through draft-PR Actions, then synchronize all cycle documents. PR #1 stays draft; main untouched.
+
+## Cycle 080 completion / Cycle 081 activation — 2026-10-16 UTC
+- Cycle 080 E080/F082/US-R080-P1-01A COMPLETE: production fix `22069d6d7746a0c92b386f0046ad56a1d09bb45d` and five committed core PDF JVM regression tests at exact combined SHA `5c1bda17219cdaf139631f46f2d9174fbd81cd37`. Authoritative draft-PR Actions #700 / API `38874374439` SUCCESS on this SHA: all eight gates passed (core PDF, converter, scanner, PDF tools signature, app JVM, debug APK, unsigned release/R8, lint). Paired push #699 / API `38874367806` CANCELLED by concurrency, not validation evidence. No emulator, physical-device, benchmark, race-free or hard-link guarantee.
+- Cycle 081 E081/F083/US-R081-P1-01A ACTIVE / INCOMPLETE: guard against staging-file post-validation substitution during publication. Evidence: `moveStagedFileWithoutOverwrite` checks `Files.isRegularFile(..., NOFOLLOW_LINKS)` before `Files.move(stagedFile.toPath(), candidate.toPath())`; an entry may change between the check and move, so a symlink could become a published output. Scope: assess Android-compatible safe publication primitives, establish a deterministic adversarial test seam, implement a bounded mitigation that does not claim race elimination without proof, and validate exact code/test SHA in authoritative draft-PR CI. Hard-link aliasing and ancestor-directory swaps remain separate. No Cycle 081 production/test mutation at activation. PR #1 stays draft/unmerged; main untouched.
