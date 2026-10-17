@@ -757,3 +757,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E096 — PDF compare remaining-heap raster safety
 #### Feature F098 — Account for already-occupied Java heap
 - [ACTIVE / P2] `US-R096-P2-01A`: compare currently budgets from max Java heap without subtracting occupied heap. Add deterministic headroom boundary tests and conservative remaining-heap cap, validate exact code/test SHA; PR #1 draft/unmerged, main untouched.
+
+
+## Cycle 096 authoritative completion / Cycle 097 activation — 2026-10-17 UTC
+- [COMPLETE / PR CI #806] `US-R096-P2-01A` (`E096/F098`). Exact code/test SHA `386112813f01ea8daea2ee1cf7fc7bac28b2f5a1` passed authoritative draft-PR GitHub Actions #806 / API `39046842382`, job `117437154272`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools and app JVM tests; debug APK; unsigned release/R8; Android lint. Production `e78388d700b199049349155cb4c101688747c149` budgets raster bytes from remaining Java heap estimated by `maxMemory - (totalMemory - freeMemory)`; test `38611281` adds three focused JVM regressions for occupied, inconsistent and extreme occupancy plus combined bitmap fit. No emulator, physical-device, native-memory benchmark, measured OOM prevention or complete memory safety claimed.
+### Epic E097 — PDF compare render-scale input safety
+#### Feature F099 — Normalize non-finite render-scale input
+- [ACTIVE / P2] `US-R097-P2-01A`: Cycle 097 `E097/F099/US-R097-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source at validated `38611281`: `PdfCompareTool.compare` uses `renderScale.coerceIn(0.5f, 4f)`; Kotlin `Float.NaN.coerceIn` remains NaN, so `(page.width * scale).toInt().coerceAtLeast(1)` yields 1 pixel, silently degrading comparison for a non-finite caller input. Host Kotlin reproduction observed NaN -> 1 px; not Android validation. First add a narrow finite/default render-scale normalization seam and deterministic JVM tests for NaN, +/-Infinity and ordinary values, without altering normal quality or cancellation. Validate exact code/test SHA via draft-PR CI. PR #1 draft/unmerged; `main` untouched.

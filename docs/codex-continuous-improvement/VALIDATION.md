@@ -96,3 +96,8 @@ The complete earlier validation log remains in Git history at commit `7593c9044a
 ## Cycle 095 completion / Cycle 096 activation — 2026-10-17 UTC
 - Cycle 095 exact code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed draft-PR Actions #796 / API `39041350384`, job `117422336197`, all nine gates SUCCESS. Documentation-head `43fe075dfe7b90ac10e9b479ff4aa8f15ef5b02e` passed #797 / API `39043002749`, job `117426099487`, all nine gates SUCCESS. Host JVM validation only, no emulator/device/OOM benchmark or universal memory safety claim.
 - Cycle 096 ACTIVE before code/test mutation. Exact next evidence: occupied-heap JVM tests, conservative remaining-heap budget implementation and authoritative draft-PR exact-SHA CI. PR #1 draft/unmerged, main untouched.
+
+
+## Cycle 096 exact-SHA authoritative CI — 2026-10-17 UTC
+- Exact code/test SHA `386112813f01ea8daea2ee1cf7fc7bac28b2f5a1` passed authoritative draft-PR GitHub Actions #806 / API `39046842382`, job `117437154272`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools and app JVM tests; debug APK; unsigned release/R8; Android lint. Production `e78388d700b199049349155cb4c101688747c149` budgets raster bytes from remaining Java heap estimated by `maxMemory - (totalMemory - freeMemory)`; test `38611281` adds three focused JVM regressions for occupied, inconsistent and extreme occupancy plus combined bitmap fit. No emulator, physical-device, native-memory benchmark, measured OOM prevention or complete memory safety claimed.
+- PR #1 remained draft/unmerged; main unchanged. Next active E097/F099/US-R097-P2-01A requires a separate exact-SHA run.

@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-096`
+**Current report:** `2026-10-17_cycle-097`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 096
-**Current Epic:** `E096` — PDF compare remaining-heap raster safety
-**Current Feature:** `F098` — Account for already-occupied Java heap
-**Current User Story:** `US-R096-P2-01A` — Bound comparison rasters by available heap headroom (ACTIVE)
-**Last completed cycle:** Cycle 095
+**Cycle:** 097
+**Current Epic:** `E097` — PDF compare render-scale input safety
+**Current Feature:** `F099` — Normalize non-finite render-scale input
+**Current User Story:** `US-R097-P2-01A` — Prevent silent one-pixel output for NaN scale (ACTIVE)
+**Last completed cycle:** Cycle 096
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 096: add occupied-heap budget tests and bounded production correction; validate exact code/test SHA in draft-PR CI.
+- **Next exact step:** Cycle 097: normalize non-finite compare renderScale; add focused JVM tests and exact-SHA draft-PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -112,3 +112,8 @@
 ## Cycle 096 activation — 2026-10-17 UTC
 - `E096/F098/US-R096-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Cycle 095 code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed draft-PR Actions #796 / API `39041350384`, job `117422336197`, all nine gates SUCCESS. Docs HEAD `43fe075dfe7b90ac10e9b479ff4aa8f15ef5b02e` passed #797 / API `39043002749`, job `117426099487`. Source: `PdfCompareTool.compare` budgets from `Runtime.maxMemory()` alone and ignores current heap occupancy; 128 MiB max heap with 120 MiB occupied can request a 16 MiB raster budget despite only 8 MiB nominal headroom. This is source-level risk, not observed OOM.
 - First production mutation after this durable activation: bound budget to a fraction of remaining heap using sampled `totalMemory() - freeMemory()`, preserve 12-byte floor and 48 MiB ceiling, add deterministic occupied-heap tests, exact-SHA draft-PR CI. Residual: Android native bitmap/PdfRenderer/PdfDocument allocations are not fully represented by Java heap headroom; no device/emulator, OOM benchmark or global memory-safety claim. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 096 authoritative completion / Cycle 097 activation — 2026-10-17 UTC
+- Cycle 096 `E096/F098/US-R096-P2-01A` COMPLETE. Exact code/test SHA `386112813f01ea8daea2ee1cf7fc7bac28b2f5a1` passed authoritative draft-PR GitHub Actions #806 / API `39046842382`, job `117437154272`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools and app JVM tests; debug APK; unsigned release/R8; Android lint. Production `e78388d700b199049349155cb4c101688747c149` budgets raster bytes from remaining Java heap estimated by `maxMemory - (totalMemory - freeMemory)`; test `38611281` adds three focused JVM regressions for occupied, inconsistent and extreme occupancy plus combined bitmap fit. No emulator, physical-device, native-memory benchmark, measured OOM prevention or complete memory safety claimed.
+- Cycle 097 `E097/F099/US-R097-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source at validated `38611281`: `PdfCompareTool.compare` uses `renderScale.coerceIn(0.5f, 4f)`; Kotlin `Float.NaN.coerceIn` remains NaN, so `(page.width * scale).toInt().coerceAtLeast(1)` yields 1 pixel, silently degrading comparison for a non-finite caller input. Host Kotlin reproduction observed NaN -> 1 px; not Android validation. First add a narrow finite/default render-scale normalization seam and deterministic JVM tests for NaN, +/-Infinity and ordinary values, without altering normal quality or cancellation. Validate exact code/test SHA via draft-PR CI. PR #1 draft/unmerged; `main` untouched.
