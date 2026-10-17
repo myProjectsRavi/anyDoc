@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-102`
+**Current report:** `2026-10-17_cycle-103`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 102
-**Current Epic:** `E102` — PDF compare bitmap cleanup exception safety
-**Current Feature:** `F104` — Avoid self-suppression during bitmap cleanup
-**Current User Story:** `US-R102-P2-01A` — Preserve original failure when cleanup rethrows identical Throwable (ACTIVE)
-**Last completed cycle:** Cycle 101
+**Cycle:** 103
+**Current Epic:** `E103` — PDF compare page-render cleanup safety
+**Current Feature:** `F105` — Preserve rendering failure when bitmap recycling throws
+**Current User Story:** `US-R103-P2-01A` — Preserve original page-render failure under bitmap recycle failure (ACTIVE)
+**Last completed cycle:** Cycle 102
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 102: reproduce `withCleanupOnFailure` self-suppression with a focused host JVM test, add identity guard if justified, then validate exact-SHA draft-PR CI.
+- **Next exact step:** Cycle 103: review `renderPage` catch cleanup and focused tests, use existing suppression helper if compatible, validate exact code/test SHA in draft-PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -142,3 +142,8 @@
 ## Cycle 101 authoritative completion / Cycle 102 activation — 2026-10-17 UTC
 - Cycle 101 `E101/F103/US-R101-P2-01A` COMPLETE. Exact production/test SHA `d05bde850d46172ddb90463f7a2b0a65e92240f4` passed authoritative draft-PR Actions #828 / API `39071028675`, job `117508502508`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM tests, debug APK, unsigned release/R8, Android lint. Six host JVM lifecycle regressions in `PdfCompareDocumentLifecycleTest.kt` verify normal close, draw/finish/cancellation failure preservation with suppressed close errors, close failure after successful write, and identical primary/cleanup throwable avoiding self-suppression. Production `withClosePreservingPrimaryFailure` wraps `PdfDocument` use. No emulator, physical device, OEM, visual/benchmark/peak heap or complete race-freedom proof.
 - Cycle 102 `E102/F104/US-R102-P2-01A` ACTIVE / INCOMPLETE before production/test mutation. Source-level evidence in `PdfCompareTool.kt`: `withCleanupOnFailure` calls `failure.addSuppressed(cleanupFailure)` without checking identity. If the injected cleanup callback throws the exact same Throwable instance as the original block, Java rejects self-suppression with `IllegalArgumentException`, masking the primary error. This is a deterministic helper edge case, not an observed Android Bitmap.recycle failure. Add focused JVM tests and smallest compatible guard; preserve bitmap recycling and original error; validate exact code/test SHA in draft-PR CI. PR #1 stays draft/unmerged; main untouched.
+
+
+## Cycle 102 authoritative completion / Cycle 103 activation — 2026-10-17 UTC
+- `E102/F104/US-R102-P2-01A` COMPLETE. Exact production/test SHA `6f130bdbe4b4b1cd5277a4061bc5704f8d21a21f` passed authoritative draft-PR Actions #831 / API `39075310686`, job `117521147882`, with all nine configured gates SUCCESS (core domain, PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint). Docs-head #832 / API `39077710177` and #833 / API `39079471345` also succeeded. Five host JVM regressions cover normal cleanup, original-error preservation, distinct cleanup suppression, identical Throwable self-suppression, and cancellation. No Android device/emulator/OEM/benchmark/peak heap or complete race-freedom evidence.
+- Cycle 103 `E103/F105/US-R103-P2-01A` ACTIVE / INCOMPLETE before any production mutation. Source evidence: `PdfCompareTool.renderPage` catch block calls `bitmap.recycle()` directly before rethrowing `page.render` failure; a secondary recycle failure could mask the primary rendering exception. Source-level risk only, not an observed Android error. Inspect callers and test seam; reuse `withCleanupOnFailure` if compatible, add focused host JVM regressions, validate exact code/test SHA via draft-PR CI. Preserve cancellation and bitmap ownership. PR #1 remains draft/unmerged; main untouched.
