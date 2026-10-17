@@ -48,4 +48,36 @@ class PdfStagedAndroidSnapshotFailureTest {
             root.deleteRecursively()
         }
     }
+
+    @Test fun androidReaderFailureWithoutIdentitySkipsWriter() = runBlocking {
+        val root = Files.createTempDirectory("android-reader-denied").toFile()
+        try {
+            val failure = SecurityException("identity unavailable")
+            var staged: File? = null
+            var writerCalled = false
+            try {
+                withStagedOutputFilesUsingIdentityReaders(
+                    root,
+                    listOf(StagedOutputRequest<Int>("output", "pdf") {
+                        writerCalled = true
+                        1
+                    }),
+                    readNioFileKey = { null },
+                    readAndroidIdentity = { file ->
+                        staged = file
+                        throw failure
+                    }
+                )
+                fail("Expected Android identity reader failure")
+            } catch (actual: SecurityException) {
+                assertSame(failure, actual)
+            }
+            assertFalse(writerCalled)
+            assertFalse(File(root, "output.pdf").exists())
+            assertTrue("Unknown ownership must preserve the staging entry", requireNotNull(staged).exists())
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
 }
