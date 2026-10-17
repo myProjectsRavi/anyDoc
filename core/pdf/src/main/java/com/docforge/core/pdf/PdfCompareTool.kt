@@ -120,6 +120,19 @@ internal object CompareRasterBudget {
     }
 }
 
+/** The missing side is a complete difference; the source page stays owned by its caller. */
+internal fun <T : Any> missingPageDiff(
+    left: T?,
+    right: T?,
+    highlightCopy: (T) -> T
+): Pair<T, Float>? {
+    if ((left == null) == (right == null)) return null
+    return highlightCopy((left ?: right)!!) to 100f
+}
+
+/** Translucent red keeps the surviving page readable while marking the whole page changed. */
+internal val MISSING_PAGE_OVERLAY_COLOR = 0x88FF3232.toInt()
+
 class PdfCompareTool(
     private val context: Context
 ) {
@@ -266,8 +279,18 @@ class PdfCompareTool(
             blank.eraseColor(Color.LTGRAY)
             return blank to 0f
         }
-        if (left == null) return right!!.copy(Bitmap.Config.ARGB_8888, false) to 100f
-        if (right == null) return left.copy(Bitmap.Config.ARGB_8888, false) to 100f
+        val missingPage = missingPageDiff(left, right) { present ->
+            checkCancelled()
+            val highlighted = present.copy(Bitmap.Config.ARGB_8888, true)
+                ?: error("Unable to copy PDF compare page")
+            withCleanupOnFailure(highlighted, Bitmap::recycle) {
+                checkCancelled()
+                android.graphics.Canvas(highlighted).drawColor(MISSING_PAGE_OVERLAY_COLOR)
+                checkCancelled()
+                highlighted
+            }
+        }
+        if (missingPage != null) return missingPage
 
         val w = max(left.width, right.width)
         val h = max(left.height, right.height)
