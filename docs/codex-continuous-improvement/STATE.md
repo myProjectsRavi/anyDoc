@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-091`
+**Current report:** `2026-10-17_cycle-092`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 091
-**Current Epic:** `E091` — Identity-aware cleanup fallback
-**Current Feature:** `F093` — Cleanup and rollback on null-key providers
-**Current User Story:** `US-R091-P1-01A` — Identity-aware cleanup and rollback fallback (ACTIVE)
-**Last completed cycle:** Cycle 090
+**Cycle:** 092
+**Current Epic:** `E092` — Staging identity-capture failure safety
+**Current Feature:** `F094` — Handle staging identity reader failures safely
+**Current User Story:** `US-R092-P1-01A` — Staging identity-capture failure safety (ACTIVE)
+**Last completed cycle:** Cycle 091
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 091: add batch rollback and cancellation regression coverage, validate the new exact code/test SHA, then reconcile and close this story if all acceptance criteria pass.
+- **Next exact step:** Cycle 092: reproduce identity reader failure after staging-file creation, implement bounded ownership-safe handling, add JVM tests and obtain exact-SHA PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -79,3 +79,8 @@
 - Production `PdfIoUtils.kt` now carries original Android st_dev/st_ino identity through owned-stage cleanup, failed-publication cleanup and batch rollback when NIO fileKey is unavailable; NOFOLLOW regular-file checks and unknown-identity fail-closed behavior are preserved. Six new core PDF JVM regression methods were committed in `PdfStagedAndroidCleanupFallbackTest.kt`; the core PDF gate succeeded. Original cancellation/writer errors remain propagated by existing code, but targeted integrated cancellation coverage is pending.
 - Remaining acceptance gap: direct injected JVM tests cover fallback ownership, substitution, links/directories, missing/unknown identity and NIO precedence, but no new end-to-end batch-rollback or staging-cancellation regression was added for the null-key scenario. Keep Cycle 091 ACTIVE until these paths are covered or explicitly scoped/deferred with evidence. Android OEM/provider compatibility, emulator/device behavior and atomic check/unlink remain unverified.
 - Next executable step: add focused batch rollback and cancellation regressions without broadening production scope; run authoritative draft-PR CI for the resulting exact SHA, diagnose failures, then synchronize STATE/CURRENT_REPORT/BACKLOG/VALIDATION/report. PR #1 remains draft/unmerged; main untouched.
+
+
+## Cycle 091 authoritative completion / Cycle 092 activation — 2026-10-17 UTC
+- Cycle 091 E091/F093/US-R091-P1-01A COMPLETE: exact production/test SHA `a72ec713043f8dc2490e8fcbbfda48c144ebc270` passed authoritative draft-PR Actions #773 / API `39008317260`, job `117325244525`, on 2026-10-17 UTC. All nine configured gates SUCCESS (domain, PDF, converter, scanner, PDF-tools, app JVM tests; debug APK; unsigned release/R8; Android lint). Paired push #772 / API `39008314535` was cancelled by concurrency, not validation evidence. Earlier code/test SHA `2552fc0137e584de5e134eecc9821f8d76544a67` passed #770 / API `39002954473`. Latest commit adds an injectable NIO/Android identity-reader seam and four integrated null-NIO-key JVM regressions covering multi-output rollback, cancellation, substituted foreign staging preservation and numbered collision. Tests are host simulations, not Android `Os.lstat` device verification. Unknown identities, non-atomic identity/check/delete races and OEM/provider behavior remain unproven.
+- Cycle 092 E092/F094/US-R092-P1-01A ACTIVE / INCOMPLETE before production/test mutation. Evidence in `core/pdf/src/main/java/com/docforge/core/pdf/PdfIoUtils.kt` at `a72ec713043f8dc2490e8fcbbfda48c144ebc270`: `withStagedOutputFilesUsingIdentityReaders` creates a `.anydoc_stage_` file, then invokes `readNioFileKey` and optional `readAndroidIdentity` BEFORE entering the writer `try/catch` and enclosing `finally`. An exception from an identity reader escapes without the established ownership-aware cleanup path; the writer is not invoked, but the stage may be orphaned. First: reproduce with injected reader failures and verify no unrelated file is removed; implement the smallest safe capture/fallback and guarded cleanup without deleting entries whose ownership cannot be established; add core PDF JVM regressions, exact-SHA draft-PR CI, then reconcile documents. Do not claim cleanup is possible when both identity sources are unknown. PR #1 draft/unmerged; main untouched.
