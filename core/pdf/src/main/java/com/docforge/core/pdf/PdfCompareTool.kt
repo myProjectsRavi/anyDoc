@@ -291,6 +291,7 @@ class PdfCompareTool(
             }
         }
         if (missingPage != null) return missingPage
+        if (left == null || right == null) error("Missing-page diff was not handled")
 
         val w = max(left.width, right.width)
         val h = max(left.height, right.height)
