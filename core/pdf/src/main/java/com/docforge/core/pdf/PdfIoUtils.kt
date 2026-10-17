@@ -220,6 +220,18 @@ private fun requireRegularStagedOutput(stagedFile: File) {
     requireNoKnownStagedHardLinks(stagedFile)
 }
 
+/** Compare a known original stage identity; unavailable file keys are not proof of continuity. */
+private fun requireOriginalStagedIdentity(stagedFile: File, originalFileKey: Any?) {
+    if (originalFileKey == null) return
+    val attributes = Files.readAttributes(
+        stagedFile.toPath(), java.nio.file.attribute.BasicFileAttributes::class.java,
+        LinkOption.NOFOLLOW_LINKS
+    )
+    require(attributes.isRegularFile && attributes.fileKey() == originalFileKey) {
+        "Original staged output was replaced."
+    }
+}
+
 fun resolveNonConflictingFile(directory: File, baseName: String, extension: String): File {
     validateOutputName(baseName, extension)
     requireNonSymlinkOutputDirectory(directory)
@@ -310,6 +322,7 @@ suspend fun <T> withStagedOutputFiles(
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
                 requireRegularStagedOutput(stagedFile)
+                requireOriginalStagedIdentity(stagedFile, stagedFileKey)
                 prepared += PreparedStagedOutput(
                     stagedFile = stagedFile,
                     stagedFileKey = stagedFileKey,
@@ -324,7 +337,10 @@ suspend fun <T> withStagedOutputFiles(
         }
 
         currentCoroutineContext().ensureActive()
-        prepared.forEach { requireRegularStagedOutput(it.stagedFile) }
+        prepared.forEach {
+            requireRegularStagedOutput(it.stagedFile)
+            requireOriginalStagedIdentity(it.stagedFile, it.stagedFileKey)
+        }
         val published = mutableListOf<PublishedStagedOutput>()
         try {
             val results = prepared.map { item ->
@@ -332,6 +348,7 @@ suspend fun <T> withStagedOutputFiles(
                 val publishedOutput = synchronized(stagedOutputPublicationLock) {
                     moveStagedFileWithoutOverwrite(
                         stagedFile = item.stagedFile,
+                        originalFileKey = item.stagedFileKey,
                         directory = directory,
                         baseName = item.request.baseName,
                         extension = item.request.extension
@@ -390,6 +407,7 @@ private val stagedOutputPublicationLock = Any()
 internal fun publishCheckedStagedOutput(
     stagedFile: File,
     candidate: File,
+    originalFileKey: Any? = null,
     beforeMove: () -> Unit = {}
 ): Any? {
     val source = stagedFile.toPath()
@@ -399,7 +417,9 @@ internal fun publishCheckedStagedOutput(
     )
     require(sourceAttributes.isRegularFile) { "Staged output must be a regular file." }
     requireNoKnownStagedHardLinks(stagedFile)
+    requireOriginalStagedIdentity(stagedFile, originalFileKey)
     beforeMove()
+    requireOriginalStagedIdentity(stagedFile, originalFileKey)
     // Do not use ATOMIC_MOVE here: implementations may replace existing destinations.
     Files.move(source, target)
     return try {
@@ -415,12 +435,15 @@ internal fun publishCheckedStagedOutput(
         require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
             "Staged output changed before publication."
         }
+        require(originalFileKey == null || publishedKey == originalFileKey) {
+            "Original staged output was replaced before publication."
+        }
         publishedKey
     } catch (failure: Throwable) {
         // A substituted entry may have been moved to the candidate path. Never recursively
         // delete it: remove only our original regular file when its identity is still known.
         // This check is best-effort, not atomic against a concurrent path replacement.
-        runCatching { rollbackPublishedOutputIfUnchanged(candidate, sourceAttributes.fileKey()) }
+        runCatching { rollbackPublishedOutputIfUnchanged(candidate, originalFileKey ?: sourceAttributes.fileKey()) }
             .exceptionOrNull()?.let(failure::addSuppressed)
         throw failure
     }
@@ -428,6 +451,7 @@ internal fun publishCheckedStagedOutput(
 
 private fun moveStagedFileWithoutOverwrite(
     stagedFile: File,
+    originalFileKey: Any?,
     directory: File,
     baseName: String,
     extension: String
@@ -446,7 +470,7 @@ private fun moveStagedFileWithoutOverwrite(
         }
 
         try {
-            val publishedKey = publishCheckedStagedOutput(stagedFile, candidate)
+            val publishedKey = publishCheckedStagedOutput(stagedFile, candidate, originalFileKey)
             return PublishedStagedOutput(candidate, publishedKey)
         } catch (_: FileAlreadyExistsException) {
             // Another writer won the race after exists(); choose the next non-conflicting name.
