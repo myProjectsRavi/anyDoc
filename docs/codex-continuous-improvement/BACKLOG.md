@@ -745,3 +745,9 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E095 — Small-heap PDF compare raster safety
 #### Feature F097 — Audit heap-budget minimum against runtime ceiling
 - [ACTIVE / P2] `US-R095-P2-01A`: `CompareRasterBudget.heapAwareBudgetBytes` returns at least 12 MiB even for 32 MiB max heaps, and current JVM test codifies this floor. Assess allocation pressure/quality on small heaps, add boundary tests, choose a compatible safe cap if warranted, and validate exact-SHA draft-PR CI. No emulator/device benchmark evidence; main untouched, PR #1 draft.
+
+
+## Cycle 095 authoritative completion — 2026-10-17 UTC
+- `E095/F097/US-R095-P2-01A` COMPLETE for bounded small-heap compare raster budgeting. Exact code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed draft-PR Actions #796 / API `39041350384`. Documentation-head `43fe075dfe7b90ac10e9b479ff4aa8f15ef5b02e` passed Actions #797 / API `39043002749`, job `117426099487`, all nine configured gates SUCCESS.
+- `CompareRasterBudget.heapAwareBudgetBytes` now limits budget to 1/8 of heap capped at 48 MiB, with a 12-byte floor for three 1-pixel ARGB_8888 bitmaps rather than a disproportionate 12 MiB minimum. JVM regressions assert 16/32/64 MiB boundaries, fitting three bitmaps and impossible minimum checks. No emulator, physical-device, performance/OOM measurements or universal memory safety claim.
+- Next: audit the next distinct evidence-backed risk, activate a new cycle before production mutation. PR #1 draft/unmerged; main untouched.
