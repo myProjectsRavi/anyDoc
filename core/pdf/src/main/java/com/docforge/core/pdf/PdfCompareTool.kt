@@ -392,7 +392,7 @@ internal inline fun <T, R> withCleanupOnFailure(
         try {
             cleanup(resource)
         } catch (cleanupFailure: Throwable) {
-            failure.addSuppressed(cleanupFailure)
+            if (cleanupFailure !== failure) failure.addSuppressed(cleanupFailure)
         }
         throw failure
     }
