@@ -704,3 +704,9 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E090 — Portable staged-file identity
 #### Feature F092 — Fallback identity when NIO fileKey is unavailable
 - [ACTIVE / P1] `US-R090-P1-01A`: source `requireOriginalStagedIdentity` returns early when original fileKey is null, so replacement cannot be detected by that guard. Inspect Android `Os.lstat` inode/device identity support on minSdk 26; add focused JVM fallback-selection and mismatch regressions; implement only a compatible bounded guard, validate exact code/test SHA in draft-PR CI. Never claim atomic race safety or device testing. PR #1 draft; main untouched.
+
+## Cycle 090 completion / Cycle 091 activation — 2026-10-17 UTC
+- [COMPLETE / PR CI #766] `US-R090-P1-01A` (`E090/F092`). Exact code/test SHA `8d6d1fb2e7c3567d174675f8324226002aef2bcc`; authoritative draft-PR Actions #766 / API `38991137058`, job `117273629538`, SUCCESS all nine gates (core domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). Paired push #765 was cancelled, not acceptance evidence. Four injected JVM regressions for NIO/Android identity fallback. JVM tests inject/simulate Android identity; no emulator, physical-device, OEM/provider, benchmark, atomic check/delete or complete TOCTOU/race-freedom evidence. Unknown identities remain unproven.
+### Epic E091 — Identity-aware cleanup fallback
+#### Feature F093 — Cleanup and rollback on null-key providers
+- [ACTIVE / P1] `US-R091-P1-01A`: NIO-null keys prevent owned-stage deletion and batch rollback even when Android device/inode identity exists. Add narrowly scoped NOFOLLOW ownership fallback and deterministic injected core PDF JVM regressions; preserve foreign replacements, unknown-key fail-closed, writer errors/cancellation and normal collision behavior. Require exact-SHA authoritative PR CI; PR #1 draft, `main` untouched.
