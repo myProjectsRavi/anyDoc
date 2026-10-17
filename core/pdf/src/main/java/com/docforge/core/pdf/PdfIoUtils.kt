@@ -232,6 +232,10 @@ private fun requireRegularStagedOutput(stagedFile: File) {
 /** Android lstat supplies device/inode identity when NIO fileKey is unavailable. */
 internal data class StagedAndroidIdentity(val device: Long, val inode: Long)
 
+private fun readNioStagedFileKey(file: File): Any? = Files.readAttributes(
+    file.toPath(), java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS
+).fileKey()
+
 private fun readAndroidStagedIdentity(file: File): StagedAndroidIdentity? = try {
     val stat = android.system.Os.lstat(file.absolutePath)
     if (stat.st_ino <= 0L) null else StagedAndroidIdentity(stat.st_dev, stat.st_ino)
@@ -346,6 +350,16 @@ suspend fun <T> withStagedOutputFile(
 suspend fun <T> withStagedOutputFiles(
     directory: File,
     requests: List<StagedOutputRequest<T>>
+): List<StagedOutputResult<T>> = withStagedOutputFilesUsingIdentityReaders(
+    directory, requests, ::readNioStagedFileKey, ::readAndroidStagedIdentity
+)
+
+/** JVM injection seam for simulating providers without NIO file keys. */
+internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
+    directory: File,
+    requests: List<StagedOutputRequest<T>>,
+    readNioFileKey: (File) -> Any?,
+    readAndroidIdentity: (File) -> StagedAndroidIdentity?
 ): List<StagedOutputResult<T>> {
     requests.forEach { validateOutputName(it.baseName, it.extension) }
     requireNonSymlinkOutputDirectory(directory)
@@ -359,16 +373,13 @@ suspend fun <T> withStagedOutputFiles(
         requests.forEach { request ->
             currentCoroutineContext().ensureActive()
             val stagedFile = File.createTempFile(".anydoc_stage_", ".part", directory)
-            val stagedFileKey = Files.readAttributes(
-                stagedFile.toPath(), java.nio.file.attribute.BasicFileAttributes::class.java,
-                LinkOption.NOFOLLOW_LINKS
-            ).fileKey()
-            val stagedAndroidIdentity = if (stagedFileKey == null) readAndroidStagedIdentity(stagedFile) else null
+            val stagedFileKey = readNioFileKey(stagedFile)
+            val stagedAndroidIdentity = if (stagedFileKey == null) readAndroidIdentity(stagedFile) else null
             try {
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
                 requireRegularStagedOutput(stagedFile)
-                requireOriginalStagedIdentity(stagedFile, stagedFileKey, stagedAndroidIdentity)
+                requireOriginalStagedIdentity(stagedFile, stagedFileKey, stagedAndroidIdentity, readAndroidIdentity)
                 prepared += PreparedStagedOutput(
                     stagedFile = stagedFile,
                     stagedFileKey = stagedFileKey,
@@ -377,7 +388,7 @@ suspend fun <T> withStagedOutputFiles(
                     value = value
                 )
             } catch (t: Throwable) {
-                runCatching { deleteOwnedStagedEntry(stagedFile, stagedFileKey, stagedAndroidIdentity) }
+                runCatching { deleteOwnedStagedEntry(stagedFile, stagedFileKey, stagedAndroidIdentity, readAndroidIdentity) }
                     .exceptionOrNull()?.let(t::addSuppressed)
                 throw t
             }
@@ -386,7 +397,7 @@ suspend fun <T> withStagedOutputFiles(
         currentCoroutineContext().ensureActive()
         prepared.forEach {
             requireRegularStagedOutput(it.stagedFile)
-            requireOriginalStagedIdentity(it.stagedFile, it.stagedFileKey, it.stagedAndroidIdentity)
+            requireOriginalStagedIdentity(it.stagedFile, it.stagedFileKey, it.stagedAndroidIdentity, readAndroidIdentity)
         }
         val published = mutableListOf<PublishedStagedOutput>()
         try {
@@ -397,6 +408,8 @@ suspend fun <T> withStagedOutputFiles(
                         stagedFile = item.stagedFile,
                         originalFileKey = item.stagedFileKey,
                         originalAndroidIdentity = item.stagedAndroidIdentity,
+                        readNioFileKey = readNioFileKey,
+                        readAndroidIdentity = readAndroidIdentity,
                         directory = directory,
                         baseName = item.request.baseName,
                         extension = item.request.extension
@@ -413,7 +426,8 @@ suspend fun <T> withStagedOutputFiles(
                     rollbackPublishedOutputIfUnchanged(
                         publishedOutput.outputFile,
                         publishedOutput.fileKey,
-                        publishedOutput.androidIdentity
+                        publishedOutput.androidIdentity,
+                        readAndroidIdentity
                     )
                 }.exceptionOrNull()?.let(t::addSuppressed)
             }
@@ -421,7 +435,7 @@ suspend fun <T> withStagedOutputFiles(
         }
     } finally {
         prepared.forEach { item ->
-            runCatching { deleteOwnedStagedEntry(item.stagedFile, item.stagedFileKey, item.stagedAndroidIdentity) }
+            runCatching { deleteOwnedStagedEntry(item.stagedFile, item.stagedFileKey, item.stagedAndroidIdentity, readAndroidIdentity) }
         }
     }
 }
@@ -472,6 +486,7 @@ internal fun publishCheckedStagedOutput(
     originalFileKey: Any? = null,
     originalAndroidIdentity: StagedAndroidIdentity? = null,
     readAndroidIdentity: (File) -> StagedAndroidIdentity? = ::readAndroidStagedIdentity,
+    readNioFileKey: (File) -> Any? = ::readNioStagedFileKey,
     beforeMove: () -> Unit = {}
 ): Any? {
     val source = stagedFile.toPath()
@@ -481,6 +496,7 @@ internal fun publishCheckedStagedOutput(
     )
     require(sourceAttributes.isRegularFile) { "Staged output must be a regular file." }
     requireNoKnownStagedHardLinks(stagedFile)
+    val sourceKey = readNioFileKey(stagedFile)
     requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
     beforeMove()
     requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
@@ -494,8 +510,7 @@ internal fun publishCheckedStagedOutput(
             "Published output must be a regular file."
         }
         requireNoKnownStagedHardLinks(candidate)
-        val sourceKey = sourceAttributes.fileKey()
-        val publishedKey = publishedAttributes.fileKey()
+        val publishedKey = readNioFileKey(candidate)
         require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
             "Staged output changed before publication."
         }
@@ -529,6 +544,8 @@ private fun moveStagedFileWithoutOverwrite(
     stagedFile: File,
     originalFileKey: Any?,
     originalAndroidIdentity: StagedAndroidIdentity?,
+    readNioFileKey: (File) -> Any?,
+    readAndroidIdentity: (File) -> StagedAndroidIdentity?,
     directory: File,
     baseName: String,
     extension: String
@@ -548,7 +565,8 @@ private fun moveStagedFileWithoutOverwrite(
 
         try {
             val publishedKey = publishCheckedStagedOutput(
-                stagedFile, candidate, originalFileKey, originalAndroidIdentity
+                stagedFile, candidate, originalFileKey, originalAndroidIdentity,
+                readAndroidIdentity, readNioFileKey
             )
             return PublishedStagedOutput(
                 candidate, publishedKey,
