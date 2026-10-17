@@ -764,3 +764,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E097 — PDF compare render-scale input safety
 #### Feature F099 — Normalize non-finite render-scale input
 - [ACTIVE / P2] `US-R097-P2-01A`: Cycle 097 `E097/F099/US-R097-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source at validated `38611281`: `PdfCompareTool.compare` uses `renderScale.coerceIn(0.5f, 4f)`; Kotlin `Float.NaN.coerceIn` remains NaN, so `(page.width * scale).toInt().coerceAtLeast(1)` yields 1 pixel, silently degrading comparison for a non-finite caller input. Host Kotlin reproduction observed NaN -> 1 px; not Android validation. First add a narrow finite/default render-scale normalization seam and deterministic JVM tests for NaN, +/-Infinity and ordinary values, without altering normal quality or cancellation. Validate exact code/test SHA via draft-PR CI. PR #1 draft/unmerged; `main` untouched.
+
+
+## Cycle 098 authoritative completion / Cycle 099 activation — 2026-10-17 UTC
+- [COMPLETE / PR CI #817] `US-R098-P2-01A` (`E098/F100`): exact code/test SHA `dcc142664e7d09061003c212102efca4090734b1` passed draft-PR Actions API `39060565666`, job `117477503838`, all nine configured gates SUCCESS. Missing-page red overlay and five focused JVM regressions. #815 failed Kotlin compilation and was superseded by `dcc142664e7d09061003c212102efca4090734b1`. No Android bitmap visual/emulator/device evidence.
+### Epic E099 — PDF compare descriptor lifecycle safety
+#### Feature F101 — Close the first input descriptor on second open failure
+- [ACTIVE / P1] `US-R099-P1-01A`: `PdfCompareTool.compare` opens left and right `ParcelFileDescriptor` before either enters `use`; a failure opening the second leaves the first unclosed. Implement nested open/use ownership with deterministic JVM close-on-failure tests; obtain exact-SHA draft-PR CI. PR #1 draft/unmerged; main untouched.
