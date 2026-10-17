@@ -220,14 +220,45 @@ private fun requireRegularStagedOutput(stagedFile: File) {
     requireNoKnownStagedHardLinks(stagedFile)
 }
 
-/** Compare a known original stage identity; unavailable file keys are not proof of continuity. */
-private fun requireOriginalStagedIdentity(stagedFile: File, originalFileKey: Any?) {
-    if (originalFileKey == null) return
+/** Android lstat supplies device/inode identity when NIO fileKey is unavailable. */
+internal data class StagedAndroidIdentity(val device: Long, val inode: Long)
+
+private fun readAndroidStagedIdentity(file: File): StagedAndroidIdentity? = try {
+    val stat = android.system.Os.lstat(file.absolutePath)
+    if (stat.st_ino <= 0L) null else StagedAndroidIdentity(stat.st_dev, stat.st_ino)
+} catch (_: android.system.ErrnoException) {
+    null
+} catch (_: SecurityException) {
+    null
+}
+
+/** Null means no identity source is available, not proof that a file is unchanged. */
+internal fun stagedIdentityContinuity(
+    originalFileKey: Any?,
+    originalAndroidIdentity: StagedAndroidIdentity?,
+    currentFileKey: Any?,
+    currentAndroidIdentity: StagedAndroidIdentity?
+): Boolean? = when {
+    originalFileKey != null -> originalFileKey == currentFileKey
+    originalAndroidIdentity != null -> originalAndroidIdentity == currentAndroidIdentity
+    else -> null
+}
+
+private fun requireOriginalStagedIdentity(
+    stagedFile: File,
+    originalFileKey: Any?,
+    originalAndroidIdentity: StagedAndroidIdentity?,
+    readAndroidIdentity: (File) -> StagedAndroidIdentity? = ::readAndroidStagedIdentity
+) {
+    if (originalFileKey == null && originalAndroidIdentity == null) return
     val attributes = Files.readAttributes(
         stagedFile.toPath(), java.nio.file.attribute.BasicFileAttributes::class.java,
         LinkOption.NOFOLLOW_LINKS
     )
-    require(attributes.isRegularFile && attributes.fileKey() == originalFileKey) {
+    val actualAndroidIdentity = if (originalFileKey == null) readAndroidIdentity(stagedFile) else null
+    require(attributes.isRegularFile && stagedIdentityContinuity(
+        originalFileKey, originalAndroidIdentity, attributes.fileKey(), actualAndroidIdentity
+    ) == true) {
         "Original staged output was replaced."
     }
 }
@@ -262,6 +293,7 @@ private data class PublishedStagedOutput(val outputFile: File, val fileKey: Any?
 private data class PreparedStagedOutput<T>(
     val stagedFile: File,
     val stagedFileKey: Any?,
+    val stagedAndroidIdentity: StagedAndroidIdentity?,
     val request: StagedOutputRequest<T>,
     val value: T
 )
@@ -318,14 +350,16 @@ suspend fun <T> withStagedOutputFiles(
                 stagedFile.toPath(), java.nio.file.attribute.BasicFileAttributes::class.java,
                 LinkOption.NOFOLLOW_LINKS
             ).fileKey()
+            val stagedAndroidIdentity = if (stagedFileKey == null) readAndroidStagedIdentity(stagedFile) else null
             try {
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
                 requireRegularStagedOutput(stagedFile)
-                requireOriginalStagedIdentity(stagedFile, stagedFileKey)
+                requireOriginalStagedIdentity(stagedFile, stagedFileKey, stagedAndroidIdentity)
                 prepared += PreparedStagedOutput(
                     stagedFile = stagedFile,
                     stagedFileKey = stagedFileKey,
+                    stagedAndroidIdentity = stagedAndroidIdentity,
                     request = request,
                     value = value
                 )
@@ -339,7 +373,7 @@ suspend fun <T> withStagedOutputFiles(
         currentCoroutineContext().ensureActive()
         prepared.forEach {
             requireRegularStagedOutput(it.stagedFile)
-            requireOriginalStagedIdentity(it.stagedFile, it.stagedFileKey)
+            requireOriginalStagedIdentity(it.stagedFile, it.stagedFileKey, it.stagedAndroidIdentity)
         }
         val published = mutableListOf<PublishedStagedOutput>()
         try {
@@ -349,6 +383,7 @@ suspend fun <T> withStagedOutputFiles(
                     moveStagedFileWithoutOverwrite(
                         stagedFile = item.stagedFile,
                         originalFileKey = item.stagedFileKey,
+                        originalAndroidIdentity = item.stagedAndroidIdentity,
                         directory = directory,
                         baseName = item.request.baseName,
                         extension = item.request.extension
@@ -408,6 +443,8 @@ internal fun publishCheckedStagedOutput(
     stagedFile: File,
     candidate: File,
     originalFileKey: Any? = null,
+    originalAndroidIdentity: StagedAndroidIdentity? = null,
+    readAndroidIdentity: (File) -> StagedAndroidIdentity? = ::readAndroidStagedIdentity,
     beforeMove: () -> Unit = {}
 ): Any? {
     val source = stagedFile.toPath()
@@ -417,9 +454,9 @@ internal fun publishCheckedStagedOutput(
     )
     require(sourceAttributes.isRegularFile) { "Staged output must be a regular file." }
     requireNoKnownStagedHardLinks(stagedFile)
-    requireOriginalStagedIdentity(stagedFile, originalFileKey)
+    requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
     beforeMove()
-    requireOriginalStagedIdentity(stagedFile, originalFileKey)
+    requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
     // Do not use ATOMIC_MOVE here: implementations may replace existing destinations.
     Files.move(source, target)
     return try {
@@ -435,7 +472,12 @@ internal fun publishCheckedStagedOutput(
         require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
             "Staged output changed before publication."
         }
-        require(originalFileKey == null || publishedKey == originalFileKey) {
+        val publishedAndroidIdentity = if (originalFileKey == null && originalAndroidIdentity != null) {
+            readAndroidIdentity(candidate)
+        } else null
+        require(stagedIdentityContinuity(
+            originalFileKey, originalAndroidIdentity, publishedKey, publishedAndroidIdentity
+        ) != false) {
             "Original staged output was replaced before publication."
         }
         publishedKey
@@ -452,6 +494,7 @@ internal fun publishCheckedStagedOutput(
 private fun moveStagedFileWithoutOverwrite(
     stagedFile: File,
     originalFileKey: Any?,
+    originalAndroidIdentity: StagedAndroidIdentity?,
     directory: File,
     baseName: String,
     extension: String
@@ -470,7 +513,9 @@ private fun moveStagedFileWithoutOverwrite(
         }
 
         try {
-            val publishedKey = publishCheckedStagedOutput(stagedFile, candidate, originalFileKey)
+            val publishedKey = publishCheckedStagedOutput(
+                stagedFile, candidate, originalFileKey, originalAndroidIdentity
+            )
             return PublishedStagedOutput(candidate, publishedKey)
         } catch (_: FileAlreadyExistsException) {
             // Another writer won the race after exists(); choose the next non-conflicting name.
