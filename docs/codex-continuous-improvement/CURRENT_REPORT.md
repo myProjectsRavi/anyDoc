@@ -1,15 +1,12 @@
-# Cycle 101 — PDF compare cleanup error propagation
+# Cycle 102 — Bitmap cleanup self-suppression safety
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E101 / F103 / US-R101-P2-01A
-**Previous cycle:** Cycle 100 COMPLETE at code/test SHA `42a9e068a6f6ad62679c4e85bcb91c6dc46767dc`, authoritative draft-PR Actions #825 / API `39066975014`, job `117496569062`, all nine configured gates SUCCESS. PR #1 remains draft/unmerged; main untouched.
+**Epic / Feature / Story:** E102 / F104 / US-R102-P2-01A
+**Previous cycle:** Cycle 101 COMPLETE. Exact production/test SHA `d05bde850d46172ddb90463f7a2b0a65e92240f4` passed authoritative draft-PR Actions #828 / API `39071028675`, job `117508502508`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM tests, debug APK, unsigned release/R8, Android lint. Six host JVM lifecycle regressions in `PdfCompareDocumentLifecycleTest.kt` verify normal close, draw/finish/cancellation failure preservation with suppressed close errors, close failure after successful write, and identical primary/cleanup throwable avoiding self-suppression. Production `withClosePreservingPrimaryFailure` wraps `PdfDocument` use. No emulator, physical device, OEM, visual/benchmark/peak heap or complete race-freedom proof.
 
-## Source evidence
-In `core/pdf/src/main/java/com/docforge/core/pdf/PdfCompareTool.kt`, a PdfDocument page is started and `drawBitmap`/`finishPage` execute before an unconditional `pdfDoc.close()` in `finally`. A drawing/finish exception followed by a cleanup exception could replace the original failure in Kotlin finally semantics. Verify whether Android PdfDocument.close can throw with an unfinished page. No device failure or test proof is claimed at activation.
-
-## Scope and acceptance
-Audit Android PdfDocument lifecycle behavior and existing tests, preserve original exceptions with suppressed cleanup errors where compatible, and retain cancellation, staged output, bitmap recycling, collision and memory-budget behavior. Add focused host JVM lifecycle/error tests before production mutation; validate exact code/test SHA in draft-PR Actions all nine gates. Do not claim Android visual/device/OEM/benchmark or full race-freedom proof.
+## Source evidence and acceptance
+Source-level evidence in `PdfCompareTool.kt`: `withCleanupOnFailure` calls `failure.addSuppressed(cleanupFailure)` without checking identity. If the injected cleanup callback throws the exact same Throwable instance as the original block, Java rejects self-suppression with `IllegalArgumentException`, masking the primary error. This is a deterministic helper edge case, not an observed Android Bitmap.recycle failure. Add focused JVM tests and smallest compatible guard; preserve bitmap recycling and original error; validate exact code/test SHA in draft-PR CI.
 
 ## Next executable step
-Read PdfCompareTool page lifecycle and Android PdfDocument API contract; design minimal close-on-failure regression seam and review compatibility. Do not change source before validating the issue and checking branch/CI concurrency.
+Review existing `withCleanupOnFailure` callers and tests; reproduce identical Throwable cleanup case in a deterministic core PDF JVM regression. Make smallest safe fix only after confirming reachability/compatibility. Recheck branch HEAD/PR and exact-head CI before mutation. PR #1 draft/unmerged; main untouched.
