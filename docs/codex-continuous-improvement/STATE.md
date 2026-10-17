@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-092`
+**Current report:** `2026-10-17_cycle-093`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 092
-**Current Epic:** `E092` — Staging identity-capture failure safety
-**Current Feature:** `F094` — Handle staging identity reader failures safely
-**Current User Story:** `US-R092-P1-01A` — Staging identity-capture failure safety (ACTIVE)
-**Last completed cycle:** Cycle 091
+**Cycle:** 093
+**Current Epic:** `E093` — Unknown staging identity publication safety
+**Current Feature:** `F095` — Reject unverified staged-file substitution
+**Current User Story:** `US-R093-P1-01A` — Unknown identity publication safety (ACTIVE)
+**Last completed cycle:** Cycle 092
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 092: reproduce identity reader failure after staging-file creation, implement bounded ownership-safe handling, add JVM tests and obtain exact-SHA PR CI.
+- **Next exact step:** Cycle 093: reproduce unknown-identity regular-file substitution with injected null identity readers; assess fail-closed behavior and Android compatibility before production mutation; obtain exact-SHA PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -89,3 +89,7 @@
 - ACTIVE / INCOMPLETE E092/F094/US-R092-P1-01A. Production/test SHA `072eb963f27791ef0912be502a3af6a60b6f5b18` passed authoritative draft-PR Actions #778 / API `39011896677`, attempt 2, job `117342370975`, all nine configured gates SUCCESS. Attempt 1 failed `:app:packageDebug`; same-SHA rerun succeeded. Earlier `3781d964` failed core PDF CI #776 and was corrected by `072eb963`.
 - Remaining same-story acceptance gap: injected Android identity-reader exception and later-request snapshot failure cleanup regression tests are prepared but not committed; connector rejected the attempted test-file creation. A minimal CURRENT_REPORT documentation checkpoint succeeded. No device/emulator/race-free claim.
 - Exact next action: publish the two prepared JVM tests when safe writes permit, validate their exact combined SHA in draft-PR CI, then close Cycle 092 only after all acceptance criteria and synchronize the canonical docs. PR #1 stays draft/unmerged; main untouched.
+
+## Cycle 092 authoritative completion / Cycle 093 activation — 2026-10-17 UTC
+- Cycle 092 `E092/F094/US-R092-P1-01A` COMPLETE. Exact code/test SHA `7036384a7cbd37c7c3ebfbee0f6979a3968235cf` passed authoritative draft-PR Actions #787 / API `39028698857`, job `117385580946`, all nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). Paired push #786 was cancelled by concurrency and is not acceptance evidence. Production `072eb963f27791ef0912be502a3af6a60b6f5b18` guards identity capture with ownership-aware cleanup; committed JVM regressions at `7a449e8c`, `f08ecd1d`, `7036384a` cover later-request failure, foreign-stage preservation and Android-reader failure without identity. Unknown ownership deliberately preserves the stage; no emulator, device, benchmark or atomic race-freedom evidence.
+- Cycle 093 `E093/F095/US-R093-P1-01A` ACTIVE / INCOMPLETE before production/test mutation. Source: `requireOriginalStagedIdentity` returns without checking when both original NIO fileKey and Android identity are null; `publishCheckedStagedOutput` similarly allows null identity continuity. A regular-file substitution may therefore be published on providers reporting neither identity. First reproduce with injected null readers and deterministic JVM tests; assess compatibility and fail-closed behavior without deleting unknown/foreign entries; implement only a bounded safe correction after evidence. Keep PR #1 draft/unmerged, main untouched.
