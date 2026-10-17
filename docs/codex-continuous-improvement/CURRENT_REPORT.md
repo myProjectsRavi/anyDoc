@@ -1,15 +1,15 @@
-# Cycle 100 — PDF compare output page geometry
+# Cycle 101 — PDF compare cleanup error propagation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E100 / F102 / US-R100-P2-01A
-**Previous cycle:** Cycle 099 COMPLETE. Exact Cycle 099 production/test SHA `f621c4ecaf779c7791d320d287068c71e124e5ef` passed authoritative draft-PR Actions #822 / API `39063440811`, job `117486041589`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools and app JVM tests, debug APK, unsigned release/R8, Android lint. Production nested Closeable acquisition helper was introduced at `234a35d5f6340e85de621186c153dd52dfd74e94`; four host JVM lifecycle regressions at `f621c4ecaf779c7791d320d287068c71e124e5ef` cover first-open error, second-open error, block error and success, with close-on-failure and original exception propagation. No Android device/emulator/OEM/benchmark or complete resource-safety proof; PR #1 stays draft/unmerged, main untouched.
+**Epic / Feature / Story:** E101 / F103 / US-R101-P2-01A
+**Previous cycle:** Cycle 100 COMPLETE at code/test SHA `42a9e068a6f6ad62679c4e85bcb91c6dc46767dc`, authoritative draft-PR Actions #825 / API `39066975014`, job `117496569062`, all nine configured gates SUCCESS. PR #1 remains draft/unmerged; main untouched.
 
 ## Source evidence
-Cycle 100 `E100/F102/US-R100-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source evidence in `core/pdf/src/main/java/com/docforge/core/pdf/PdfCompareTool.kt`: `requestedSize` multiplies source PDF page width/height by renderScale (default 1.5f), but `PdfDocument.PageInfo.Builder(diffBmp.width, diffBmp.height,...)` uses those raster pixel dimensions as PDF page dimensions in points. Thus a 595x842-point page at 1.5x is emitted near 892x1263 points, changing physical page geometry. This is a source-level output-fidelity concern, not device-verified behavior. First: verify intended output dimensions for equal, unequal and missing input pages; introduce a pure JVM-testable output-geometry calculation; preserve high-resolution raster diff while writing to original-size PDF page bounds using scaled canvas drawing if compatible; add deterministic JVM regressions and exact-SHA draft-PR CI. Do not claim Android visual/OEM proof.
+In `core/pdf/src/main/java/com/docforge/core/pdf/PdfCompareTool.kt`, a PdfDocument page is started and `drawBitmap`/`finishPage` execute before an unconditional `pdfDoc.close()` in `finally`. A drawing/finish exception followed by a cleanup exception could replace the original failure in Kotlin finally semantics. Verify whether Android PdfDocument.close can throw with an unfinished page. No device failure or test proof is claimed at activation.
 
-## Acceptance boundaries
-Confirm PDF output page physical dimensions are not unintentionally multiplied by renderScale. Cover equal, unequal, left-missing and right-missing input dimensions with pure JVM tests; preserve diff bitmap quality, percentage, red overlay, cancellation, staged publication, bitmap cleanup and occupied-heap limits. Only implement a minimal compatible change after source/test review. Validate the exact production/test SHA via draft-PR CI all nine gates. Host JVM tests do not prove Android PdfDocument/Canvas output, OEM compatibility, performance or peak heap.
+## Scope and acceptance
+Audit Android PdfDocument lifecycle behavior and existing tests, preserve original exceptions with suppressed cleanup errors where compatible, and retain cancellation, staged output, bitmap recycling, collision and memory-budget behavior. Add focused host JVM lifecycle/error tests before production mutation; validate exact code/test SHA in draft-PR Actions all nine gates. Do not claim Android visual/device/OEM/benchmark or full race-freedom proof.
 
-## Next executable action
-Inspect the current PdfCompareTool page-size and drawBitmap paths; design a pure geometry helper, implement focused regression tests, and commit only on the authorized branch after confirming no active exact-HEAD CI or primary write. Keep PR #1 draft and main untouched.
+## Next executable step
+Read PdfCompareTool page lifecycle and Android PdfDocument API contract; design minimal close-on-failure regression seam and review compatibility. Do not change source before validating the issue and checking branch/CI concurrency.
