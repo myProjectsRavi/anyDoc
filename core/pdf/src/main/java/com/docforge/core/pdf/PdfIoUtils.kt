@@ -373,9 +373,17 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
         requests.forEach { request ->
             currentCoroutineContext().ensureActive()
             val stagedFile = File.createTempFile(".anydoc_stage_", ".part", directory)
-            val stagedFileKey = readNioFileKey(stagedFile)
-            val stagedAndroidIdentity = if (stagedFileKey == null) readAndroidIdentity(stagedFile) else null
+            var stagedFileKey: Any? = null
+            var stagedAndroidIdentity: StagedAndroidIdentity? = null
             try {
+                // Unsupported NIO identity must use the Android fallback; other snapshot
+                // failures still pass through ownership-aware cleanup and propagate.
+                stagedFileKey = try {
+                    readNioFileKey(stagedFile)
+                } catch (_: UnsupportedOperationException) {
+                    null
+                }
+                stagedAndroidIdentity = if (stagedFileKey == null) readAndroidIdentity(stagedFile) else null
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
                 requireRegularStagedOutput(stagedFile)
