@@ -696,3 +696,11 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - `E087/F089/US-R087-P0-01A` COMPLETE for bounded identity-aware, non-recursive failed-publication cleanup. Exact code/test head `b455c28156d5566d788e09876ed127df10e44f13` passed draft-PR Actions #748 / API `38943994491`, job `117118776491`. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8 and Android lint.
 - Source `publishCheckedStagedOutput` now attempts `rollbackPublishedOutputIfUnchanged(candidate, sourceAttributes.fileKey())` after failed post-move validation rather than recursively deleting a substituted directory; file-key unknown or mismatched entries remain in place. JVM swap regressions confirm preservation of substituted nonempty directory children, links and regular files, alongside normal publication and occupied-name behavior. Final hard-link alias expectation adjusted in `b455c281` after #746 failure; #748 passed.
 - Remaining limitations: foreign entries may remain visible at the candidate path after rejection; no atomic filesystem identity-and-unlink, full TOCTOU safety, Android emulator/device evidence or race-free guarantee. No reviewer approval implied. PR #1 draft/unmerged; `main` unchanged.
+
+### Epic E089 — Staged-file identity continuity
+#### Feature F091 — Validate original staging identity before publication
+- [COMPLETE / PR CI API 38988957597] `US-R089-P1-01A`: exact code/test SHA `9c6ac1a5d87b136449d596e5ce9ae8b31e287191`, all nine gates SUCCESS; three core PDF JVM regressions. Known file-key substitutions rejected at writer, batch and publication boundaries; unknown keys and non-atomic filesystem races remain limitations.
+
+### Epic E090 — Portable staged-file identity
+#### Feature F092 — Fallback identity when NIO fileKey is unavailable
+- [ACTIVE / P1] `US-R090-P1-01A`: source `requireOriginalStagedIdentity` returns early when original fileKey is null, so replacement cannot be detected by that guard. Inspect Android `Os.lstat` inode/device identity support on minSdk 26; add focused JVM fallback-selection and mismatch regressions; implement only a compatible bounded guard, validate exact code/test SHA in draft-PR CI. Never claim atomic race safety or device testing. PR #1 draft; main untouched.

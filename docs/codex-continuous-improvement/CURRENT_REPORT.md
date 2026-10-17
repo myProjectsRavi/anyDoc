@@ -1,19 +1,18 @@
-# Cycle 089 — Staged-file identity continuity
+# Cycle 090 — Portable staged-file identity
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E089 / F091 / US-R089-P1-01A
-**Previous cycle:** Cycle 088 COMPLETE, exact code/test SHA `c37dfae34f3d29f0d2cbbfa71769d7dc121473af`, authoritative draft-PR Actions #758 / API `38958983854` attempt 2 SUCCESS (nine gates).
+**Epic / Feature / Story:** E090 / F092 / US-R090-P1-01A
+**Previous cycle:** Cycle 089 COMPLETE, exact code/test SHA `9c6ac1a5d87b136449d596e5ce9ae8b31e287191`, authoritative draft-PR Actions API `38988957597`, job `117267167769` SUCCESS (nine gates).
 
 ## Evidence
-The staging API captures the initial `stagedFileKey`, but its post-writer `requireRegularStagedOutput` does not compare that identity to the initial key. The later publication identity comparison starts after the writer, so a replaced regular file can pass when it has one hard link.
+`requireOriginalStagedIdentity` returns without comparing identity when the original NIO `fileKey` is null. Some providers may not expose that key. Cycle 089's known-key guard then cannot distinguish a replacement regular staging file from the original.
 
 ## Acceptance criteria
-- Deterministic core PDF JVM test reproduces regular-file substitution after staging and before publication.
-- Reject known original-key mismatches without deleting foreign replacements; normal writer and collision behavior preserved.
-- Unknown file keys and non-atomic path races explicitly documented.
-- Exact combined production/test SHA passes all configured draft-PR CI gates.
-- Synchronize STATE, CURRENT_REPORT, BACKLOG, VALIDATION and cycle report after terminal CI; keep PR #1 draft and main untouched.
+- Verify Android API 26+ `Os.lstat` `st_dev/st_ino` feasibility without assuming all providers expose stable identity.
+- Add deterministic core PDF JVM tests for available/unavailable fallback identities, matching and mismatching entries; preserve normal publication and foreign-file safety.
+- Implement the smallest safe fallback if evidence supports it, retain non-atomic race/unknown-provider caveats, validate exact code/test SHA through draft-PR CI.
+- After terminal CI synchronize STATE, CURRENT_REPORT, BACKLOG, VALIDATION and Cycle 090 report. PR #1 draft/unmerged; main untouched.
 
-## Exact next step
-Inspect `withStagedOutputFiles` and `requireRegularStagedOutput`, add a focused regression, then implement the smallest compatible check and run authoritative CI.
+## Exact next action
+Inspect existing Android `Os.lstat` fallback, stage creation/identity checks and tests. Build a bounded injectable identity-source seam, then run core PDF tests and authoritative CI.

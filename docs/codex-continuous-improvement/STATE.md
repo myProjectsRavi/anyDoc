@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-16_cycle-089`
+**Current report:** `2026-10-17_cycle-090`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 089
-**Current Epic:** `E089` — Staged-file identity continuity
-**Current Feature:** `F091` — Validate original staging identity before publication
-**Current User Story:** `US-R089-P1-01A` — Reject known writer-time regular-file substitutions (ACTIVE)
-**Last completed cycle:** Cycle 088
+**Cycle:** 090
+**Current Epic:** `E090` — Portable staged-file identity
+**Current Feature:** `F092` — Fallback identity when NIO fileKey is unavailable
+**Current User Story:** `US-R090-P1-01A` — Evaluate and mitigate null-key staged-file replacement (ACTIVE)
+**Last completed cycle:** Cycle 089
 **State checkpoint timestamp:** 2026-10-16 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** inspect initial staging fileKey capture and post-writer validation; add deterministic JVM regular-file swap regressions, implement bounded known-key comparison, and obtain exact-SHA draft-PR CI.
+- **Next exact step:** inspect Android lstat identity fields and NIO null-key behavior; add deterministic JVM fallback-selection tests before production changes, then exact-SHA draft-PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -65,3 +65,7 @@
 ## Cycle 088 authoritative completion / Cycle 089 activation — 2026-10-16 UTC
 - Cycle 088 `E088/F090/US-R088-P0-01A` COMPLETE. Exact code/test SHA `c37dfae34f3d29f0d2cbbfa71769d7dc121473af` passed authoritative draft-PR Actions #758 / API `38958983854`, attempt 2, job `117181328512`, on 2026-10-16 UTC. All nine gates SUCCESS: domain JVM, PDF JVM, converter JVM, scanner JVM, PDF tools JVM, app JVM, debug APK, unsigned release/R8, Android lint. Attempt 1 failed only while downloading androidx.activity:activity:1.8.2 AAR from Google's Maven endpoint (`Read timed out`) during release lint-model generation; exact-SHA retry succeeded without production changes. Production commit `7505dda178d0bf28191faf7285d9e34e593dad8a` replaces recursive staging cleanup with NOFOLLOW, file-key identity-aware, non-recursive `deleteOwnedStagedEntry`. Three new ownership regressions in `47455994a5d64cb9d9cfde9b804cf3b2a7697af6`; ten legacy boundary expectations updated in `c37dfae34f3d29f0d2cbbfa71769d7dc121473af` to assert preservation of substituted foreign entries. Normal owned-stage cleanup remains tested. Limitations: unknown file keys leave staged entries, path-based check/unlink is not atomic, foreign entries may remain in output directory, no emulator/device/benchmark evidence.
 - Cycle 089 `E089/F091/US-R089-P1-01A` ACTIVE / INCOMPLETE before code mutation. Source evidence: `withStagedOutputFiles` records `stagedFileKey` at `File.createTempFile`, but after the writer returns, `requireRegularStagedOutput` verifies only file type and known hard-link count, not identity against the original key. `publishCheckedStagedOutput` compares identity only across its later move, so a regular-file replacement between initial staging and publication can pass when link count is one. Scope: reproduce deterministic writer-time regular-file substitution, reject known original-key mismatches while preserving normal writers, handle unknown keys conservatively, and validate exact-SHA draft-PR CI. Avoid broad filesystem race claims. PR #1 stays draft/unmerged; main untouched.
+
+## Cycle 089 authoritative completion / Cycle 090 activation — 2026-10-17 UTC
+- Cycle 089 `E089/F091/US-R089-P1-01A` COMPLETE. Exact production/test SHA `9c6ac1a5d87b136449d596e5ce9ae8b31e287191` passed authoritative draft-PR Actions API `38988957597`, job `117267167769` on 2026-10-17 UTC. All nine gates SUCCESS: core domain JVM, core PDF JVM, converter JVM, scanner JVM, PDF tools JVM, app JVM, debug APK, unsigned release/R8, and Android lint. Paired push run `38988952406` was cancelled, not acceptance evidence. Production `PdfIoUtils.requireOriginalStagedIdentity` compares known original fileKey after writing, at batch revalidation, immediately before move, and after publication; three committed core PDF JVM regressions cover writer substitution, earlier batch-stage replacement, and pre-move hook replacement. The checks remain path-based/non-atomic; NIO fileKey may be unavailable. No emulator, physical device, benchmark, or full race-freedom claim. PR #1 draft/unmerged; main untouched.
+- Cycle 090 `E090/F092/US-R090-P1-01A` ACTIVE / INCOMPLETE before code mutation. Source evidence: `requireOriginalStagedIdentity` immediately returns when original NIO `fileKey` is null; on such providers Cycle 089's continuity check cannot reject a replaced regular staging file. First inspect Android API 26+ `Os.lstat` `st_dev/st_ino` feasibility and existing fallback patterns; add deterministic JVM tests for identity-source selection and mismatch; implement only a safe, narrowly bounded fallback if supported. Unknown identities and non-atomic check/rename remain explicit residual limitations. Obtain exact combined code/test SHA via draft-PR CI, then reconcile all canonical docs. Never modify/merge main.
