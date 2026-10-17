@@ -29,10 +29,44 @@ class PdfCompareRasterBudgetTest {
     fun heapBudgetIsClampedToConservativeRange() {
         val mib = 1024L * 1024L
 
-        assertEquals(12L * mib, CompareRasterBudget.heapAwareBudgetBytes(32L * mib))
+        assertEquals(2L * mib, CompareRasterBudget.heapAwareBudgetBytes(16L * mib))
+        assertEquals(4L * mib, CompareRasterBudget.heapAwareBudgetBytes(32L * mib))
+        assertEquals(8L * mib, CompareRasterBudget.heapAwareBudgetBytes(64L * mib))
+        assertEquals(12L * mib, CompareRasterBudget.heapAwareBudgetBytes(96L * mib))
         assertEquals(16L * mib, CompareRasterBudget.heapAwareBudgetBytes(128L * mib))
         assertEquals(48L * mib, CompareRasterBudget.heapAwareBudgetBytes(384L * mib))
         assertEquals(48L * mib, CompareRasterBudget.heapAwareBudgetBytes(1024L * mib))
+    }
+
+    @Test
+    fun smallHeapBudgetFitsCombinedLeftRightAndDiffRasters() {
+        val mib = 1024L * 1024L
+        val left = CompareRasterSize(16000, 1000)
+        val right = CompareRasterSize(1000, 16000)
+
+        for (heapMib in listOf(16L, 32L, 64L)) {
+            val maxHeap = heapMib * mib
+            val budget = CompareRasterBudget.heapAwareBudgetBytes(maxHeap)
+            assertTrue("Budget must not exceed one eighth of a small heap", budget <= maxHeap / 8L)
+
+            val (fittedLeft, fittedRight) = CompareRasterBudget.fit(left, right, budget)
+            assertTrue(
+                "Combined left, right, and diff bitmaps must fit the budget",
+                CompareRasterBudget.workingSetBytes(fittedLeft, fittedRight) <= budget
+            )
+            assertTrue(fittedLeft!!.width in 1..left.width)
+            assertTrue(fittedRight!!.height in 1..right.height)
+        }
+    }
+
+    @Test
+    fun minimumRasterBudgetSupportsTwoOnePixelInputsAndDiff() {
+        val pixel = CompareRasterSize(1, 1)
+        val minimum = CompareRasterBudget.heapAwareBudgetBytes(0L)
+
+        assertEquals(12L, minimum)
+        assertEquals(12L, CompareRasterBudget.workingSetBytes(pixel, pixel))
+        assertEquals(pixel to pixel, CompareRasterBudget.fit(pixel, pixel, minimum))
     }
 
     @Test

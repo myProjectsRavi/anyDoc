@@ -38,7 +38,8 @@ internal data class CompareRasterSize(val width: Int, val height: Int)
 
 internal object CompareRasterBudget {
     private const val BYTES_PER_PIXEL = 4L
-    private const val MIN_BUDGET_BYTES = 12L * 1024L * 1024L
+    // A one-pixel left, right, and diff bitmap need 12 bytes. Do not reserve 12 MiB on tiny heaps.
+    private const val MIN_BUDGET_BYTES = 3L * BYTES_PER_PIXEL
     private const val MAX_BUDGET_BYTES = 48L * 1024L * 1024L
 
     fun heapAwareBudgetBytes(maxHeapBytes: Long): Long =
