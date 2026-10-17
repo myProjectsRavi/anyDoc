@@ -1,18 +1,18 @@
-# Cycle 094 — Direct publication helper identity contract
+# Cycle 095 — Small-heap PDF compare raster budget review
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E094 / F096 / US-R094-P2-01A
-**Previous cycle:** Cycle 093 COMPLETE; exact code/test SHA `e4960f63dbcc055215e4f60b6716f8e543aa6d4f` passed authoritative draft-PR Actions #790 / API `39033315120`, job `117398111312`, all nine gates SUCCESS.
+**Epic / Feature / Story:** E095 / F097 / US-R095-P2-01A
+**Previous cycle:** Cycle 094 COMPLETE; exact code/test SHA `f9254345d91125c9f6304dc95f22bb370bdb23a0` passed authoritative draft-PR Actions #793 / API `39036699340`, job `117407938037`, all nine configured gates SUCCESS.
 
 ## Source evidence
-Internal `publishCheckedStagedOutput` has default null original NIO/Android identities; a null `stagedIdentityContinuity` result passes the post-move `!= false` guard. The production batch wrapper now captures/requires identity before writer execution, but direct internal helper calls in JVM tests omit original identity. This is a contract gap for future direct callers, not a proven currently reachable Android exploit.
+`CompareRasterBudget.heapAwareBudgetBytes` currently uses `(maxHeapBytes / 8L).coerceIn(12 MiB, 48 MiB)`. For a 32 MiB maximum heap, the budget is 12 MiB, 37.5% of the heap instead of the nominal 12.5%. The current `PdfCompareRasterBudgetTest` asserts this 12 MiB floor. This is a source-level allocation-pressure concern, not observed Android OOM evidence.
 
 ## Acceptance and boundaries
-- Enumerate actual direct helper call sites and their semantics; preserve the existing swap/hard-link/normal publication test intent.
-- Reproduce null-identity helper behavior in focused JVM tests, then choose a minimal compatible API contract if evidence warrants it. Do not weaken identity checks or delete unverified/foreign entries.
-- Validate exact code/test SHA through authoritative draft-PR CI, then reconcile STATE/CURRENT_REPORT/BACKLOG/VALIDATION and cycle report.
-- No emulator, physical device, OEM compatibility or atomic race-freedom claim. PR #1 draft and main untouched.
+- Reconcile existing intentional 12 MiB quality floor with realistic Android heap limits and simultaneous left/right/diff ARGB_8888 allocations.
+- Add focused deterministic JVM boundary tests for small heaps and `fit`; choose the smallest safe change only after evaluating quality and compatibility.
+- Preserve normal compare behavior, missing-page handling, cancellation, staged publication and resource recycling.
+- Validate exact combined code/test SHA through authoritative draft-PR CI before marking COMPLETE. No device/emulator/OEM/benchmark or race-free claims. PR #1 stays draft; main untouched.
 
 ## Next executable step
-Review `PdfStagedHardLinkTest` and `PdfStagedPublicationSwapTest` direct calls, decide whether original identity must be explicit or safely captured at entry, and add a deterministic regression before production mutation.
+Inspect `PdfCompareRasterBudgetTest` and `CompareRasterBudget.fit` together, quantify minimum safe working set for 16/32/64 MiB heaps, then implement a bounded regression-backed correction if warranted.

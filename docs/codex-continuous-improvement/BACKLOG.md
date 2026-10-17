@@ -738,3 +738,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E094 — Direct publication helper identity contract
 #### Feature F096 — Verify direct publication identity requirements
 - [ACTIVE / P2] `US-R094-P2-01A`: internal `publishCheckedStagedOutput` accepts omitted original identity and permits unknown continuity (`null != false`). Audit direct helper call sites and test contracts; add focused regression for unknown-identity direct invocation, decide compatible guard/explicit identity requirement, and obtain exact-SHA authoritative draft-PR CI. Distinguish internal helper risk from production batch path. PR #1 draft, main untouched.
+
+## Cycle 094 completion / Cycle 095 activation — 2026-10-17 UTC
+- [COMPLETE / PR CI #793] `US-R094-P2-01A` (`E094/F096`): direct publication now captures NIO/Android identity when omitted, fails closed if both unknown, verifies continuity after rename; three new core PDF JVM regressions. Exact SHA `f9254345d91125c9f6304dc95f22bb370bdb23a0` passed draft-PR Actions API `39036699340`, job `117407938037`, all nine gates SUCCESS. Residual non-atomic path race and foreign final-path entry after rejection; no device proof.
+
+### Epic E095 — Small-heap PDF compare raster safety
+#### Feature F097 — Audit heap-budget minimum against runtime ceiling
+- [ACTIVE / P2] `US-R095-P2-01A`: `CompareRasterBudget.heapAwareBudgetBytes` returns at least 12 MiB even for 32 MiB max heaps, and current JVM test codifies this floor. Assess allocation pressure/quality on small heaps, add boundary tests, choose a compatible safe cap if warranted, and validate exact-SHA draft-PR CI. No emulator/device benchmark evidence; main untouched, PR #1 draft.

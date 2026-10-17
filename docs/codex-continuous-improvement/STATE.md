@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-094`
+**Current report:** `2026-10-17_cycle-095`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 094
-**Current Epic:** `E094` — Direct publication helper identity contract
-**Current Feature:** `F096` — Verify direct publication identity requirements
-**Current User Story:** `US-R094-P2-01A` — Direct publication helper identity contract (ACTIVE)
-**Last completed cycle:** Cycle 093
+**Cycle:** 095
+**Current Epic:** `E095` — Small-heap PDF compare raster safety
+**Current Feature:** `F097` — Audit heap-budget minimum against runtime ceiling
+**Current User Story:** `US-R095-P2-01A` — Small-heap compare raster budget review (ACTIVE)
+**Last completed cycle:** Cycle 094
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 094: audit direct `publishCheckedStagedOutput` call sites and null-identity behavior; add focused JVM regressions and a bounded helper contract fix if justified; obtain exact-SHA draft-PR CI.
+- **Next exact step:** Cycle 095: review CompareRasterBudget minimum against small max heaps and existing tests; quantify safe allocation ceiling before production mutation; exact-SHA PR CI required.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -97,3 +97,7 @@
 ## Cycle 093 authoritative completion / Cycle 094 activation — 2026-10-17 UTC
 - Cycle 093 `E093/F095/US-R093-P1-01A` COMPLETE for the production batch staging entry point. Exact code/test SHA `e4960f63dbcc055215e4f60b6716f8e543aa6d4f` passed authoritative draft-PR Actions #790 / API `39033315120`, job `117398111312`, all nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). Paired push #789 cancelled; docs-head #788 cancelled, neither is acceptance evidence. Production rejects staging before writer execution if both NIO fileKey and Android device/inode identity are unavailable; two JVM regressions in `PdfStagedUnknownIdentityPublicationTest.kt` cover unknown-identity failure and foreign regular-file substitution preservation. Unknown-identity staging entries are intentionally left in place because ownership cannot be proven. No emulator, physical device, OEM/provider, benchmark or atomic race-freedom evidence. Compatibility risk on providers exposing neither identity remains documented.
 - Cycle 094 `E094/F096/US-R094-P2-01A` ACTIVE / INCOMPLETE before production/test mutation. Source: internal `publishCheckedStagedOutput` accepts default null original identity; its `stagedIdentityContinuity(...)` null result passes the post-move `!= false` check. Production batch wrapper now requires identity, but direct internal helper callers/tests can bypass this contract. Next: audit all production/test call sites and determine whether direct helper needs explicit identity or safe capture without breaking existing swap/hard-link regressions. Add deterministic tests before any correction. Do not conflate test helper reachability with a demonstrated product exploit. PR #1 draft; main untouched.
+
+## Cycle 094 authoritative completion / Cycle 095 activation — 2026-10-17 UTC
+- Cycle 094 `E094/F096/US-R094-P2-01A` COMPLETE. Exact code/test SHA `f9254345d91125c9f6304dc95f22bb370bdb23a0` passed authoritative draft-PR Actions #793 / API `39036699340`, job `117407938037`, all nine gates SUCCESS: core domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint. Paired push #792 and superseded docs-head #791 were cancelled, not acceptance evidence. Production helper now captures an original NIO or Android identity for direct callers that omit one, rejects both-unknown identity before rename, and requires verified post-move continuity; three committed JVM tests cover null/null refusal, Android fallback publication and substituted foreign-file preservation. Direct helper pre-move substitution can still leave a foreign entry at the final path after rejected post-move verification; identity checks and unlink are not atomic. No emulator, device, OEM, benchmark or full TOCTOU guarantee.
+- Cycle 095 `E095/F097/US-R095-P2-01A` ACTIVE / INCOMPLETE before code/test mutation. Evidence: `CompareRasterBudget.heapAwareBudgetBytes` clamps `maxHeapBytes / 8` to a 12 MiB minimum, so a 32 MiB max heap receives a 12 MiB raster budget (37.5% of heap); `PdfCompareRasterBudgetTest` currently asserts this floor. Assess realistic small-heap behavior, potential overcommit and quality impact before changing the budget; add focused JVM tests and obtain exact-SHA PR CI if a safe correction is justified. PR #1 draft; main untouched.
