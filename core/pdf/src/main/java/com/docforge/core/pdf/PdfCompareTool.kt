@@ -133,6 +133,13 @@ internal fun <T : Any> missingPageDiff(
 /** Translucent red keeps the surviving page readable while marking the whole page changed. */
 internal val MISSING_PAGE_OVERLAY_COLOR = 0x88FF3232.toInt()
 
+/** Acquire the second resource only while the first is under a close-on-failure scope. */
+internal inline fun <A : java.io.Closeable, B : java.io.Closeable, T> withOpenedCloseables(
+    openFirst: () -> A,
+    openSecond: () -> B,
+    block: (A, B) -> T
+): T = openFirst().use { first -> openSecond().use { second -> block(first, second) } }
+
 class PdfCompareTool(
     private val context: Context
 ) {
@@ -157,11 +164,10 @@ class PdfCompareTool(
 
         context.withUriCopiedToCacheFile(leftUri, prefix = "docforge_cmp_left_", suffix = ".pdf") { leftFile ->
             context.withUriCopiedToCacheFile(rightUri, prefix = "docforge_cmp_right_", suffix = ".pdf") { rightFile ->
-                val leftPfd = ParcelFileDescriptor.open(leftFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                val rightPfd = ParcelFileDescriptor.open(rightFile, ParcelFileDescriptor.MODE_READ_ONLY)
-
-                leftPfd.use { lPfd ->
-                    rightPfd.use { rPfd ->
+                withOpenedCloseables(
+                    openFirst = { ParcelFileDescriptor.open(leftFile, ParcelFileDescriptor.MODE_READ_ONLY) },
+                    openSecond = { ParcelFileDescriptor.open(rightFile, ParcelFileDescriptor.MODE_READ_ONLY) }
+                ) { lPfd, rPfd ->
                         PdfRenderer(lPfd).use { leftRenderer ->
                             PdfRenderer(rPfd).use { rightRenderer ->
                                 val pageCount = max(leftRenderer.pageCount, rightRenderer.pageCount)
@@ -236,7 +242,6 @@ class PdfCompareTool(
                                 )
                             }
                         }
-                    }
                 }
             }
         }
