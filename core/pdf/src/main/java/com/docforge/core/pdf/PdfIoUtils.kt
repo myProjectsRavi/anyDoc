@@ -504,7 +504,11 @@ internal fun publishCheckedStagedOutput(
     )
     require(sourceAttributes.isRegularFile) { "Staged output must be a regular file." }
     requireNoKnownStagedHardLinks(stagedFile)
-    val sourceKey = readNioFileKey(stagedFile)
+    val sourceKey = try {
+        readNioFileKey(stagedFile)
+    } catch (_: UnsupportedOperationException) {
+        null
+    }
     requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
     beforeMove()
     requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
@@ -518,7 +522,11 @@ internal fun publishCheckedStagedOutput(
             "Published output must be a regular file."
         }
         requireNoKnownStagedHardLinks(candidate)
-        val publishedKey = readNioFileKey(candidate)
+        val publishedKey = try {
+            readNioFileKey(candidate)
+        } catch (_: UnsupportedOperationException) {
+            null
+        }
         require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
             "Staged output changed before publication."
         }
