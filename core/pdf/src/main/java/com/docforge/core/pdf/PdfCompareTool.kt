@@ -42,8 +42,11 @@ internal object CompareRasterBudget {
     private const val MIN_BUDGET_BYTES = 3L * BYTES_PER_PIXEL
     private const val MAX_BUDGET_BYTES = 48L * 1024L * 1024L
 
-    fun heapAwareBudgetBytes(maxHeapBytes: Long): Long =
-        (maxHeapBytes / 8L).coerceIn(MIN_BUDGET_BYTES, MAX_BUDGET_BYTES)
+    fun heapAwareBudgetBytes(maxHeapBytes: Long, occupiedHeapBytes: Long = 0L): Long {
+        val remaining = (maxHeapBytes - occupiedHeapBytes.coerceIn(0L, maxHeapBytes.coerceAtLeast(0L)))
+            .coerceAtLeast(0L)
+        return (remaining / 8L).coerceIn(MIN_BUDGET_BYTES, MAX_BUDGET_BYTES)
+    }
 
     fun fit(
         left: CompareRasterSize?,
@@ -172,7 +175,12 @@ class PdfCompareTool(
                                                 val (leftSize, rightSize) = CompareRasterBudget.fit(
                                                     left = requestedLeft,
                                                     right = requestedRight,
-                                                    budgetBytes = CompareRasterBudget.heapAwareBudgetBytes(Runtime.getRuntime().maxMemory())
+                                                    budgetBytes = Runtime.getRuntime().let { runtime ->
+                                                        CompareRasterBudget.heapAwareBudgetBytes(
+                                                            maxHeapBytes = runtime.maxMemory(),
+                                                            occupiedHeapBytes = runtime.totalMemory() - runtime.freeMemory()
+                                                        )
+                                                    }
                                                 )
                                                 leftBmp = renderPage(leftRenderer, pageIndex, leftSize)
                                                 rightBmp = renderPage(rightRenderer, pageIndex, rightSize)
