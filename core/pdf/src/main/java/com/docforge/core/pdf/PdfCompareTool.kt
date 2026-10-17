@@ -36,6 +36,10 @@ data class PdfCompareResult(
  */
 internal data class CompareRasterSize(val width: Int, val height: Int)
 
+/** Preserve normal scale clamping while preventing NaN from collapsing page rasters to 1x1. */
+internal fun normalizedCompareRenderScale(requested: Float): Float =
+    if (requested.isNaN()) 1.5f else requested.coerceIn(0.5f, 4f)
+
 internal object CompareRasterBudget {
     private const val BYTES_PER_PIXEL = 4L
     // A one-pixel left, right, and diff bitmap need 12 bytes. Do not reserve 12 MiB on tiny heaps.
@@ -136,7 +140,7 @@ class PdfCompareTool(
     ): PdfCompareResult = withContext(Dispatchers.IO) {
         val checkCancelled = { coroutineContext.ensureActive() }
         val threshold = diffThreshold.coerceIn(0, 255)
-        val scale = renderScale.coerceIn(0.5f, 4f)
+        val scale = normalizedCompareRenderScale(renderScale)
 
         context.withUriCopiedToCacheFile(leftUri, prefix = "docforge_cmp_left_", suffix = ".pdf") { leftFile ->
             context.withUriCopiedToCacheFile(rightUri, prefix = "docforge_cmp_right_", suffix = ".pdf") { rightFile ->
