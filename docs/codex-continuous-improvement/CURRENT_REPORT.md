@@ -1,15 +1,15 @@
-# Cycle 099 — PDF compare descriptor lifecycle safety
+# Cycle 100 — PDF compare output page geometry
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E099 / F101 / US-R099-P1-01A
-**Previous cycle:** Cycle 098 COMPLETE. Exact code/test SHA `dcc142664e7d09061003c212102efca4090734b1` passed draft-PR Actions #817 / API `39060565666`, job `117477503838`, all nine gates SUCCESS. Earlier #815 failed Kotlin compilation and is not acceptance evidence. No emulator/device/benchmark evidence.
+**Epic / Feature / Story:** E100 / F102 / US-R100-P2-01A
+**Previous cycle:** Cycle 099 COMPLETE. Exact Cycle 099 production/test SHA `f621c4ecaf779c7791d320d287068c71e124e5ef` passed authoritative draft-PR Actions #822 / API `39063440811`, job `117486041589`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools and app JVM tests, debug APK, unsigned release/R8, Android lint. Production nested Closeable acquisition helper was introduced at `234a35d5f6340e85de621186c153dd52dfd74e94`; four host JVM lifecycle regressions at `f621c4ecaf779c7791d320d287068c71e124e5ef` cover first-open error, second-open error, block error and success, with close-on-failure and original exception propagation. No Android device/emulator/OEM/benchmark or complete resource-safety proof; PR #1 stays draft/unmerged, main untouched.
 
 ## Source evidence
-`PdfCompareTool.compare` currently opens the left `ParcelFileDescriptor` and then opens the right descriptor before entering either `use` scope. If the second open fails, the left descriptor escapes automatic cleanup. This is a source-level descriptor-lifetime issue, not a demonstrated crash.
+Cycle 100 `E100/F102/US-R100-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source evidence in `core/pdf/src/main/java/com/docforge/core/pdf/PdfCompareTool.kt`: `requestedSize` multiplies source PDF page width/height by renderScale (default 1.5f), but `PdfDocument.PageInfo.Builder(diffBmp.width, diffBmp.height,...)` uses those raster pixel dimensions as PDF page dimensions in points. Thus a 595x842-point page at 1.5x is emitted near 892x1263 points, changing physical page geometry. This is a source-level output-fidelity concern, not device-verified behavior. First: verify intended output dimensions for equal, unequal and missing input pages; introduce a pure JVM-testable output-geometry calculation; preserve high-resolution raster diff while writing to original-size PDF page bounds using scaled canvas drawing if compatible; add deterministic JVM regressions and exact-SHA draft-PR CI. Do not claim Android visual/OEM proof.
 
-## Scope and acceptance
-Place each descriptor acquisition inside the preceding descriptor's `use` scope. Prefer a small reusable Closeable pair helper only if it enables deterministic JVM coverage without changing Android behavior. Verify first-open failure, second-open failure, block failure, and success close both resources exactly once, including exception propagation. Preserve PDF renderer/page/cancellation/output semantics. Obtain exact-SHA draft-PR CI before completion; do not claim emulator/device proof.
+## Acceptance boundaries
+Confirm PDF output page physical dimensions are not unintentionally multiplied by renderScale. Cover equal, unequal, left-missing and right-missing input dimensions with pure JVM tests; preserve diff bitmap quality, percentage, red overlay, cancellation, staged publication, bitmap cleanup and occupied-heap limits. Only implement a minimal compatible change after source/test review. Validate the exact production/test SHA via draft-PR CI all nine gates. Host JVM tests do not prove Android PdfDocument/Canvas output, OEM compatibility, performance or peak heap.
 
-## Next action
-Inspect current test utilities and implement bounded nested-open cleanup with deterministic core PDF JVM tests, run exact-SHA CI, then synchronize canonical docs. PR #1 draft/unmerged; main untouched.
+## Next executable action
+Inspect the current PdfCompareTool page-size and drawBitmap paths; design a pure geometry helper, implement focused regression tests, and commit only on the authorized branch after confirming no active exact-HEAD CI or primary write. Keep PR #1 draft and main untouched.

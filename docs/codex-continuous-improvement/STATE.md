@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-099`
+**Current report:** `2026-10-17_cycle-100`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 099
-**Current Epic:** `E099` — PDF compare descriptor lifecycle safety
-**Current Feature:** `F101` — Close first descriptor when opening second fails
-**Current User Story:** `US-R099-P1-01A` — Prevent first input descriptor leak on second open failure (ACTIVE)
-**Last completed cycle:** Cycle 098
+**Cycle:** 100
+**Current Epic:** `E100` — PDF compare output page geometry
+**Current Feature:** `F102` — Preserve source page dimensions independent of raster scale
+**Current User Story:** `US-R100-P2-01A` — Prevent raster scale from enlarging output PDF pages (ACTIVE)
+**Last completed cycle:** Cycle 099
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 099: prove and fix second-input-open descriptor leak with focused JVM tests and exact-SHA draft-PR CI.
+- **Next exact step:** Cycle 100: verify output page geometry against source dimensions, add bounded JVM-testable geometry fix and tests, then exact-SHA draft-PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -127,3 +127,8 @@
 ## Cycle 098 authoritative completion / Cycle 099 activation — 2026-10-17 UTC
 - Cycle 098 `E098/F100/US-R098-P2-01A` COMPLETE. Exact code/test SHA `dcc142664e7d09061003c212102efca4090734b1` passed draft-PR GitHub Actions #817 / API `39060565666`, job `117477503838`, all nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). Previous candidate `456e5c65d087eb498b1ceffed0acab5cd0f09996` failed core PDF Kotlin compilation in #815; `dcc142664e7d09061003c212102efca4090734b1` added a nullable-argument guard after the missing-page helper. Five JVM regressions cover helper dispatch, overlay-color contract, and callback failure. Actual Android bitmap rendering, emulator/device/OEM behavior, and performance are unverified. PR #1 remains draft/unmerged; main untouched.
 - Cycle 099 `E099/F101/US-R099-P1-01A` ACTIVE / INCOMPLETE before production/test mutation. Source evidence: `PdfCompareTool.compare` opens `leftPfd`, then opens `rightPfd` before entering `leftPfd.use`; if the second open throws, the first descriptor is not closed by that use block. This is a resource-leak path inferred from control flow, not an observed Android crash. First: add a narrowly scoped close-on-second-open-failure structure, deterministic JVM lifecycle regressions with injectable Closeable resources, exact-SHA draft-PR CI, then reconcile all canonical documents. Keep PR #1 draft/unmerged and never touch main.
+
+
+## Cycle 099 authoritative completion / Cycle 100 activation — 2026-10-17 UTC
+- Exact Cycle 099 production/test SHA `f621c4ecaf779c7791d320d287068c71e124e5ef` passed authoritative draft-PR Actions #822 / API `39063440811`, job `117486041589`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools and app JVM tests, debug APK, unsigned release/R8, Android lint. Production nested Closeable acquisition helper was introduced at `234a35d5f6340e85de621186c153dd52dfd74e94`; four host JVM lifecycle regressions at `f621c4ecaf779c7791d320d287068c71e124e5ef` cover first-open error, second-open error, block error and success, with close-on-failure and original exception propagation. No Android device/emulator/OEM/benchmark or complete resource-safety proof; PR #1 stays draft/unmerged, main untouched.
+- Cycle 100 `E100/F102/US-R100-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source evidence in `core/pdf/src/main/java/com/docforge/core/pdf/PdfCompareTool.kt`: `requestedSize` multiplies source PDF page width/height by renderScale (default 1.5f), but `PdfDocument.PageInfo.Builder(diffBmp.width, diffBmp.height,...)` uses those raster pixel dimensions as PDF page dimensions in points. Thus a 595x842-point page at 1.5x is emitted near 892x1263 points, changing physical page geometry. This is a source-level output-fidelity concern, not device-verified behavior. First: verify intended output dimensions for equal, unequal and missing input pages; introduce a pure JVM-testable output-geometry calculation; preserve high-resolution raster diff while writing to original-size PDF page bounds using scaled canvas drawing if compatible; add deterministic JVM regressions and exact-SHA draft-PR CI. Do not claim Android visual/OEM proof.
