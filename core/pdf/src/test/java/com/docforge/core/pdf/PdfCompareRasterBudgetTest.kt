@@ -39,6 +39,33 @@ class PdfCompareRasterBudgetTest {
     }
 
     @Test
+    fun occupiedHeapReducesRasterBudgetWithoutChangingEmptyHeapBudget() {
+        val mib = 1024L * 1024L
+        assertEquals(16L * mib, CompareRasterBudget.heapAwareBudgetBytes(128L * mib))
+        assertEquals(1L * mib, CompareRasterBudget.heapAwareBudgetBytes(128L * mib, 120L * mib))
+        assertEquals(2L * mib, CompareRasterBudget.heapAwareBudgetBytes(128L * mib, 112L * mib))
+        assertEquals(12L, CompareRasterBudget.heapAwareBudgetBytes(128L * mib, 128L * mib))
+    }
+
+    @Test
+    fun inconsistentHeapOccupancyCannotOverflowRemainingBudget() {
+        val mib = 1024L * 1024L
+        assertEquals(4L * mib, CompareRasterBudget.heapAwareBudgetBytes(32L * mib, -1L))
+        assertEquals(12L, CompareRasterBudget.heapAwareBudgetBytes(32L * mib, 100L * mib))
+        assertEquals(12L, CompareRasterBudget.heapAwareBudgetBytes(0L, Long.MAX_VALUE))
+        assertEquals(48L * mib, CompareRasterBudget.heapAwareBudgetBytes(Long.MAX_VALUE, Long.MIN_VALUE))
+    }
+
+    @Test
+    fun occupiedHeapBudgetFitsCombinedThreeRasterWorkingSet() {
+        val mib = 1024L * 1024L
+        val budget = CompareRasterBudget.heapAwareBudgetBytes(128L * mib, 120L * mib)
+        val requested = CompareRasterSize(16000, 1000)
+        val fitted = CompareRasterBudget.fit(requested, requested, budget)
+        assertTrue(CompareRasterBudget.workingSetBytes(fitted.first, fitted.second) <= budget)
+    }
+
+    @Test
     fun smallHeapBudgetFitsCombinedLeftRightAndDiffRasters() {
         val mib = 1024L * 1024L
         val left = CompareRasterSize(16000, 1000)
