@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-097`
+**Current report:** `2026-10-17_cycle-098`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 097
-**Current Epic:** `E097` — PDF compare render-scale input safety
-**Current Feature:** `F099` — Normalize non-finite render-scale input
-**Current User Story:** `US-R097-P2-01A` — Prevent silent one-pixel output for NaN scale (ACTIVE)
-**Last completed cycle:** Cycle 096
+**Cycle:** 098
+**Current Epic:** `E098` — PDF compare missing-page diff visibility
+**Current Feature:** `F100` — Highlight unmatched pages red
+**Current User Story:** `US-R098-P2-01A` — Render missing-page differences visibly red (ACTIVE)
+**Last completed cycle:** Cycle 097
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 097: normalize non-finite compare renderScale; add focused JVM tests and exact-SHA draft-PR CI.
+- **Next exact step:** Cycle 098: render missing-page differences red; add focused JVM tests and exact-SHA draft-PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -117,3 +117,8 @@
 ## Cycle 096 authoritative completion / Cycle 097 activation — 2026-10-17 UTC
 - Cycle 096 `E096/F098/US-R096-P2-01A` COMPLETE. Exact code/test SHA `386112813f01ea8daea2ee1cf7fc7bac28b2f5a1` passed authoritative draft-PR GitHub Actions #806 / API `39046842382`, job `117437154272`, on 2026-10-17 UTC. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools and app JVM tests; debug APK; unsigned release/R8; Android lint. Production `e78388d700b199049349155cb4c101688747c149` budgets raster bytes from remaining Java heap estimated by `maxMemory - (totalMemory - freeMemory)`; test `38611281` adds three focused JVM regressions for occupied, inconsistent and extreme occupancy plus combined bitmap fit. No emulator, physical-device, native-memory benchmark, measured OOM prevention or complete memory safety claimed.
 - Cycle 097 `E097/F099/US-R097-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source at validated `38611281`: `PdfCompareTool.compare` uses `renderScale.coerceIn(0.5f, 4f)`; Kotlin `Float.NaN.coerceIn` remains NaN, so `(page.width * scale).toInt().coerceAtLeast(1)` yields 1 pixel, silently degrading comparison for a non-finite caller input. Host Kotlin reproduction observed NaN -> 1 px; not Android validation. First add a narrow finite/default render-scale normalization seam and deterministic JVM tests for NaN, +/-Infinity and ordinary values, without altering normal quality or cancellation. Validate exact code/test SHA via draft-PR CI. PR #1 draft/unmerged; `main` untouched.
+
+
+## Cycle 097 authoritative completion / Cycle 098 activation — 2026-10-17 UTC
+- Exact Cycle 097 production/test SHA `c658610d54deeacbbffb55dbc542f3de0a8257e1` passed authoritative draft-PR Actions #809 / API `39049802481`, job `117445934547`, on 2026-10-17 UTC. All nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). Documentation checkpoint `e75394355fefa29a29b8ee1a308a56d10350b2c4` passed #810 / API `39052167975`, job `117452789875`. Production normalizes NaN scale to 1.5f; three JVM tests cover NaN, infinities and finite clamping. No device/emulator/benchmark evidence.
+- Cycle 098 `E098/F100/US-R098-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Source in `PdfCompareTool.diffBitmaps` at `c658610`: when one side is missing, the function copies the present page and returns 100f, but does not mark its pixels red, contradicting the documented missing-page red highlight. This is a source-level output semantics defect, not an observed Android crash. First add a narrowly scoped missing-page red overlay with deterministic JVM-verifiable helper tests and retain 100% difference, page size, cancellation and bitmap cleanup. Exact-SHA draft-PR CI required. No device/emulator/visual approval or universal correctness claim. PR #1 remains draft/unmerged; `main` untouched.
