@@ -751,3 +751,9 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - `E095/F097/US-R095-P2-01A` COMPLETE for bounded small-heap compare raster budgeting. Exact code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed draft-PR Actions #796 / API `39041350384`. Documentation-head `43fe075dfe7b90ac10e9b479ff4aa8f15ef5b02e` passed Actions #797 / API `39043002749`, job `117426099487`, all nine configured gates SUCCESS.
 - `CompareRasterBudget.heapAwareBudgetBytes` now limits budget to 1/8 of heap capped at 48 MiB, with a 12-byte floor for three 1-pixel ARGB_8888 bitmaps rather than a disproportionate 12 MiB minimum. JVM regressions assert 16/32/64 MiB boundaries, fitting three bitmaps and impossible minimum checks. No emulator, physical-device, performance/OOM measurements or universal memory safety claim.
 - Next: audit the next distinct evidence-backed risk, activate a new cycle before production mutation. PR #1 draft/unmerged; main untouched.
+
+## Cycle 095 completion / Cycle 096 activation — 2026-10-17 UTC
+- [COMPLETE / PR CI #796] `US-R095-P2-01A` (`E095/F097`): code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed API `39041350384`, job `117422336197`, nine gates SUCCESS. Docs-head #797 SUCCESS. 12-byte minimum and small-heap JVM regressions; no measured device OOM or emulator evidence.
+### Epic E096 — PDF compare remaining-heap raster safety
+#### Feature F098 — Account for already-occupied Java heap
+- [ACTIVE / P2] `US-R096-P2-01A`: compare currently budgets from max Java heap without subtracting occupied heap. Add deterministic headroom boundary tests and conservative remaining-heap cap, validate exact code/test SHA; PR #1 draft/unmerged, main untouched.

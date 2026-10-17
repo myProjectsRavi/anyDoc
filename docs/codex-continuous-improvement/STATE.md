@@ -3,12 +3,12 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-095`
-**Report status:** COMPLETE
-**Cycle:** 095
-**Current Epic:** `E095` — Small-heap PDF compare raster safety
-**Current Feature:** `F097` — Audit heap-budget minimum against runtime ceiling
-**Current User Story:** `US-R095-P2-01A` — Small-heap compare raster budget review (COMPLETE)
+**Current report:** `2026-10-17_cycle-096`
+**Report status:** ACTIVE / INCOMPLETE
+**Cycle:** 096
+**Current Epic:** `E096` — PDF compare remaining-heap raster safety
+**Current Feature:** `F098` — Account for already-occupied Java heap
+**Current User Story:** `US-R096-P2-01A` — Bound comparison rasters by available heap headroom (ACTIVE)
 **Last completed cycle:** Cycle 095
 **State checkpoint timestamp:** 2026-10-17 UTC
 
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 095: review CompareRasterBudget minimum against small max heaps and existing tests; quantify safe allocation ceiling before production mutation; exact-SHA PR CI required.
+- **Next exact step:** Cycle 096: add occupied-heap budget tests and bounded production correction; validate exact code/test SHA in draft-PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -107,3 +107,8 @@
 - `E095/F097/US-R095-P2-01A` COMPLETE for bounded small-heap compare raster budgeting. Exact code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed draft-PR Actions #796 / API `39041350384`. Documentation-head `43fe075dfe7b90ac10e9b479ff4aa8f15ef5b02e` passed Actions #797 / API `39043002749`, job `117426099487`, all nine configured gates SUCCESS.
 - `CompareRasterBudget.heapAwareBudgetBytes` now limits budget to 1/8 of heap capped at 48 MiB, with a 12-byte floor for three 1-pixel ARGB_8888 bitmaps rather than a disproportionate 12 MiB minimum. JVM regressions assert 16/32/64 MiB boundaries, fitting three bitmaps and impossible minimum checks. No emulator, physical-device, performance/OOM measurements or universal memory safety claim.
 - Next: audit the next distinct evidence-backed risk, activate a new cycle before production mutation. PR #1 draft/unmerged; main untouched.
+
+
+## Cycle 096 activation — 2026-10-17 UTC
+- `E096/F098/US-R096-P2-01A` ACTIVE / INCOMPLETE before any production/test mutation. Cycle 095 code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed draft-PR Actions #796 / API `39041350384`, job `117422336197`, all nine gates SUCCESS. Docs HEAD `43fe075dfe7b90ac10e9b479ff4aa8f15ef5b02e` passed #797 / API `39043002749`, job `117426099487`. Source: `PdfCompareTool.compare` budgets from `Runtime.maxMemory()` alone and ignores current heap occupancy; 128 MiB max heap with 120 MiB occupied can request a 16 MiB raster budget despite only 8 MiB nominal headroom. This is source-level risk, not observed OOM.
+- First production mutation after this durable activation: bound budget to a fraction of remaining heap using sampled `totalMemory() - freeMemory()`, preserve 12-byte floor and 48 MiB ceiling, add deterministic occupied-heap tests, exact-SHA draft-PR CI. Residual: Android native bitmap/PdfRenderer/PdfDocument allocations are not fully represented by Java heap headroom; no device/emulator, OOM benchmark or global memory-safety claim. PR #1 draft/unmerged; main untouched.
