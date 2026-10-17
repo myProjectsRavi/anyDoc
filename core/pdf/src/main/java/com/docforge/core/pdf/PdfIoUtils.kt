@@ -514,6 +514,17 @@ internal fun publishCheckedStagedOutput(
     } catch (_: UnsupportedOperationException) {
         null
     }
+    // Direct callers may omit an original snapshot. Capture a known identity before
+    // the rename or test hook, and fail closed if both providers are unavailable.
+    // An explicitly supplied Android identity must outrank a later NIO reading.
+    val capturedAndroidIdentity = if (
+        originalFileKey == null && originalAndroidIdentity == null && sourceKey == null
+    ) readAndroidIdentity(stagedFile) else null
+    val expectedFileKey = originalFileKey ?: if (originalAndroidIdentity == null) sourceKey else null
+    val expectedAndroidIdentity = originalAndroidIdentity ?: capturedAndroidIdentity
+    check(expectedFileKey != null || expectedAndroidIdentity != null) {
+        "Unable to establish staged output identity."
+    }
     requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
     beforeMove()
     requireOriginalStagedIdentity(stagedFile, originalFileKey, originalAndroidIdentity, readAndroidIdentity)
@@ -535,12 +546,12 @@ internal fun publishCheckedStagedOutput(
         require(sourceKey == null || publishedKey == null || sourceKey == publishedKey) {
             "Staged output changed before publication."
         }
-        val publishedAndroidIdentity = if (originalFileKey == null && originalAndroidIdentity != null) {
+        val publishedAndroidIdentity = if (expectedFileKey == null) {
             readAndroidIdentity(candidate)
         } else null
         require(stagedIdentityContinuity(
-            originalFileKey, originalAndroidIdentity, publishedKey, publishedAndroidIdentity
-        ) != false) {
+            expectedFileKey, expectedAndroidIdentity, publishedKey, publishedAndroidIdentity
+        ) == true) {
             "Original staged output was replaced before publication."
         }
         publishedKey
@@ -549,11 +560,9 @@ internal fun publishCheckedStagedOutput(
         // delete it: remove only our original regular file when its identity is still known.
         // This check is best-effort, not atomic against a concurrent path replacement.
         runCatching {
-            // Do not substitute a later key when original Android ownership was captured.
-            val cleanupKey = if (originalAndroidIdentity != null) originalFileKey
-                else originalFileKey ?: sourceAttributes.fileKey()
+            // Only an identity captured before the rename may authorize cleanup.
             rollbackPublishedOutputIfUnchanged(
-                candidate, cleanupKey, originalAndroidIdentity, readAndroidIdentity
+                candidate, expectedFileKey, expectedAndroidIdentity, readAndroidIdentity
             )
         }
             .exceptionOrNull()?.let(failure::addSuppressed)
