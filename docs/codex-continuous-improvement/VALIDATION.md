@@ -86,3 +86,9 @@ The complete earlier validation log remains in Git history at commit `7593c9044a
 ## Cycle 094 authoritative validation / Cycle 095 activation — 2026-10-17 UTC
 - Cycle 094 `E094/F096/US-R094-P2-01A` COMPLETE. Exact code/test SHA `f9254345d91125c9f6304dc95f22bb370bdb23a0` passed authoritative draft-PR Actions #793 / API `39036699340`, job `117407938037`, all nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8 and Android lint. Paired push #792 and docs-head #791 were cancelled, not test evidence. Three new core PDF JVM tests cover direct unknown identity refusal, Android fallback success and foreign-file substitution preservation. This is host CI, not Android emulator/device/OEM or complete race-safety proof.
 - Cycle 095 `E095/F097/US-R095-P2-01A` ACTIVE before production mutation: inspect 12 MiB minimum budget vs 32 MiB heap and add bounded small-heap tests; no Cycle 095 CI evidence yet.
+
+
+## Cycle 095 authoritative completion — 2026-10-17 UTC
+- `E095/F097/US-R095-P2-01A` COMPLETE for bounded small-heap compare raster budgeting. Exact code/test SHA `34c7539e50630f53c365f877583506e40a5cf257` passed draft-PR Actions #796 / API `39041350384`. Documentation-head `43fe075dfe7b90ac10e9b479ff4aa8f15ef5b02e` passed Actions #797 / API `39043002749`, job `117426099487`, all nine configured gates SUCCESS.
+- `CompareRasterBudget.heapAwareBudgetBytes` now limits budget to 1/8 of heap capped at 48 MiB, with a 12-byte floor for three 1-pixel ARGB_8888 bitmaps rather than a disproportionate 12 MiB minimum. JVM regressions assert 16/32/64 MiB boundaries, fitting three bitmaps and impossible minimum checks. No emulator, physical-device, performance/OOM measurements or universal memory safety claim.
+- Next: audit the next distinct evidence-backed risk, activate a new cycle before production mutation. PR #1 draft/unmerged; main untouched.
