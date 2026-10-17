@@ -152,6 +152,31 @@ internal fun <T : Any> missingPageDiff(
 /** Translucent red keeps the surviving page readable while marking the whole page changed. */
 internal val MISSING_PAGE_OVERLAY_COLOR = 0x88FF3232.toInt()
 
+/** PdfDocument has close(), but does not implement Closeable on supported Android APIs.
+ * Keep the rendering error primary if close() also rejects an unfinished page.
+ */
+internal inline fun <T, R> withClosePreservingPrimaryFailure(
+    resource: T,
+    close: (T) -> Unit,
+    block: (T) -> R
+): R {
+    var primaryFailure: Throwable? = null
+    try {
+        return block(resource)
+    } catch (failure: Throwable) {
+        primaryFailure = failure
+        throw failure
+    } finally {
+        try {
+            close(resource)
+        } catch (cleanupFailure: Throwable) {
+            val primary = primaryFailure
+            if (primary == null) throw cleanupFailure
+            if (cleanupFailure !== primary) primary.addSuppressed(cleanupFailure)
+        }
+    }
+}
+
 /** Acquire the second resource only while the first is under a close-on-failure scope. */
 internal inline fun <A : java.io.Closeable, B : java.io.Closeable, T> withOpenedCloseables(
     openFirst: () -> A,
@@ -204,8 +229,10 @@ class PdfCompareTool(
                                     extension = "pdf"
                                 ) { stagedFile ->
                                     val diffPcts = mutableListOf<Float>()
-                                    val pdfDoc = android.graphics.pdf.PdfDocument()
-                                    try {
+                                    withClosePreservingPrimaryFailure(
+                                        resource = android.graphics.pdf.PdfDocument(),
+                                        close = { it.close() }
+                                    ) { pdfDoc ->
                                         for (pageIndex in 0 until pageCount) {
                                             checkCancelled()
                                             var leftBmp: Bitmap? = null
@@ -253,8 +280,6 @@ class PdfCompareTool(
                                         }
 
                                         FileOutputStream(stagedFile).use { pdfDoc.writeTo(it) }
-                                    } finally {
-                                        pdfDoc.close()
                                     }
                                     diffPcts.toList()
                                 }
