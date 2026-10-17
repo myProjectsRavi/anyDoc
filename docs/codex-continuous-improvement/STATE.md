@@ -3,13 +3,13 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main` in this program.
-**Current report:** `2026-10-17_cycle-093`
+**Current report:** `2026-10-17_cycle-094`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 093
-**Current Epic:** `E093` — Unknown staging identity publication safety
-**Current Feature:** `F095` — Reject unverified staged-file substitution
-**Current User Story:** `US-R093-P1-01A` — Unknown identity publication safety (ACTIVE)
-**Last completed cycle:** Cycle 092
+**Cycle:** 094
+**Current Epic:** `E094` — Direct publication helper identity contract
+**Current Feature:** `F096` — Verify direct publication identity requirements
+**Current User Story:** `US-R094-P2-01A` — Direct publication helper identity contract (ACTIVE)
+**Last completed cycle:** Cycle 093
 **State checkpoint timestamp:** 2026-10-17 UTC
 
 ## Canonical checkpoint
@@ -17,7 +17,7 @@
 - Production `f344450b587c7c1b5767904a85fdf783d51205d4` rejects lexical symlink ancestors; three JVM regressions in `80341dc3c40c01abfbecadfa5821a7e1f0da3889`. Android-provided public/app storage bases are canonicalized before appending the configured child in `e4fa660e6fa847e11fc33afa00366d5e48ef52fb`, with an alias JVM regression in `f6dafeaad2a086edbe9496783fcca4f628c84b85`. `90de62ed6d9d95d06851b639f3cba36589f8539c` removed a duplicate suppression annotation that caused CI #724 to fail; #726 succeeded.
 - Scope limitation: JVM alias simulation does not prove Android OEM/storage compatibility; no emulator, physical-device, benchmark or cross-process race freedom claimed. Independently mutable ancestor paths remain a TOCTOU limitation. Follow up on-device verification when available.
 - Cycle 084 `E084/F086/US-R084-P1-01A` COMPLETE after nine CI gates SUCCESS. Evidence: `DocForgeSettingsStore.resolveOutputDirectory` returns `publicDir` when `publicDir.isDirectory` is true, including when the configured leaf folder is a symlink; fallback `File(...).isDirectory` also follows links. A caller writing directly to such a returned folder could be redirected. The ancestor guard in `PdfIoUtils` protects its own callers but does not make the settings resolver safe for every consumer.
-- **Next exact step:** Cycle 093: reproduce unknown-identity regular-file substitution with injected null identity readers; assess fail-closed behavior and Android compatibility before production mutation; obtain exact-SHA PR CI.
+- **Next exact step:** Cycle 094: audit direct `publishCheckedStagedOutput` call sites and null-identity behavior; add focused JVM regressions and a bounded helper contract fix if justified; obtain exact-SHA draft-PR CI.
 - **PR #1:** open, draft, unmerged. `main` untouched. Never merge.
 
 ## History preservation
@@ -93,3 +93,7 @@
 ## Cycle 092 authoritative completion / Cycle 093 activation — 2026-10-17 UTC
 - Cycle 092 `E092/F094/US-R092-P1-01A` COMPLETE. Exact code/test SHA `7036384a7cbd37c7c3ebfbee0f6979a3968235cf` passed authoritative draft-PR Actions #787 / API `39028698857`, job `117385580946`, all nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). Paired push #786 was cancelled by concurrency and is not acceptance evidence. Production `072eb963f27791ef0912be502a3af6a60b6f5b18` guards identity capture with ownership-aware cleanup; committed JVM regressions at `7a449e8c`, `f08ecd1d`, `7036384a` cover later-request failure, foreign-stage preservation and Android-reader failure without identity. Unknown ownership deliberately preserves the stage; no emulator, device, benchmark or atomic race-freedom evidence.
 - Cycle 093 `E093/F095/US-R093-P1-01A` ACTIVE / INCOMPLETE before production/test mutation. Source: `requireOriginalStagedIdentity` returns without checking when both original NIO fileKey and Android identity are null; `publishCheckedStagedOutput` similarly allows null identity continuity. A regular-file substitution may therefore be published on providers reporting neither identity. First reproduce with injected null readers and deterministic JVM tests; assess compatibility and fail-closed behavior without deleting unknown/foreign entries; implement only a bounded safe correction after evidence. Keep PR #1 draft/unmerged, main untouched.
+
+## Cycle 093 authoritative completion / Cycle 094 activation — 2026-10-17 UTC
+- Cycle 093 `E093/F095/US-R093-P1-01A` COMPLETE for the production batch staging entry point. Exact code/test SHA `e4960f63dbcc055215e4f60b6716f8e543aa6d4f` passed authoritative draft-PR Actions #790 / API `39033315120`, job `117398111312`, all nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). Paired push #789 cancelled; docs-head #788 cancelled, neither is acceptance evidence. Production rejects staging before writer execution if both NIO fileKey and Android device/inode identity are unavailable; two JVM regressions in `PdfStagedUnknownIdentityPublicationTest.kt` cover unknown-identity failure and foreign regular-file substitution preservation. Unknown-identity staging entries are intentionally left in place because ownership cannot be proven. No emulator, physical device, OEM/provider, benchmark or atomic race-freedom evidence. Compatibility risk on providers exposing neither identity remains documented.
+- Cycle 094 `E094/F096/US-R094-P2-01A` ACTIVE / INCOMPLETE before production/test mutation. Source: internal `publishCheckedStagedOutput` accepts default null original identity; its `stagedIdentityContinuity(...)` null result passes the post-move `!= false` check. Production batch wrapper now requires identity, but direct internal helper callers/tests can bypass this contract. Next: audit all production/test call sites and determine whether direct helper needs explicit identity or safe capture without breaking existing swap/hard-link regressions. Add deterministic tests before any correction. Do not conflate test helper reachability with a demonstrated product exploit. PR #1 draft; main untouched.

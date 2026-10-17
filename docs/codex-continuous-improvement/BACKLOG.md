@@ -731,3 +731,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E093 — Unknown staging identity publication safety
 #### Feature F095 — Reject unverified staged-file substitution
 - [ACTIVE / P1] `US-R093-P1-01A`: with both NIO fileKey and Android identity absent, original staged-file identity continuity is unknown and `requireOriginalStagedIdentity` returns early. Reproduce a regular-file substitution under injected null identity readers, determine compatible fail-closed behavior, add regression coverage and implement the smallest safe mitigation if supported. Validate exact SHA in authoritative draft-PR CI. Do not delete unknown/foreign entries. PR #1 draft; main untouched.
+
+## Cycle 093 completion / Cycle 094 activation — 2026-10-17 UTC
+- [COMPLETE / PR CI #790] `US-R093-P1-01A` (`E093/F095`): exact code/test SHA `e4960f63dbcc055215e4f60b6716f8e543aa6d4f` passed draft-PR Actions API `39033315120`, job `117398111312`, all nine configured gates SUCCESS. Production batch staging fails closed when both identity providers return null, before writer execution. Two committed core PDF JVM regressions cover no-writer/no-publication and preservation of substituted foreign regular file. Unknown staging entries may remain; no Android device/OEM or atomic race evidence.
+
+### Epic E094 — Direct publication helper identity contract
+#### Feature F096 — Verify direct publication identity requirements
+- [ACTIVE / P2] `US-R094-P2-01A`: internal `publishCheckedStagedOutput` accepts omitted original identity and permits unknown continuity (`null != false`). Audit direct helper call sites and test contracts; add focused regression for unknown-identity direct invocation, decide compatible guard/explicit identity requirement, and obtain exact-SHA authoritative draft-PR CI. Distinguish internal helper risk from production batch path. PR #1 draft, main untouched.
