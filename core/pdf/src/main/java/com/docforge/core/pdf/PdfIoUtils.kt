@@ -384,6 +384,11 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
                     null
                 }
                 stagedAndroidIdentity = if (stagedFileKey == null) readAndroidIdentity(stagedFile) else null
+                // Do not write or publish when neither provider can prove the original
+                // staging entry's identity. Cleanup must preserve unverified entries.
+                check(stagedFileKey != null || stagedAndroidIdentity != null) {
+                    "Unable to establish staged output identity."
+                }
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
                 requireRegularStagedOutput(stagedFile)
