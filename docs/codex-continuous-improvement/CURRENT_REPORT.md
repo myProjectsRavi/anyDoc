@@ -10,3 +10,8 @@ Source-level evidence in `PdfCompareTool.kt`: `withCleanupOnFailure` calls `fail
 
 ## Next executable step
 Review existing `withCleanupOnFailure` callers and tests; reproduce identical Throwable cleanup case in a deterministic core PDF JVM regression. Make smallest safe fix only after confirming reachability/compatibility. Recheck branch HEAD/PR and exact-head CI before mutation. PR #1 draft/unmerged; main untouched.
+
+
+## Validated candidate awaiting canonical reconciliation
+- On 2026-10-17 UTC, production/test SHA `6f130bdbe4b4b1cd5277a4061bc5704f8d21a21f` passed draft-PR Actions #831 (API `39075310686`), job `117521147882`, with all nine configured gates successful. Docs-head CI #832 (API `39077710177`) also succeeded.
+- Cycle 102 remains ACTIVE until STATE.md and all canonical reports are synchronized. Attempted atomic six-document reconciliation was blocked before mutation. Next: reconcile Cycle 102 completion and activate the next evidence-backed story before production edits.
