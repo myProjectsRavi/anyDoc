@@ -36,6 +36,25 @@ data class PdfCompareResult(
  */
 internal data class CompareRasterSize(val width: Int, val height: Int)
 
+/** PDF page dimensions are points; render scale affects only raster pixel density. */
+internal fun scaledCompareRasterSize(pageSize: CompareRasterSize, scale: Float): CompareRasterSize =
+    CompareRasterSize(
+        width = (pageSize.width * scale).toInt().coerceAtLeast(1),
+        height = (pageSize.height * scale).toInt().coerceAtLeast(1)
+    )
+
+/** Preserve the larger source page bounds when compared pages have different dimensions. */
+internal fun compareOutputPageSize(
+    left: CompareRasterSize?,
+    right: CompareRasterSize?
+): CompareRasterSize {
+    require(left != null || right != null) { "At least one PDF page must exist." }
+    return CompareRasterSize(
+        width = max(left?.width ?: 0, right?.width ?: 0),
+        height = max(left?.height ?: 0, right?.height ?: 0)
+    )
+}
+
 /** Preserve normal scale clamping while preventing NaN from collapsing page rasters to 1x1. */
 internal fun normalizedCompareRenderScale(requested: Float): Float =
     if (requested.isNaN()) 1.5f else requested.coerceIn(0.5f, 4f)
@@ -193,11 +212,11 @@ class PdfCompareTool(
                                             var rightBmp: Bitmap? = null
                                             var diffBmp: Bitmap? = null
                                             try {
-                                                val requestedLeft = requestedSize(leftRenderer, pageIndex, scale)
-                                                val requestedRight = requestedSize(rightRenderer, pageIndex, scale)
+                                                val leftPageSize = pageSize(leftRenderer, pageIndex)
+                                                val rightPageSize = pageSize(rightRenderer, pageIndex)
                                                 val (leftSize, rightSize) = CompareRasterBudget.fit(
-                                                    left = requestedLeft,
-                                                    right = requestedRight,
+                                                    left = leftPageSize?.let { scaledCompareRasterSize(it, scale) },
+                                                    right = rightPageSize?.let { scaledCompareRasterSize(it, scale) },
                                                     budgetBytes = Runtime.getRuntime().let { runtime ->
                                                         CompareRasterBudget.heapAwareBudgetBytes(
                                                             maxHeapBytes = runtime.maxMemory(),
@@ -212,13 +231,19 @@ class PdfCompareTool(
                                                 diffBmp = diff.first
                                                 diffPcts += diff.second
 
+                                                val outputPageSize = compareOutputPageSize(leftPageSize, rightPageSize)
                                                 val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(
-                                                    diffBmp.width,
-                                                    diffBmp.height,
+                                                    outputPageSize.width,
+                                                    outputPageSize.height,
                                                     pageIndex + 1
                                                 ).create()
                                                 val page = pdfDoc.startPage(pageInfo)
-                                                page.canvas.drawBitmap(diffBmp, 0f, 0f, null)
+                                                page.canvas.drawBitmap(
+                                                    diffBmp,
+                                                    null,
+                                                    android.graphics.Rect(0, 0, outputPageSize.width, outputPageSize.height),
+                                                    null
+                                                )
                                                 pdfDoc.finishPage(page)
                                             } finally {
                                                 leftBmp?.recycle()
@@ -247,13 +272,10 @@ class PdfCompareTool(
         }
     }
 
-    private fun requestedSize(renderer: PdfRenderer, pageIndex: Int, scale: Float): CompareRasterSize? {
+    private fun pageSize(renderer: PdfRenderer, pageIndex: Int): CompareRasterSize? {
         if (pageIndex >= renderer.pageCount) return null
         renderer.openPage(pageIndex).use { page ->
-            return CompareRasterSize(
-                width = (page.width * scale).toInt().coerceAtLeast(1),
-                height = (page.height * scale).toInt().coerceAtLeast(1)
-            )
+            return CompareRasterSize(width = page.width, height = page.height)
         }
     }
 
