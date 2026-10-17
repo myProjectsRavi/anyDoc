@@ -160,15 +160,24 @@ private fun File.isOccupiedOutputName(): Boolean = exists() || Files.isSymbolicL
 
 /** Remove generated staging entries without traversing symbolic links or buffering a directory tree. */
 /** Never recurse into an entry substituted at a staging path. Missing identity fails closed. */
-internal fun deleteOwnedStagedEntry(stagedFile: File, expectedFileKey: Any?): Boolean {
-    if (expectedFileKey == null) return false
+internal fun deleteOwnedStagedEntry(
+    stagedFile: File,
+    expectedFileKey: Any?,
+    expectedAndroidIdentity: StagedAndroidIdentity? = null,
+    readAndroidIdentity: (File) -> StagedAndroidIdentity? = ::readAndroidStagedIdentity
+): Boolean {
+    if (expectedFileKey == null && expectedAndroidIdentity == null) return false
     val path = stagedFile.toPath()
     val attributes = try {
         Files.readAttributes(path, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
     } catch (_: java.nio.file.NoSuchFileException) {
         return false
     }
-    if (!attributes.isRegularFile || attributes.fileKey() != expectedFileKey) return false
+    if (!attributes.isRegularFile) return false
+    val actualAndroidIdentity = if (expectedFileKey == null) readAndroidIdentity(stagedFile) else null
+    if (stagedIdentityContinuity(
+        expectedFileKey, expectedAndroidIdentity, attributes.fileKey(), actualAndroidIdentity
+    ) != true) return false
     // Path-based delete is best-effort, not atomic with the identity check.
     return Files.deleteIfExists(path)
 }
@@ -288,7 +297,11 @@ class StagedOutputRequest<T>(
     val block: suspend (stagedFile: File) -> T
 )
 
-private data class PublishedStagedOutput(val outputFile: File, val fileKey: Any?)
+private data class PublishedStagedOutput(
+    val outputFile: File,
+    val fileKey: Any?,
+    val androidIdentity: StagedAndroidIdentity?
+)
 
 private data class PreparedStagedOutput<T>(
     val stagedFile: File,
@@ -364,7 +377,7 @@ suspend fun <T> withStagedOutputFiles(
                     value = value
                 )
             } catch (t: Throwable) {
-                runCatching { deleteOwnedStagedEntry(stagedFile, stagedFileKey) }
+                runCatching { deleteOwnedStagedEntry(stagedFile, stagedFileKey, stagedAndroidIdentity) }
                     .exceptionOrNull()?.let(t::addSuppressed)
                 throw t
             }
@@ -397,14 +410,18 @@ suspend fun <T> withStagedOutputFiles(
         } catch (t: Throwable) {
             published.asReversed().forEach { publishedOutput ->
                 runCatching {
-                    rollbackPublishedOutputIfUnchanged(publishedOutput.outputFile, publishedOutput.fileKey)
+                    rollbackPublishedOutputIfUnchanged(
+                        publishedOutput.outputFile,
+                        publishedOutput.fileKey,
+                        publishedOutput.androidIdentity
+                    )
                 }.exceptionOrNull()?.let(t::addSuppressed)
             }
             throw t
         }
     } finally {
         prepared.forEach { item ->
-            runCatching { deleteOwnedStagedEntry(item.stagedFile, item.stagedFileKey) }
+            runCatching { deleteOwnedStagedEntry(item.stagedFile, item.stagedFileKey, item.stagedAndroidIdentity) }
         }
     }
 }
@@ -415,15 +432,25 @@ suspend fun <T> withStagedOutputFiles(
  * risk deleting an unrelated replacement. This is not an atomic check-and-unlink;
  * independently mutable paths can still change between the check and deletion.
  */
-internal fun rollbackPublishedOutputIfUnchanged(outputFile: File, expectedFileKey: Any?): Boolean {
-    if (expectedFileKey == null) return false
+internal fun rollbackPublishedOutputIfUnchanged(
+    outputFile: File,
+    expectedFileKey: Any?,
+    expectedAndroidIdentity: StagedAndroidIdentity? = null,
+    readAndroidIdentity: (File) -> StagedAndroidIdentity? = ::readAndroidStagedIdentity
+): Boolean {
+    if (expectedFileKey == null && expectedAndroidIdentity == null) return false
     val path = outputFile.toPath()
     val attributes = try {
         Files.readAttributes(path, java.nio.file.attribute.BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
     } catch (_: java.nio.file.NoSuchFileException) {
         return false
     }
-    if (!attributes.isRegularFile || attributes.fileKey() != expectedFileKey) return false
+    if (!attributes.isRegularFile) return false
+    val actualAndroidIdentity = if (expectedFileKey == null) readAndroidIdentity(outputFile) else null
+    if (stagedIdentityContinuity(
+        expectedFileKey, expectedAndroidIdentity, attributes.fileKey(), actualAndroidIdentity
+    ) != true) return false
+    // The ownership check and unlink are not atomic against concurrent replacement.
     return Files.deleteIfExists(path)
 }
 
@@ -485,7 +512,14 @@ internal fun publishCheckedStagedOutput(
         // A substituted entry may have been moved to the candidate path. Never recursively
         // delete it: remove only our original regular file when its identity is still known.
         // This check is best-effort, not atomic against a concurrent path replacement.
-        runCatching { rollbackPublishedOutputIfUnchanged(candidate, originalFileKey ?: sourceAttributes.fileKey()) }
+        runCatching {
+            // Do not substitute a later key when original Android ownership was captured.
+            val cleanupKey = if (originalAndroidIdentity != null) originalFileKey
+                else originalFileKey ?: sourceAttributes.fileKey()
+            rollbackPublishedOutputIfUnchanged(
+                candidate, cleanupKey, originalAndroidIdentity, readAndroidIdentity
+            )
+        }
             .exceptionOrNull()?.let(failure::addSuppressed)
         throw failure
     }
@@ -516,7 +550,10 @@ private fun moveStagedFileWithoutOverwrite(
             val publishedKey = publishCheckedStagedOutput(
                 stagedFile, candidate, originalFileKey, originalAndroidIdentity
             )
-            return PublishedStagedOutput(candidate, publishedKey)
+            return PublishedStagedOutput(
+                candidate, publishedKey,
+                if (publishedKey == null) originalAndroidIdentity else null
+            )
         } catch (_: FileAlreadyExistsException) {
             // Another writer won the race after exists(); choose the next non-conflicting name.
             counter++
