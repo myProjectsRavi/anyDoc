@@ -191,6 +191,11 @@ internal inline fun <T> resolveCompareOutputDirectoryWithPreflight(
     return resolveDirectory()
 }
 
+/** Avoid staging validation and filesystem setup after PDF comparison cancellation. */
+internal inline fun checkCompareStagingPreflight(checkCancelled: () -> Unit) {
+    checkCancelled()
+}
+
 /** Avoid acquiring a cached PDF descriptor after comparison cancellation. */
 internal inline fun <T> openCompareDescriptorWithPreflight(
     checkCancelled: () -> Unit,
@@ -305,6 +310,7 @@ class PdfCompareTool(
                                     )
                                 }
                                 val sanitized = sanitizedCompareOutputBaseName(outputName)
+                                checkCompareStagingPreflight(checkCancelled)
                                 val stagedResult = withStagedOutputFile(
                                     directory = outputDir,
                                     baseName = sanitized,
