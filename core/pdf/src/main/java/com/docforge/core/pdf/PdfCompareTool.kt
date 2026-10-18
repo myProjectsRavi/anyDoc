@@ -308,13 +308,9 @@ class PdfCompareTool(
         if (size == null || pageIndex >= renderer.pageCount) return null
         renderer.openPage(pageIndex).use { page ->
             val bitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
-            return try {
-                bitmap.eraseColor(Color.WHITE)
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                bitmap
-            } catch (t: Throwable) {
-                bitmap.recycle()
-                throw t
+            return renderComparePageWithCleanup(bitmap, Bitmap::recycle) { target ->
+                target.eraseColor(Color.WHITE)
+                page.render(target, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             }
         }
     }
@@ -378,6 +374,16 @@ class PdfCompareTool(
             output to pct
         }
     }
+}
+
+/** Rendering owns the bitmap until success; failed rendering recycles without masking its cause. */
+internal inline fun <T> renderComparePageWithCleanup(
+    bitmap: T,
+    recycle: (T) -> Unit,
+    render: (T) -> Unit
+): T = withCleanupOnFailure(bitmap, recycle) {
+    render(bitmap)
+    bitmap
 }
 
 /** The caller owns [resource] only after [block] returns successfully. */
