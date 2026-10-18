@@ -361,6 +361,7 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
     readNioFileKey: (File) -> Any?,
     readAndroidIdentity: (File) -> StagedAndroidIdentity?
 ): List<StagedOutputResult<T>> {
+    currentCoroutineContext().ensureActive()
     requests.forEach { validateOutputName(it.baseName, it.extension) }
     requireNonSymlinkOutputDirectory(directory)
     require(directory.exists() || directory.mkdirs()) {
