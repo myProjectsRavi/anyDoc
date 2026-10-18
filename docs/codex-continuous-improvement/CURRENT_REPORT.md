@@ -1,20 +1,20 @@
-# Cycle 122 — PDF compare output-directory cancellation
+# Cycle 123 — PDF compare staging-setup cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E122 / F124 / US-R122-P2-01A
-**Activation baseline:** `cc3610234154d8149f914781cb1ec13866d9b235`
-**Previous cycle:** Cycle 121 COMPLETE; exact code/test SHA `cc3610234154d8149f914781cb1ec13866d9b235` passed draft-PR Actions `39161742830`, job `117776294771`, all nine configured gates.
+**Epic / Feature / Story:** E123 / F125 / US-R123-P2-01A
+**Activation baseline:** `8d1bdf2c7be2f646d89d7e19421b5e3169a529be`
+**Last validated production/test SHA:** `d4921e0b47f414c009a433e7d9adf599096cebb2` (Cycle 122, Actions #909 / API `39166370082`, job `117790052942`, nine configured gates SUCCESS).
 
 ## Source evidence
-`PdfCompareTool.compare` checks cancellation before renderer acquisition, but after the right renderer opens and page count is read it calls `DocForgeSettingsStore.resolveOutputDirectory` without a new preflight. That resolver reads preferences and may create the configured output folder via `mkdirs()`. Cancellation in the gap can still cause unnecessary directory resolution and creation. Source-level P2 responsiveness concern; no reproduced Android defect or measured delay.
+After `resolveCompareOutputDirectoryWithPreflight`, `PdfCompareTool.compare` sanitizes the name and invokes `withStagedOutputFile` without another cancellation preflight. `withStagedOutputFilesUsingIdentityReaders` validates names, checks directory symlinks and can create a directory before its first `ensureActive()`. Cancellation between directory resolution and staging entry may cause avoidable filesystem checks or effects. Source-level P2 responsiveness issue, not a reproduced crash.
 
 ## Acceptance
-- Check cancellation immediately before output-directory resolution after renderer acquisition.
-- Preserve successful folder selection, symlink validation, resource cleanup, exception identity and output bytes.
-- Add focused deterministic JVM regressions for cancellation, success ordering and exception behavior.
-- Require exact-code/test-SHA draft-PR CI: six JVM groups, debug APK, unsigned release/R8 and Android lint.
-- Do not claim emulator, physical-device, OEM, benchmark, measured latency, peak heap or complete race freedom.
+- Check cancellation immediately before entering staged output setup.
+- Preserve output naming, directory validation, ownership-aware cleanup, staged publication and exception identity.
+- Add deterministic JVM regression tests for cancellation, successful staging ordering and exception preservation.
+- Validate exact production/test SHA through draft-PR CI: six JVM test groups, debug APK, unsigned release/R8, Android lint.
+- Do not claim emulator/device/OEM/benchmark/measured latency/heap/race-freedom evidence.
 
 ## Next executable step
-Add a minimal JVM-testable preflight at the output-directory resolution call in `PdfCompareTool.kt`, add `PdfCompareOutputDirectoryCancellationTest.kt`, commit only on the authorized branch and validate exact SHA. After terminal CI, synchronize all canonical docs and this cycle report.
+Implement the minimal preflight in `PdfCompareTool.kt` and focused core PDF JVM tests, commit only to `codex/anydoc-continuous-improvement`, inspect authoritative CI, then reconcile STATE.md, CURRENT_REPORT.md, BACKLOG.md, VALIDATION.md and this report after terminal CI. Keep PR #1 draft/unmerged and main unchanged.
