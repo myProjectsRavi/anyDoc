@@ -184,6 +184,17 @@ internal inline fun <A : java.io.Closeable, B : java.io.Closeable, T> withOpened
     block: (A, B) -> T
 ): T = openFirst().use { first -> openSecond().use { second -> block(first, second) } }
 
+/** ASCII names stay below common 255-byte component limits, including .pdf and collision suffixes. */
+internal const val MAX_COMPARE_OUTPUT_BASE_NAME_LENGTH = 200
+
+/** Preserve ordinary comparison names while bounding long user-provided names. */
+internal fun sanitizedCompareOutputBaseName(
+    outputName: String,
+    fallback: () -> String = { "compare_${System.currentTimeMillis()}" }
+): String = outputName.ifBlank(fallback)
+    .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+    .take(MAX_COMPARE_OUTPUT_BASE_NAME_LENGTH)
+
 class PdfCompareTool(
     private val context: Context
 ) {
@@ -221,8 +232,7 @@ class PdfCompareTool(
                                     context = context,
                                     bucket = DocForgeOutputBucket.DOCUMENTS
                                 )
-                                val sanitized = outputName.ifBlank { "compare_${System.currentTimeMillis()}" }
-                                    .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                                val sanitized = sanitizedCompareOutputBaseName(outputName)
                                 val stagedResult = withStagedOutputFile(
                                     directory = outputDir,
                                     baseName = sanitized,
