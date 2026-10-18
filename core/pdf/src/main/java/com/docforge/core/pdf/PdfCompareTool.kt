@@ -177,6 +177,11 @@ internal inline fun <T, R> withClosePreservingPrimaryFailure(
     }
 }
 
+/** Reject cancellation before either URI provider/cache-copy setup begins. */
+internal inline fun checkCompareCacheCopyPreflight(checkCancelled: () -> Unit) {
+    checkCancelled()
+}
+
 /** Avoid acquiring a cached PDF descriptor after comparison cancellation. */
 internal inline fun <T> openCompareDescriptorWithPreflight(
     checkCancelled: () -> Unit,
@@ -263,7 +268,9 @@ class PdfCompareTool(
         val threshold = diffThreshold.coerceIn(0, 255)
         val scale = normalizedCompareRenderScale(renderScale)
 
+        checkCompareCacheCopyPreflight(checkCancelled)
         context.withUriCopiedToCacheFile(leftUri, prefix = "docforge_cmp_left_", suffix = ".pdf") { leftFile ->
+            checkCompareCacheCopyPreflight(checkCancelled)
             context.withUriCopiedToCacheFile(rightUri, prefix = "docforge_cmp_right_", suffix = ".pdf") { rightFile ->
                 withOpenedCloseables(
                     openFirst = {
