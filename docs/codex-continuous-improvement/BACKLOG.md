@@ -886,3 +886,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E116 — PDF renderer construction cancellation
 #### Feature F118 — Preflight before opening either renderer
 - [ACTIVE / P2] `US-R116-P2-01A`: `PdfCompareTool.compare` constructs `PdfRenderer(lPfd)` and `PdfRenderer(rPfd)` without cancellation preflights after cache copies or between renderer opens. Introduce minimal JVM-testable preflight, preserve renderer/descriptor cleanup and error behavior, add deterministic JVM tests, validate exact production/test SHA via draft-PR CI. PR #1 draft/unmerged; `main` untouched.
+
+
+## Cycle 116 authoritative completion / Cycle 117 activation — 2026-10-18 UTC
+- [COMPLETE / PR CI #886] `US-R116-P2-01A` (`E116/F118`): exact production/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed authoritative draft-PR Actions #886 / API `39136348187`, job `117701568583`, all nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Eight new renderer-open preflight JVM regressions; independent isolated host 4/4. Paired push #885 cancelled by concurrency. No emulator/physical-device/OEM/benchmark or measured speedup evidence.
+### Epic E117 — PDF output-page start cancellation
+#### Feature F119 — Preflight immediately before starting an output page
+- [ACTIVE / P2] `US-R117-P2-01A`: after raster diff completes, `PdfCompareTool.compare` computes geometry and invokes `pdfDoc.startPage(pageInfo)` without fresh cancellation preflight. Add minimal JVM-testable preflight, preserve page lifecycle/error handling, bitmap cleanup, staged output and collision behavior, deterministic tests and exact-SHA draft-PR CI. PR #1 draft/unmerged, `main` untouched.

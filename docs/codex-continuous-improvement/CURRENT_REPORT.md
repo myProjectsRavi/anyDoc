@@ -1,20 +1,20 @@
-# Cycle 116 — PDF renderer construction cancellation
+# Cycle 117 — PDF output-page start cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E116 / F118 / US-R116-P2-01A
-**Activation baseline:** `8945dab4b8521e71b5e284641757ce9f8b9678c0`
-**Previous cycle:** Cycle 115 COMPLETE; exact code/test SHA `6be844634382b60203f8c6813b39d95794517ad2` passed draft-PR Actions #882 / API `39131997093`, job `117688922042`.
+**Epic / Feature / Story:** E117 / F119 / US-R117-P2-01A
+**Activation baseline:** `a6ef1d8c7d989155fd3a4217e65301066c8a2369`
+**Previous cycle:** Cycle 116 COMPLETE; exact code/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed draft-PR Actions #886 / API `39136348187`, job `117701568583`.
 
 ## Source evidence
-`PdfCompareTool.compare` constructs left and right `PdfRenderer` objects without checking cancellation directly before either constructor. Cancellation after input copies or between the two renderer constructions can still open an unnecessary renderer. This is a source-level allocation/resource-work risk, not an observed crash or measured latency regression.
+`PdfCompareTool.compare` checks cancellation in raster diff loops, then computes output page geometry, builds `PdfDocument.PageInfo`, and invokes `pdfDoc.startPage(pageInfo)` without a fresh cancellation preflight. A cancellation in this gap may still start an unnecessary output page. This is a source-level work/cancellation responsiveness risk, not a reproduced Android crash.
 
 ## Acceptance and scope
-- Check cancellation before constructing either PDF renderer; a cancellation between left and right opens must skip the right constructor.
-- Preserve existing renderer and descriptor cleanup, normal comparison results and original exception propagation.
-- Add focused pure JVM tests for cancelled no-open, success ordering, left/right sequencing, open errors and cleanup behavior.
-- Validate exact production/test SHA through draft-PR CI (six JVM groups, debug APK, unsigned release/R8 and Android lint).
-- No device/emulator/OEM/benchmark or measured resource-savings claims.
+- Check cancellation immediately before `pdfDoc.startPage(pageInfo)` for each output page.
+- Preserve existing normal page rendering, `finishPage`, original exception identity, document cleanup, bitmap recycling, staging and collision safety.
+- Add focused pure JVM regressions for cancelled no-start, successful start, original start exceptions, and cancellation between raster completion and output page start.
+- Require exact production/test SHA draft-PR CI (six JVM groups, debug APK, unsigned release/R8 and Android lint).
+- No Android emulator/physical-device/OEM/benchmark or measured cancellation-latency claims.
 
 ## Next executable step
-Add `openCompareRendererWithPreflight` and use it before both `PdfRenderer` constructors. Add deterministic JVM tests, commit only on the authorized branch, inspect authoritative CI and reconcile after terminal result. Keep PR #1 draft/unmerged and `main` unchanged.
+Introduce a small `startComparePdfPageWithPreflight` helper in `PdfCompareTool.kt` and wrap the `pdfDoc.startPage(pageInfo)` call. Add deterministic JVM tests and obtain exact-SHA CI. Keep PR #1 draft/unmerged and `main` unchanged.
