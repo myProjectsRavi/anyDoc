@@ -382,10 +382,13 @@ class PdfCompareTool(
             val rightPixels = IntArray(chunkWidth)
             val outputPixels = IntArray(chunkWidth)
             fun readChunk(source: Bitmap, pixels: IntArray, x: Int, y: Int, count: Int) {
-                java.util.Arrays.fill(pixels, 0, count, Color.WHITE)
-                if (y >= source.height || x >= source.width) return
+                if (y >= source.height || x >= source.width) {
+                    fillCompareMissingChunkPixels(pixels, 0, count)
+                    return
+                }
                 val copied = minOf(count, source.width - x)
                 source.getPixels(pixels, 0, copied, x, y, copied, 1)
+                fillCompareMissingChunkPixels(pixels, copied, count)
             }
 
             forEachDiffRow(h, checkCancelled) { y ->
@@ -476,6 +479,13 @@ internal inline fun forEachDiffColumn(
     for (x in 0 until width) {
         if (x % 4096 == 0) checkCancelled()
         block(x)
+    }
+}
+
+/** White-fill only pixels absent from the source; getPixels already overwrites the prefix. */
+internal fun fillCompareMissingChunkPixels(pixels: IntArray, copied: Int, count: Int) {
+    if (copied < count) {
+        java.util.Arrays.fill(pixels, copied, count, 0xFFFFFFFF.toInt())
     }
 }
 
