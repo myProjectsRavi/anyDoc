@@ -376,26 +376,27 @@ class PdfCompareTool(
             var diffPixels = 0L
             val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
     
+            // Three small row buffers avoid per-pixel Bitmap JNI calls without holding full rows.
+            val chunkWidth = minOf(COMPARE_DIFF_ROW_CHUNK_PIXELS, w)
+            val leftPixels = IntArray(chunkWidth)
+            val rightPixels = IntArray(chunkWidth)
+            val outputPixels = IntArray(chunkWidth)
+            fun readChunk(source: Bitmap, pixels: IntArray, x: Int, y: Int, count: Int) {
+                java.util.Arrays.fill(pixels, 0, count, Color.WHITE)
+                if (y >= source.height || x >= source.width) return
+                val copied = minOf(count, source.width - x)
+                source.getPixels(pixels, 0, copied, x, y, copied, 1)
+            }
+
             forEachDiffRow(h, checkCancelled) { y ->
-                forEachDiffColumn(w, checkCancelled) { x ->
-                    val lPixel = if (x < left.width && y < left.height) left.getPixel(x, y) else Color.WHITE
-                    val rPixel = if (x < right.width && y < right.height) right.getPixel(x, y) else Color.WHITE
-    
-                    val dr = abs(Color.red(lPixel) - Color.red(rPixel))
-                    val dg = abs(Color.green(lPixel) - Color.green(rPixel))
-                    val db = abs(Color.blue(lPixel) - Color.blue(rPixel))
-    
-                    if (dr > threshold || dg > threshold || db > threshold) {
-                        output.setPixel(x, y, Color.argb(200, 255, 50, 50))
-                        diffPixels++
-                    } else {
-                        // Greyed-out version of original
-                        val grey = (Color.red(lPixel) * 0.3f + Color.green(lPixel) * 0.59f + Color.blue(lPixel) * 0.11f).toInt()
-                        output.setPixel(x, y, Color.rgb(grey, grey, grey))
-                    }
+                forEachDiffChunk(w, checkCancelled) { x, count ->
+                    readChunk(left, leftPixels, x, y, count)
+                    readChunk(right, rightPixels, x, y, count)
+                    diffPixels += compareDiffArgbChunk(leftPixels, rightPixels, outputPixels, count, threshold)
+                    output.setPixels(outputPixels, 0, count, x, y, count, 1)
                 }
             }
-    
+
             val pct = if (totalPixels > 0) (diffPixels.toFloat() / totalPixels * 100f) else 0f
             output to pct
         }
@@ -476,4 +477,55 @@ internal inline fun forEachDiffColumn(
         if (x % 4096 == 0) checkCancelled()
         block(x)
     }
+}
+
+/** Limit transient row buffers to 12 KiB total for the two inputs and diff output. */
+internal const val COMPARE_DIFF_ROW_CHUNK_PIXELS = 1024
+
+/** Check cancellation at the same 4096-column boundaries as the original pixel loop. */
+internal inline fun forEachDiffChunk(
+    width: Int,
+    checkCancelled: () -> Unit,
+    block: (start: Int, count: Int) -> Unit
+) {
+    var start = 0
+    while (start < width) {
+        if (start % 4096 == 0) checkCancelled()
+        val count = minOf(COMPARE_DIFF_ROW_CHUNK_PIXELS, width - start)
+        block(start, count)
+        start += count
+    }
+}
+
+/** Pure JVM-testable ARGB comparison. Alpha is intentionally ignored, as in the old loop. */
+internal fun compareDiffArgbChunk(
+    left: IntArray,
+    right: IntArray,
+    output: IntArray,
+    count: Int,
+    threshold: Int
+): Int {
+    var changed = 0
+    for (index in 0 until count) {
+        val leftArgb = left[index]
+        val rightArgb = right[index]
+        val leftRed = (leftArgb ushr 16) and 255
+        val leftGreen = (leftArgb ushr 8) and 255
+        val leftBlue = leftArgb and 255
+        val rightRed = (rightArgb ushr 16) and 255
+        val rightGreen = (rightArgb ushr 8) and 255
+        val rightBlue = rightArgb and 255
+
+        if (abs(leftRed - rightRed) > threshold ||
+            abs(leftGreen - rightGreen) > threshold ||
+            abs(leftBlue - rightBlue) > threshold
+        ) {
+            output[index] = 0xC8FF3232.toInt()
+            changed++
+        } else {
+            val grey = (leftRed * 0.3f + leftGreen * 0.59f + leftBlue * 0.11f).toInt()
+            output[index] = 0xFF000000.toInt() or (grey shl 16) or (grey shl 8) or grey
+        }
+    }
+    return changed
 }
