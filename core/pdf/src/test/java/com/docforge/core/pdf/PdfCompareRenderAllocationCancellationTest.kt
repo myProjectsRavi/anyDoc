@@ -81,7 +81,7 @@ class PdfCompareRenderAllocationCancellationTest {
             renderComparePageWithPreflight(
                 checkCancelled = {},
                 allocate = { bitmap },
-                recycle = { it.recycle(); throw cleanup }
+                recycle = { target: FakeBitmap -> target.recycle(); throw cleanup }
             ) { throw primary }
         }
         assertSame(primary, thrown)
