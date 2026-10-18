@@ -56,4 +56,6 @@ dependencies {
     implementation(libs.androidx.documentfile)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.collections.immutable)
+
+    testImplementation(libs.junit4)
 }

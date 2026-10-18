@@ -86,8 +86,6 @@ class PdfFormTool(
         )
         val sanitized = outputName.ifBlank { "form_filled_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_form_fill_", suffix = ".pdf") { sourceFile ->
             loadPdfDocument(sourceFile).use { document ->
                 val form = document.documentCatalog?.acroForm
@@ -139,12 +137,15 @@ class PdfFormTool(
                     form.flatten()
                 }
 
-                document.save(outputFile)
+                val staged = withStagedOutputFile(outputDir, sanitized, "pdf") { stagedFile ->
+                    document.save(stagedFile)
+                    Pair(updated, document.numberOfPages)
+                }
                 PdfFormFillResult(
-                    outputFile = outputFile,
-                    updatedFieldCount = updated,
-                    pageCount = document.numberOfPages,
-                    outputSizeBytes = outputFile.length()
+                    outputFile = staged.outputFile,
+                    updatedFieldCount = staged.value.first,
+                    pageCount = staged.value.second,
+                    outputSizeBytes = staged.outputFile.length()
                 )
             }
         }
@@ -170,8 +171,6 @@ class PdfFormTool(
         )
         val sanitized = outputName.ifBlank { "form_builder_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
         context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_form_build_", suffix = ".pdf") { sourceFile ->
             loadPdfDocument(sourceFile).use { sourceDoc ->
                 require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
@@ -215,12 +214,15 @@ class PdfFormTool(
                     acroForm.fields = fields
                     acroForm.refreshAppearances()
 
-                    outDoc.save(outputFile)
+                    val staged = withStagedOutputFile(outputDir, sanitized, "pdf") { stagedFile ->
+                        outDoc.save(stagedFile)
+                        Pair(cleanFieldName, outDoc.numberOfPages)
+                    }
                     PdfFormBuildResult(
-                        outputFile = outputFile,
-                        createdFieldName = cleanFieldName,
-                        pageCount = outDoc.numberOfPages,
-                        outputSizeBytes = outputFile.length()
+                        outputFile = staged.outputFile,
+                        createdFieldName = staged.value.first,
+                        pageCount = staged.value.second,
+                        outputSizeBytes = staged.outputFile.length()
                     )
                 }
             }

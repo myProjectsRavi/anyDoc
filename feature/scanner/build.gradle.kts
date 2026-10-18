@@ -63,4 +63,6 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     implementation(libs.mlkit.text.recognition)
+
+    testImplementation(libs.junit4)
 }

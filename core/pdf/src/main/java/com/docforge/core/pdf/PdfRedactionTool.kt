@@ -25,6 +25,22 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 
+
+internal inline fun <T> scanPagesUntil(
+    pageCount: Int,
+    beforePage: (Int) -> Unit = {},
+    readPage: (Int) -> T,
+    stopWhen: (T) -> Boolean
+): T? {
+    require(pageCount >= 0) { "Page count must not be negative." }
+    for (pageIndex in 0 until pageCount) {
+        beforePage(pageIndex)
+        val value = readPage(pageIndex)
+        if (stopWhen(value)) return value
+    }
+    return null
+}
+
 data class PdfRedactionOptions(
     val terms: List<String>,
     val caseSensitive: Boolean = false,
@@ -78,10 +94,14 @@ class PdfRedactionTool(
                 // Build effective terms list (user-provided + auto-detected PII).
                 val terms: List<String> = if (options.autoDetectPii) {
                     onProgress?.invoke(PdfRedactionProgress(stage = "Detecting sensitive data", current = 0, total = pageCount))
-                    val extractedText = runCatching {
-                        PDFTextStripper().getText(document)
-                    }.getOrDefault("")
-                    val auto = detectPiiTerms(extractedText)
+                    val auto = LinkedHashSet<String>()
+                    scanPdfPages(
+                        document = document,
+                        beforePage = { coroutineCtx.ensureActive() }
+                    ) { pageText ->
+                        auto.addAll(detectPiiTerms(pageText))
+                        false
+                    }
                     (userTerms + auto).distinct()
                 } else {
                     userTerms
@@ -139,17 +159,42 @@ class PdfRedactionTool(
                 )
                 val sanitized = outputName.ifBlank { "redacted_${System.currentTimeMillis()}" }
                     .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-                val outputFile = File(outputDir, "${sanitized}_irreversible.pdf")
+                val outputFile = withStagedOutputFile(
+                    directory = outputDir,
+                    baseName = "${sanitized}_irreversible",
+                    extension = "pdf"
+                ) { stagedFile ->
+                    onProgress?.invoke(
+                        PdfRedactionProgress(stage = "Saving redacted PDF", current = 0, total = 1)
+                    )
+                    document.save(stagedFile)
+                    onProgress?.invoke(
+                        PdfRedactionProgress(stage = "Saving redacted PDF", current = 1, total = 1)
+                    )
 
-                onProgress?.invoke(PdfRedactionProgress(stage = "Saving redacted PDF", current = 0, total = 1))
-                document.save(outputFile)
-                onProgress?.invoke(PdfRedactionProgress(stage = "Saving redacted PDF", current = 1, total = 1))
-
-                if (options.verifyIrreversible) {
-                    onProgress?.invoke(PdfRedactionProgress(stage = "Verifying irreversible redaction", current = 0, total = 1))
-                    verifyTermsRemoved(outputFile = outputFile, terms = terms, caseSensitive = options.caseSensitive)
-                    onProgress?.invoke(PdfRedactionProgress(stage = "Verifying irreversible redaction", current = 1, total = 1))
-                }
+                    if (options.verifyIrreversible) {
+                        onProgress?.invoke(
+                            PdfRedactionProgress(
+                                stage = "Verifying irreversible redaction",
+                                current = 0,
+                                total = 1
+                            )
+                        )
+                        verifyTermsRemoved(
+                            outputFile = stagedFile,
+                            terms = terms,
+                            caseSensitive = options.caseSensitive,
+                            beforePage = { coroutineCtx.ensureActive() }
+                        )
+                        onProgress?.invoke(
+                            PdfRedactionProgress(
+                                stage = "Verifying irreversible redaction",
+                                current = 1,
+                                total = 1
+                            )
+                        )
+                    }
+                }.outputFile
 
                 PdfRedactionResult(
                     outputFile = outputFile,
@@ -321,22 +366,51 @@ class PdfRedactionTool(
         }
     }
 
+
+    private fun scanPdfPages(
+        document: PDDocument,
+        beforePage: (Int) -> Unit = {},
+        stopWhen: (String) -> Boolean
+    ): String? {
+        return scanPagesUntil(
+            pageCount = document.numberOfPages,
+            beforePage = beforePage,
+            readPage = { pageIndex ->
+                PDFTextStripper().apply {
+                    val pageNumber = pageIndex + 1
+                    setStartPage(pageNumber)
+                    setEndPage(pageNumber)
+                }.getText(document)
+            },
+            stopWhen = stopWhen
+        )
+    }
+
     private fun verifyTermsRemoved(
         outputFile: File,
         terms: List<String>,
-        caseSensitive: Boolean
+        caseSensitive: Boolean,
+        beforePage: (Int) -> Unit = {}
     ) {
         loadPdfDocument(outputFile).use { verificationDoc ->
-            val text = PDFTextStripper().getText(verificationDoc)
-            val remaining = findFirstRemainingTerm(
-                text = text,
-                terms = terms,
-                caseSensitive = caseSensitive
-            )
+            val remaining = scanPdfPages(
+                document = verificationDoc,
+                beforePage = beforePage
+            ) { pageText ->
+                findFirstRemainingTerm(
+                    text = pageText,
+                    terms = terms,
+                    caseSensitive = caseSensitive
+                ) != null
+            }
             if (remaining != null) {
-                outputFile.delete()
+                val remainingTerm = findFirstRemainingTerm(
+                    text = remaining,
+                    terms = terms,
+                    caseSensitive = caseSensitive
+                )
                 error(
-                    "Redaction verification failed. Term '$remaining' is still discoverable in output text."
+                    "Redaction verification failed. Term '$remainingTerm' is still discoverable in output text."
                 )
             }
             // Also verify annotations are clean
@@ -348,7 +422,6 @@ class PdfRedactionTool(
                         caseSensitive = caseSensitive
                     )
                     if (annotRemaining != null) {
-                        outputFile.delete()
                         error(
                             "Redaction verification failed. Term '$annotRemaining' found in annotation."
                         )

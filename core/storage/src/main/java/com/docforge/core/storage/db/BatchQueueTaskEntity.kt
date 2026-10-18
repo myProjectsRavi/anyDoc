@@ -8,6 +8,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.Transaction
 
 /**
  * Persists the batch queue across process kills.
@@ -71,6 +72,14 @@ interface BatchQueueTaskDao {
 
     @Query("UPDATE batch_queue_tasks SET status = :status, output_path = :outputPath, output_size_bytes = :sizeBytes WHERE id = :id")
     suspend fun markSuccess(id: Long, status: String, outputPath: String, sizeBytes: Long)
+
+    @Transaction
+    suspend fun replaceAll(tasks: List<BatchQueueTaskEntity>) {
+        deleteAll()
+        if (tasks.isNotEmpty()) {
+            insertAll(tasks)
+        }
+    }
 
     @Query("DELETE FROM batch_queue_tasks")
     suspend fun deleteAll()
