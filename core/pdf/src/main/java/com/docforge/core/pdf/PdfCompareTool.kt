@@ -279,8 +279,8 @@ class PdfCompareTool(
                                                         )
                                                     }
                                                 )
-                                                leftBmp = renderPage(leftRenderer, pageIndex, leftSize)
-                                                rightBmp = renderPage(rightRenderer, pageIndex, rightSize)
+                                                leftBmp = renderPage(leftRenderer, pageIndex, leftSize, checkCancelled)
+                                                rightBmp = renderPage(rightRenderer, pageIndex, rightSize, checkCancelled)
 
                                                 val diff = diffBitmaps(leftBmp, rightBmp, threshold, checkCancelled)
                                                 diffBmp = diff.first
@@ -330,11 +330,19 @@ class PdfCompareTool(
         }
     }
 
-    private fun renderPage(renderer: PdfRenderer, pageIndex: Int, size: CompareRasterSize?): Bitmap? {
+    private fun renderPage(
+        renderer: PdfRenderer,
+        pageIndex: Int,
+        size: CompareRasterSize?,
+        checkCancelled: () -> Unit
+    ): Bitmap? {
         if (size == null || pageIndex >= renderer.pageCount) return null
         renderer.openPage(pageIndex).use { page ->
-            val bitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888)
-            return renderComparePageWithCleanup(bitmap, Bitmap::recycle) { target ->
+            return renderComparePageWithPreflight(
+                checkCancelled = checkCancelled,
+                allocate = { Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888) },
+                recycle = Bitmap::recycle
+            ) { target ->
                 target.eraseColor(Color.WHITE)
                 page.render(target, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             }
@@ -440,6 +448,19 @@ internal fun <T, R> withComparePageBitmapCleanup(
     },
     block = { block() }
 )
+
+/** Check cancellation immediately before acquiring a rendered-page bitmap.
+ * The page owner closes independently; the bitmap is recycled on render failure.
+ */
+internal inline fun <T> renderComparePageWithPreflight(
+    checkCancelled: () -> Unit,
+    allocate: () -> T,
+    recycle: (T) -> Unit,
+    render: (T) -> Unit
+): T {
+    checkCancelled()
+    return renderComparePageWithCleanup(allocate(), recycle, render)
+}
 
 /** Rendering owns the bitmap until success; failed rendering recycles without masking its cause. */
 internal inline fun <T> renderComparePageWithCleanup(
