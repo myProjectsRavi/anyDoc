@@ -238,8 +238,8 @@ class PdfCompareTool(
                     openFirst = { ParcelFileDescriptor.open(leftFile, ParcelFileDescriptor.MODE_READ_ONLY) },
                     openSecond = { ParcelFileDescriptor.open(rightFile, ParcelFileDescriptor.MODE_READ_ONLY) }
                 ) { lPfd, rPfd ->
-                        PdfRenderer(lPfd).use { leftRenderer ->
-                            PdfRenderer(rPfd).use { rightRenderer ->
+                        openCompareRendererWithPreflight(checkCancelled) { PdfRenderer(lPfd) }.use { leftRenderer ->
+                            openCompareRendererWithPreflight(checkCancelled) { PdfRenderer(rPfd) }.use { rightRenderer ->
                                 val pageCount = max(leftRenderer.pageCount, rightRenderer.pageCount)
                                 require(pageCount > 0) { "Both PDFs have no pages." }
 
@@ -454,6 +454,15 @@ internal fun <T, R> withComparePageBitmapCleanup(
     },
     block = { block() }
 )
+
+/** Avoid constructing a PDF renderer after cancellation, including between left/right opens. */
+internal inline fun <T> openCompareRendererWithPreflight(
+    checkCancelled: () -> Unit,
+    openRenderer: () -> T
+): T {
+    checkCancelled()
+    return openRenderer()
+}
 
 /** Avoid opening a renderer page after cancellation while retaining the bitmap preflight. */
 internal inline fun <T> openComparePageWithPreflight(
