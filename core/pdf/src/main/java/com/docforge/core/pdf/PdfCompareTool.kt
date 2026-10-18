@@ -210,6 +210,19 @@ internal fun sanitizedCompareOutputBaseName(
     return sanitized.toString()
 }
 
+/** Check cancellation before opening the staged stream and again before serialization. */
+internal fun <S : java.io.Closeable, R> writeComparePdfWithPreflight(
+    checkCancelled: () -> Unit,
+    openStream: () -> S,
+    write: (S) -> R
+): R {
+    checkCancelled()
+    return openStream().use { stream ->
+        checkCancelled()
+        write(stream)
+    }
+}
+
 class PdfCompareTool(
     private val context: Context
 ) {
@@ -303,7 +316,10 @@ class PdfCompareTool(
                                             }
                                         }
 
-                                        FileOutputStream(stagedFile).use { fileStream ->
+                                        writeComparePdfWithPreflight(
+                                            checkCancelled = checkCancelled,
+                                            openStream = { FileOutputStream(stagedFile) }
+                                        ) { fileStream ->
                                             pdfDoc.writeTo(CancellationCheckingOutputStream(fileStream, checkCancelled))
                                         }
                                     }
