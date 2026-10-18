@@ -223,6 +223,15 @@ internal fun <S : java.io.Closeable, R> writeComparePdfWithPreflight(
     }
 }
 
+/** Reject cancelled comparisons before constructing an output PdfDocument. */
+internal inline fun <T> createComparePdfDocumentWithPreflight(
+    checkCancelled: () -> Unit,
+    createDocument: () -> T
+): T {
+    checkCancelled()
+    return createDocument()
+}
+
 class PdfCompareTool(
     private val context: Context
 ) {
@@ -268,7 +277,7 @@ class PdfCompareTool(
                                 ) { stagedFile ->
                                     val diffPcts = mutableListOf<Float>()
                                     withClosePreservingPrimaryFailure(
-                                        resource = android.graphics.pdf.PdfDocument(),
+                                        resource = createComparePdfDocumentWithPreflight(checkCancelled) { android.graphics.pdf.PdfDocument() },
                                         close = { it.close() }
                                     ) { pdfDoc ->
                                         for (pageIndex in 0 until pageCount) {
