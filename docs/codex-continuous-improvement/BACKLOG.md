@@ -899,3 +899,8 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 - `E117/F119/US-R117-P2-01A` COMPLETE for the bounded cancellation preflight immediately before starting a diff PDF output page. Exact source/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed draft-PR Actions #889 / API `39137841432`, job `117705942735`, all nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF tools/app JVM, debug APK, unsigned release/R8, Android lint).
 - `PdfCompareTool.kt` calls `startComparePdfPageWithPreflight(checkCancelled)` before `pdfDoc.startPage`; six `PdfCompareOutputPageStartCancellationTest` JVM regressions cover cancellation before start, success ordering, preflight/start errors, cancellation after raster work and between output pages. Scope: source and JVM CI only; no Android emulator, device, OEM, performance or cancellation-latency proof.
 - Keep PR #1 draft/unmerged and main untouched. Next: inspect remaining highest-priority concrete risks and activate the next cycle before any code mutation.
+
+## Cycle 118 — active
+### E118 — PDF compare serialization cancellation
+#### F120 — Preflight before staged stream open
+- [ACTIVE / P2] `US-R118-P2-01A`: `PdfCompareTool.compare` opens FileOutputStream and enters PdfDocument.writeTo without cancellation preflight after final page. Add check before stream open, focused JVM tests, exact-SHA CI; preserve staged output and exception semantics. Baseline `e488018383b565182215c31a0f784aaca90634eb`; Cycle 117 COMPLETE on Actions #889.
