@@ -1,13 +1,13 @@
-# Cycle 110 — PDF compare raster buffer efficiency
+# Cycle 111 — PDF compare raster initialization efficiency
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E110 / F112 / US-R110-P2-01A
-**Activation baseline:** `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39`
-**Previous cycle:** Cycle 109 COMPLETE. Exact Cycle 109 code/test SHA `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39` passed draft-PR Actions #859 / API `39105462244`, job `117610256645` on 2026-10-18 UTC: six JVM test groups, debug APK, unsigned release/R8 and Android lint all SUCCESS (nine configured gates). Bounded 1024-pixel ARGB chunks use 12 KiB transient buffers, preserve RGB threshold/grey and missing-page padding, cancellation every 4096 columns and difference percentages. Six focused JVM regressions cover cancellation boundaries, thresholds, randomized ARGB equivalence and white padding. No Android emulator/device/OEM/benchmark or measured speedup evidence.
+**Epic / Feature / Story:** E111 / F113 / US-R111-P2-01A
+**Activation baseline:** `26d932cc81810e59ab6b7352930db21105b780b4`
+**Previous cycle:** Cycle 110 COMPLETE. Cycle 110 `E110/F112/US-R110-P2-01A` COMPLETE: exact code/test SHA `26d932cc81810e59ab6b7352930db21105b780b4` passed authoritative draft-PR Actions #862 / API `39108188107`, job `117618514524`, on 2026-10-18 UTC. All nine configured gates SUCCESS: core domain/PDF/converter/scanner/PDF-tools/app JVM tests, debug APK, unsigned release/R8, Android lint. `readChunk` now initializes only missing white tail pixels after getPixels; seven deterministic JVM regressions cover full/partial/missing chunks, reused buffers, boundaries and diff equivalence. No device/emulator/OEM/benchmark/peak-heap or measured speedup evidence.
 
 ## Source evidence and acceptance
-`PdfCompareTool.diffBitmaps.readChunk` currently clears every chunk element to white before calling `Bitmap.getPixels`. When the source fully covers the chunk, `getPixels` overwrites the cleared values; for partial or missing pages, white padding remains required. Preserve byte-for-byte ARGB outputs, exact difference percentages, unequal page dimensions, cancellation at 4096-column boundaries, and exception/bitmap cleanup. Introduce a small pure JVM-testable missing-tail padding helper and focused regressions. Obtain authoritative draft-PR CI for the exact code/test SHA. Do not claim benchmark or Android-device performance evidence.
+At the activation baseline, `PdfCompareTool.diffBitmaps` calls `output.eraseColor(Color.WHITE)` immediately before a complete row/chunk traversal which appears to write each output pixel using `setPixels`. First prove coverage for all positive dimensions and partial final chunks. Preserve exactly identical diff colors and percentages, missing-page overlay, unequal dimensions, cancellation at row/4096-column boundaries, output staging/no-overwrite, and all bitmap ownership/cleanup. Remove the erase only if full coverage is demonstrated; add deterministic JVM tests and exact-code/test-SHA authoritative draft-PR CI. This is a source-level optimization candidate, not an Android performance result.
 
-## Next action
-Inspect the current chunk loop, implement the smallest safe tail-only white fill after the source read, add focused JVM tests and validate through exact-SHA PR CI. Do not modify `main` or merge PR #1.
+## Next executable step
+Review current loop/tests and build a pure JVM full-coverage regression. Only then make a minimal production change, validate all nine configured CI gates, and reconcile canonical docs after terminal success. PR #1 stays draft; `main` untouched.
