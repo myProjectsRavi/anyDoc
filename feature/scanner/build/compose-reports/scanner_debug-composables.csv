@@ -1,0 +1,6 @@
+package,name,composable,skippable,restartable,readonly,inline,isLambda,hasDefaults,defaultsGroup,groups,calls,
+com.docforge.feature.scanner.ScannerRoute,ScannerRoute,1,0,1,0,0,0,0,0,2,9,
+com.docforge.feature.scanner.PermissionMissingScreen,PermissionMissingScreen,1,1,1,0,0,0,0,0,1,1,
+com.docforge.feature.scanner.ScannerScreen,ScannerScreen,1,0,1,0,0,0,0,0,1,4,
+com.docforge.feature.scanner.CapturedPageItem,CapturedPageItem,1,1,1,0,0,0,0,0,1,2,
+com.docforge.feature.scanner.CameraCapturePanel,CameraCapturePanel,1,0,1,0,0,0,0,0,1,5,

@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.docforge.feature.scanner-release-63:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml",
+        "source": "com.docforge.feature.scanner-appcompat-1.6.1-42:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml"
+    },
+    {
+        "merged": "com.docforge.feature.scanner-release-63:/layout-watch-v20/abc_alert_dialog_title_material.xml",
+        "source": "com.docforge.feature.scanner-appcompat-1.6.1-42:/layout-watch-v20/abc_alert_dialog_title_material.xml"
+    }
+]

@@ -1,0 +1,7 @@
+com.docforge.core.domain-pngs-0 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/build/generated/res/pngs/release
+com.docforge.core.domain-resValues-1 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/build/generated/res/resValues/release
+com.docforge.core.domain-mergeReleaseResources-2 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+com.docforge.core.domain-mergeReleaseResources-3 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+com.docforge.core.domain-release-4 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/build/intermediates/merged_res/release/mergeReleaseResources
+com.docforge.core.domain-main-5 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/src/main/res
+com.docforge.core.domain-release-6 /Users/ravitejanekkalapu/Documents/Code Repos/anyDoc/core/domain/src/release/res

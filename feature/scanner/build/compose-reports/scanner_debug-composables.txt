@@ -1,0 +1,38 @@
+restartable scheme("[androidx.compose.ui.UiComposable]") fun ScannerRoute(
+  unstable viewModel: ScannerViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun PermissionMissingScreen(
+  stable paddingValues: PaddingValues
+  stable onRequestPermission: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun ScannerScreen(
+  stable state: ScannerUiState
+  unstable detector: DocumentEdgeDetector
+  stable paddingValues: PaddingValues
+  stable onCaptured: Function1<Uri, Unit>
+  stable onImportGallery: Function0<Unit>
+  stable onRemovePage: Function1<Int, Unit>
+  stable onReplacePage: Function3<Int, Uri, String, Unit>
+  stable onOutputNameChanged: Function1<String, Unit>
+  stable onFilterModeChanged: Function1<ScanFilterMode, Unit>
+  stable onExportFormatChanged: Function1<ScannerExportFormat, Unit>
+  stable onZipImageOutputChanged: Function1<Boolean, Unit>
+  stable onPageSizeChanged: Function1<PdfPageSize, Unit>
+  stable onExport: Function0<Unit>
+  stable onClearError: Function0<Unit>
+)
+restartable skippable scheme("[androidx.compose.ui.UiComposable]") fun CapturedPageItem(
+  stable index: Int
+  stable uriRef: StableUriRef
+  stable filterMode: ScanFilterMode
+  stable enabled: Boolean
+  stable onApplySelectedFilter: Function0<Unit>
+  stable onRemove: Function0<Unit>
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun CameraCapturePanel(
+  unstable detector: DocumentEdgeDetector
+  stable onCaptured: Function1<Uri, Unit>
+  stable selectedFilterMode: ScanFilterMode
+  stable enabled: Boolean
+)

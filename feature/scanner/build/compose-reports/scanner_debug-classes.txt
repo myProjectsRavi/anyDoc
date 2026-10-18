@@ -1,0 +1,29 @@
+stable class ScannerUiState {
+  stable val capturedUris: ImmutableList<StableUriRef>
+  stable val outputName: String
+  stable val pageSize: PdfPageSize
+  stable val exportFormat: ScannerExportFormat
+  stable val zipImageOutput: Boolean
+  stable val selectedFilterMode: ScanFilterMode
+  stable val isExporting: Boolean
+  stable val lastOutputPath: String?
+  stable val lastOutputCount: Int
+  stable val lastOutputSizeBytes: Long?
+  stable val statusMessage: String?
+  stable val errorMessage: String?
+}
+unstable class ScannerViewModel {
+  unstable val pdfCreator: PdfCreator
+  unstable val scanImageExporter: ScanImageExporter
+  unstable val historyRepository: HistoryRepository
+  unstable val _uiState: MutableStateFlow<ScannerUiState>
+  unstable val uiState: StateFlow<ScannerUiState>
+  <runtime stability> = Unstable
+}
+unstable class ScannerViewModelFactory {
+  unstable val pdfCreator: PdfCreator
+  unstable val scanImageExporter: ScanImageExporter
+  unstable val historyRepository: HistoryRepository
+  stable val defaultPageSize: PdfPageSize
+  <runtime stability> = Unstable
+}

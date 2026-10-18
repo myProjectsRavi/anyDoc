@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.docforge.core.ui-release-40:/color/vector_tint_color.xml",
+        "source": "com.docforge.core.ui-ui-release-5:/color/vector_tint_color.xml"
+    },
+    {
+        "merged": "com.docforge.core.ui-release-40:/color/vector_tint_theme_color.xml",
+        "source": "com.docforge.core.ui-ui-release-5:/color/vector_tint_theme_color.xml"
+    }
+]

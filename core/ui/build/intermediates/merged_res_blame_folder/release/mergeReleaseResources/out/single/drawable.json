@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.docforge.core.ui-release-40:/drawable/notification_bg_low.xml",
+        "source": "com.docforge.core.ui-core-1.13.1-2:/drawable/notification_bg_low.xml"
+    },
+    {
+        "merged": "com.docforge.core.ui-release-40:/drawable/notification_icon_background.xml",
+        "source": "com.docforge.core.ui-core-1.13.1-2:/drawable/notification_icon_background.xml"
+    },
+    {
+        "merged": "com.docforge.core.ui-release-40:/drawable/notification_tile_bg.xml",
+        "source": "com.docforge.core.ui-core-1.13.1-2:/drawable/notification_tile_bg.xml"
+    },
+    {
+        "merged": "com.docforge.core.ui-release-40:/drawable/notification_bg.xml",
+        "source": "com.docforge.core.ui-core-1.13.1-2:/drawable/notification_bg.xml"
+    }
+]

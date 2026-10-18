@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.docforge.core.storage-release-24:/layout/notification_template_part_chronometer.xml",
+        "source": "com.docforge.core.storage-core-1.7.0-11:/layout/notification_template_part_chronometer.xml"
+    },
+    {
+        "merged": "com.docforge.core.storage-release-24:/layout/notification_template_part_time.xml",
+        "source": "com.docforge.core.storage-core-1.7.0-11:/layout/notification_template_part_time.xml"
+    },
+    {
+        "merged": "com.docforge.core.storage-release-24:/layout/custom_dialog.xml",
+        "source": "com.docforge.core.storage-core-1.7.0-11:/layout/custom_dialog.xml"
+    }
+]

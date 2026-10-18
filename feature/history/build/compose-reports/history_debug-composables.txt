@@ -1,0 +1,11 @@
+restartable scheme("[androidx.compose.ui.UiComposable]") fun HistoryRoute(
+  unstable viewModel: HistoryViewModel
+  stable paddingValues: PaddingValues? = @static PaddingValues(0.dp)
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun HistoryScreen(
+  unstable records: List<ConversionRecord>
+  stable paddingValues: PaddingValues
+)
+restartable scheme("[androidx.compose.ui.UiComposable]") fun HistoryItem(
+  unstable record: ConversionRecord
+)
