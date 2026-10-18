@@ -825,3 +825,9 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E107 — PDF compare serialization cancellation
 #### Feature F109 — Cooperative cancellation during staged byte writes
 - [ACTIVE / P2] `US-R107-P2-01A`: `PdfCompareTool.compare` calls `pdfDoc.writeTo(FileOutputStream)` without cancellation checks during byte writes. Add cancellation-aware <=64 KiB chunked OutputStream and focused JVM tests; validate exact-SHA draft-PR CI. PR #1 draft/unmerged, main untouched.
+
+## Cycle 107 authoritative completion / Cycle 108 activation — 2026-10-18 UTC
+- [COMPLETE / PR CI #852] `US-R107-P2-01A` (`E107/F109`): Cycle 107 `E107/F109/US-R107-P2-01A` COMPLETE: exact production/test SHA `82ceba75aecf724f85d4605f7a304cfa2d71b6ec` passed authoritative draft-PR Actions #852 / API `39097399571`, job `117586609368`, all nine configured gates SUCCESS: core domain/PDF/converter/scanner/PDF-tools/app JVM tests, debug APK, unsigned release/R8, Android lint. Eight focused JVM regressions cover byte fidelity, 64 KiB chunk boundaries, cancellation, invalid ranges, downstream IO exceptions and stream lifecycle. Isolated Kotlin host run also passed 8/8. No Android emulator/physical device/OEM/benchmark or measured cancellation-latency evidence.
+### Epic E108 — PDF compare filename sanitization memory safety
+#### Feature F110 — Bound allocation for very long user output names
+- [ACTIVE / P2] `US-R108-P2-01A`: `sanitizedCompareOutputBaseName` replaces unsafe characters across the full input before taking 200 characters, potentially allocating large intermediate strings. Audit Java regex codepoint and UTF-16 surrogate behavior; implement equivalent bounded prefix sanitization and focused JVM tests, then exact-SHA draft-PR CI. PR #1 draft/unmerged, main untouched.
