@@ -831,3 +831,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E108 — PDF compare filename sanitization memory safety
 #### Feature F110 — Bound allocation for very long user output names
 - [ACTIVE / P2] `US-R108-P2-01A`: `sanitizedCompareOutputBaseName` replaces unsafe characters across the full input before taking 200 characters, potentially allocating large intermediate strings. Audit Java regex codepoint and UTF-16 surrogate behavior; implement equivalent bounded prefix sanitization and focused JVM tests, then exact-SHA draft-PR CI. PR #1 draft/unmerged, main untouched.
+
+
+## Cycle 108 authoritative completion / Cycle 109 activation — 2026-10-18 UTC
+- [COMPLETE / PR CI #855] `US-R108-P2-01A` (`E108/F110`): exact production/test SHA `d7712402afd910c76ee3b692053ad4269f8735a3` passed authoritative draft-PR Actions #855 / API `39102640344`, job `117602763202` on 2026-10-18 UTC: all nine configured gates SUCCESS (core domain, core PDF, converter, scanner, PDF tools and app JVM tests, debug APK, unsigned release/R8, Android lint). Paired push `39102637960` was cancelled by concurrency, not acceptance evidence. Bounded ASCII filename sanitization preserves the 200-character cap, lazy blank fallback, Java regex codepoint semantics for valid surrogate pairs, unpaired surrogate replacement and numbered collision publication. Five added focused JVM test methods include 10,000 deterministic UTF-16 equivalence cases and 250,000 supplementary-codepoint input. No Android device/emulator/OEM, allocation benchmark or peak-memory proof.
+### Epic E109 — PDF compare raster diff performance
+#### Feature F111 — Bounded row-buffer pixel comparison
+- [ACTIVE / P2] `US-R109-P2-01A`: E109/F111/US-R109-P2-01A — PDF compare per-pixel raster diff performance: `PdfCompareTool.diffBitmaps` calls `Bitmap.getPixel` twice and `Bitmap.setPixel` once for every pixel. Audit a bounded row-buffer alternative that preserves output pixels, diff percentages, cancellation boundaries and heap-aware memory budget; add deterministic JVM regression seams and exact-SHA draft-PR CI before completion. No measured device latency claim.
