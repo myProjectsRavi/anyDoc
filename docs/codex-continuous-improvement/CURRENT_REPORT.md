@@ -1,12 +1,13 @@
-# Cycle 109 — PDF compare raster diff performance
+# Cycle 110 — PDF compare raster buffer efficiency
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E109 / F111 / US-R109-P2-01A
-**Previous cycle:** Cycle 108 COMPLETE: exact production/test SHA `d7712402afd910c76ee3b692053ad4269f8735a3` passed authoritative draft-PR Actions #855 / API `39102640344`, job `117602763202` on 2026-10-18 UTC: all nine configured gates SUCCESS (core domain, core PDF, converter, scanner, PDF tools and app JVM tests, debug APK, unsigned release/R8, Android lint). Paired push `39102637960` was cancelled by concurrency, not acceptance evidence. Bounded ASCII filename sanitization preserves the 200-character cap, lazy blank fallback, Java regex codepoint semantics for valid surrogate pairs, unpaired surrogate replacement and numbered collision publication. Five added focused JVM test methods include 10,000 deterministic UTF-16 equivalence cases and 250,000 supplementary-codepoint input. No Android device/emulator/OEM, allocation benchmark or peak-memory proof.
+**Epic / Feature / Story:** E110 / F112 / US-R110-P2-01A
+**Activation baseline:** `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39`
+**Previous cycle:** Cycle 109 COMPLETE. Exact Cycle 109 code/test SHA `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39` passed draft-PR Actions #859 / API `39105462244`, job `117610256645` on 2026-10-18 UTC: six JVM test groups, debug APK, unsigned release/R8 and Android lint all SUCCESS (nine configured gates). Bounded 1024-pixel ARGB chunks use 12 KiB transient buffers, preserve RGB threshold/grey and missing-page padding, cancellation every 4096 columns and difference percentages. Six focused JVM regressions cover cancellation boundaries, thresholds, randomized ARGB equivalence and white padding. No Android emulator/device/OEM/benchmark or measured speedup evidence.
 
 ## Source evidence and acceptance
-`PdfCompareTool.diffBitmaps` currently performs per-pixel `left.getPixel`, `right.getPixel`, and `output.setPixel` operations for every pixel. This is a source-level CPU overhead risk on large PDFs, not a measured ANR or benchmark. Assess bounded row buffers without violating heap-aware bitmap budget; preserve exact output color and difference percentages, unequal page white padding, missing-page behavior, 4096-column cancellation boundaries, exception cleanup and bitmap ownership. Add deterministic JVM equivalence tests and authoritative exact-SHA draft-PR CI.
+`PdfCompareTool.diffBitmaps.readChunk` currently clears every chunk element to white before calling `Bitmap.getPixels`. When the source fully covers the chunk, `getPixels` overwrites the cleared values; for partial or missing pages, white padding remains required. Preserve byte-for-byte ARGB outputs, exact difference percentages, unequal page dimensions, cancellation at 4096-column boundaries, and exception/bitmap cleanup. Introduce a small pure JVM-testable missing-tail padding helper and focused regressions. Obtain authoritative draft-PR CI for the exact code/test SHA. Do not claim benchmark or Android-device performance evidence.
 
 ## Next action
-Inspect existing PDF compare regression coverage and source, implement the smallest compatible row-buffer change only after evidence, then exact-SHA CI and canonical reconciliation. Keep PR #1 draft/unmerged and main untouched.
+Inspect the current chunk loop, implement the smallest safe tail-only white fill after the source read, add focused JVM tests and validate through exact-SHA PR CI. Do not modify `main` or merge PR #1.

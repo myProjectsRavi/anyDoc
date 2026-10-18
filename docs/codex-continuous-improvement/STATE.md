@@ -3,21 +3,21 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** `2026-10-18_cycle-109`
+**Current report:** `2026-10-18_cycle-110`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 109
-**Current Epic:** `E109` — PDF compare raster diff performance
-**Current Feature:** `F111` — Bounded row-buffer pixel comparison
-**Current User Story:** `US-R109-P2-01A` — Reduce per-pixel Bitmap access overhead while preserving exact diff output (ACTIVE)
-**Last completed cycle:** Cycle 108
+**Cycle:** 110
+**Current Epic:** `E110` — PDF compare raster buffer efficiency
+**Current Feature:** `F112` — Avoid redundant full-chunk white initialization
+**Current User Story:** `US-R110-P2-01A` — Preserve white padding without clearing overwritten chunk pixels (ACTIVE)
+**Last completed cycle:** Cycle 109
 **State checkpoint timestamp:** 2026-10-18 UTC
-**Starting HEAD:** `d7712402afd910c76ee3b692053ad4269f8735a3`
+**Starting HEAD:** `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39`
 
 ## Canonical checkpoint
-- Cycle 108 `E108/F110/US-R108-P2-01A` COMPLETE: exact production/test SHA `d7712402afd910c76ee3b692053ad4269f8735a3` passed authoritative draft-PR Actions #855 / API `39102640344`, job `117602763202` on 2026-10-18 UTC: all nine configured gates SUCCESS (core domain, core PDF, converter, scanner, PDF tools and app JVM tests, debug APK, unsigned release/R8, Android lint). Paired push `39102637960` was cancelled by concurrency, not acceptance evidence. Bounded ASCII filename sanitization preserves the 200-character cap, lazy blank fallback, Java regex codepoint semantics for valid surrogate pairs, unpaired surrogate replacement and numbered collision publication. Five added focused JVM test methods include 10,000 deterministic UTF-16 equivalence cases and 250,000 supplementary-codepoint input. No Android device/emulator/OEM, allocation benchmark or peak-memory proof.
-- Cycle 109 `E109/F111/US-R109-P2-01A` ACTIVE **before production/test mutation**. Source-level evidence: `PdfCompareTool.diffBitmaps` invokes `getPixel` for left/right and `setPixel` for output in its inner pixel loop; these Bitmap APIs are called once or more per pixel. Audit row-buffer tradeoffs under the existing three-bitmap memory budget, preserve missing-page behavior, per-pixel RGB threshold/grey calculations, cancellation checks every 4096 columns and output percentages. Do not claim performance improvements without measurements.
-- **Next exact action:** inspect existing PDF comparison tests and the diff loop; build a pure JVM-testable equivalence seam for bounded row chunks, then implement the smallest safe row-buffer optimization with focused regressions and exact-SHA draft-PR CI. Reconcile all canonical documents after terminal CI.
+- Cycle 109 `E109/F111/US-R109-P2-01A` COMPLETE: Exact Cycle 109 code/test SHA `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39` passed draft-PR Actions #859 / API `39105462244`, job `117610256645` on 2026-10-18 UTC: six JVM test groups, debug APK, unsigned release/R8 and Android lint all SUCCESS (nine configured gates). Bounded 1024-pixel ARGB chunks use 12 KiB transient buffers, preserve RGB threshold/grey and missing-page padding, cancellation every 4096 columns and difference percentages. Six focused JVM regressions cover cancellation boundaries, thresholds, randomized ARGB equivalence and white padding. No Android emulator/device/OEM/benchmark or measured speedup evidence.
+- Cycle 110 `E110/F112/US-R110-P2-01A` ACTIVE before production/test mutation. Source-level evidence at `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39`: `PdfCompareTool.diffBitmaps.readChunk` fills all `count` buffer entries white even when `Bitmap.getPixels` overwrites the entire chunk. Audit partial-width and missing-row white padding; move white initialization to only the uncopied tail with a pure JVM-testable seam, preserve exact ARGB diff/percentages/cancellation/ownership, add focused regressions and exact-SHA draft-PR CI. No measured speedup claim.
+- **Next exact action:** inspect `readChunk` and the current `PdfCompareRowChunkTest` tests; introduce a pure JVM seam for filling only missing pixels, integrate a minimal compatible production change, add regressions, validate the exact candidate SHA through draft-PR CI, then reconcile all canonical documents after terminal CI.
 - **PR #1:** open/draft/unmerged; main untouched.
 
 ## History preservation
-- Cycle 108 prior STATE.md at `d7712402afd910c76ee3b692053ad4269f8735a3`; previous Cycle 107 completion at `82ceba75aecf724f85d4605f7a304cfa2d71b6ec`. Earlier history remains in BACKLOG.md, VALIDATION.md and cycle reports. Original main SHA `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`.
+- Cycle 109 code/test HEAD `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39`; previous Cycle 108 completion at `d7712402afd910c76ee3b692053ad4269f8735a3`. Earlier history remains in BACKLOG.md, VALIDATION.md and cycle reports. Original main SHA `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`.

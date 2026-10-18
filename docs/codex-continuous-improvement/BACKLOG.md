@@ -838,3 +838,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E109 — PDF compare raster diff performance
 #### Feature F111 — Bounded row-buffer pixel comparison
 - [ACTIVE / P2] `US-R109-P2-01A`: E109/F111/US-R109-P2-01A — PDF compare per-pixel raster diff performance: `PdfCompareTool.diffBitmaps` calls `Bitmap.getPixel` twice and `Bitmap.setPixel` once for every pixel. Audit a bounded row-buffer alternative that preserves output pixels, diff percentages, cancellation boundaries and heap-aware memory budget; add deterministic JVM regression seams and exact-SHA draft-PR CI before completion. No measured device latency claim.
+
+
+## Cycle 109 authoritative completion / Cycle 110 activation — 2026-10-18 UTC
+- [COMPLETE / PR CI #859] `US-R109-P2-01A` (`E109/F111`): Exact Cycle 109 code/test SHA `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39` passed draft-PR Actions #859 / API `39105462244`, job `117610256645` on 2026-10-18 UTC: six JVM test groups, debug APK, unsigned release/R8 and Android lint all SUCCESS (nine configured gates). Bounded 1024-pixel ARGB chunks use 12 KiB transient buffers, preserve RGB threshold/grey and missing-page padding, cancellation every 4096 columns and difference percentages. Six focused JVM regressions cover cancellation boundaries, thresholds, randomized ARGB equivalence and white padding. No Android emulator/device/OEM/benchmark or measured speedup evidence.
+### Epic E110 — PDF compare raster buffer efficiency
+#### Feature F112 — Avoid redundant full-chunk white initialization
+- [ACTIVE / P2] `US-R110-P2-01A`: Cycle 110 `E110/F112/US-R110-P2-01A` ACTIVE before production/test mutation. Source-level evidence at `e0caa3073c9b3c269793f8a3f05d1d8e0035ee39`: `PdfCompareTool.diffBitmaps.readChunk` fills all `count` buffer entries white even when `Bitmap.getPixels` overwrites the entire chunk. Audit partial-width and missing-row white padding; move white initialization to only the uncopied tail with a pure JVM-testable seam, preserve exact ARGB diff/percentages/cancellation/ownership, add focused regressions and exact-SHA draft-PR CI. No measured speedup claim.
