@@ -1,20 +1,20 @@
-# Cycle 114 — PDF renderer page-open cancellation
+# Cycle 115 — PDF page-size open cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E114 / F116 / US-R114-P2-01A
-**Activation baseline:** `c95a0c28094b7e4b958726b6a47584e0cbd7d13c`
-**Previous cycle:** Cycle 113 COMPLETE, draft-PR Actions #876/API `39125693956` SUCCESS.
+**Epic / Feature / Story:** E115 / F117 / US-R115-P2-01A
+**Activation baseline:** `1ad7ed5e777219a13db58a3772dd6c3246fa693c`
+**Previous cycle:** Cycle 114 COMPLETE; draft-PR Actions #879 / API `39128006515` SUCCESS.
 
 ## Source evidence
-In `PdfCompareTool.renderPage`, the non-null page path currently executes `renderer.openPage(pageIndex).use { page -> renderComparePageWithPreflight(...) }`. The preflight inside the page scope avoids a cancelled bitmap allocation but still opens a `PdfRenderer.Page` after cancellation. This is a source-level resource-work concern, not an observed Android crash.
+`PdfCompareTool.pageSize` checks only the page index, then opens a renderer page to read width/height without checking cancellation. The compare loop's cancellation check occurs before both left/right size reads. Cancellation between those reads may still open the right page. This is a source-level avoidable resource-work issue, not a device-observed crash.
 
 ## Acceptance and scope
-- Check cancellation before opening a non-null renderer page and retain the existing cancellation check immediately before bitmap allocation.
-- Preserve missing-page behavior, page closure, successful raster content, cleanup, exception identity and cancellation propagation.
-- Add focused JVM regressions covering cancelled no-open, successful open, thrown preflight/open exceptions, and no extra bitmap allocation on cancellation.
-- Validate exact code/test SHA via draft-PR CI: six JVM groups, debug APK, unsigned release/R8, Android lint.
-- No emulator/device/OEM, measured speedup or memory-savings claim.
+- Check cancellation before opening any existing page for size/dimensions, including the right page after left-side processing.
+- Preserve missing-page null behavior, returned width/height, successful page close, original exception identity, and suppression of cleanup exceptions.
+- Add pure JVM deterministic regressions for cancellation no-open, successful dimensions and cleanup, thrown open/read/close cases and two-page cancellation sequencing.
+- Validate the exact production/test SHA via draft-PR CI (six JVM groups, debug APK, unsigned release/R8, lint).
+- No emulator/device/OEM, benchmark, measured latency or allocation-savings claims.
 
 ## Next executable step
-Introduce a tiny testable preflight-before-open helper and focused JVM tests. Commit only on `codex/anydoc-continuous-improvement`; inspect exact-SHA authoritative CI and reconcile all canonical documents after terminal validation. Keep PR #1 draft/unmerged.
+Introduce a tiny testable page-size read helper and thread cancellation through `pageSize` call sites. Commit only on `codex/anydoc-continuous-improvement`. Inspect exact-SHA authoritative CI and reconcile canonical documents after terminal validation. Keep PR #1 draft/unmerged.

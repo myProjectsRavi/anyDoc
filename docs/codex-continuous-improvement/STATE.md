@@ -3,23 +3,24 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** `2026-10-18_cycle-114`
+**Current report:** `2026-10-18_cycle-115`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 114
-**Current Epic:** `E114` — PDF render-page open cancellation
-**Current Feature:** `F116` — Cancellation preflight before opening a PDF renderer page
-**Current User Story:** `US-R114-P2-01A` — Avoid opening PDF pages after cancellation (ACTIVE)
-**Last completed cycle:** Cycle 113
+**Cycle:** 115
+**Current Epic:** `E115` — PDF page-size read cancellation
+**Current Feature:** `F117` — Cancellation preflight before opening a page for dimensions
+**Current User Story:** `US-R115-P2-01A` — Avoid opening dimension-query pages after cancellation (ACTIVE)
+**Last completed cycle:** Cycle 114
 **State checkpoint timestamp:** 2026-10-18 UTC
-**Last validated code/test HEAD:** `c95a0c28094b7e4b958726b6a47584e0cbd7d13c`
+**Last validated code/test HEAD:** `1ad7ed5e777219a13db58a3772dd6c3246fa693c`
+**Current branch HEAD at activation:** `1ad7ed5e777219a13db58a3772dd6c3246fa693c`
 
 ## Canonical checkpoint
-- Cycle 113 `E113/F115/US-R113-P2-01A` COMPLETE: exact code/test SHA `c95a0c28094b7e4b958726b6a47584e0cbd7d13c` passed draft-PR Actions #876 / API `39125693956`, job `117670224339`, on 2026-10-18 UTC; all nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8 and Android lint). Initial candidate `4191a42bd19742ec655e8c7053bd86de91093732` failed core PDF Kotlin compilation in #874; the follow-up explicit lambda parameter type fixed it. Eight focused JVM regressions cover preflight order, cancellation before allocation, render cleanup and cancellation between left/right renders. No emulator/device/OEM, benchmark or measured latency evidence. PR #1 remains open/draft/unmerged; `main` untouched.
-- Cycle 114 `E114/F116/US-R114-P2-01A` ACTIVE / INCOMPLETE before production mutation: `PdfCompareTool.renderPage` currently calls `renderer.openPage(pageIndex)` before `renderComparePageWithPreflight` checks cancellation, so an already-cancelled operation may still open a page. Add a cancellation preflight before page opening while preserving the existing pre-bitmap check, missing-page semantics, page closing and original exception identity. Add focused pure JVM regressions for open suppression, successful open and thrown errors, then require exact-SHA draft-PR CI. No measured performance claim.
-- **Next exact action:** implement a small pure JVM-testable cancellation preflight before `renderer.openPage` in `PdfCompareTool.renderPage`, retain the existing pre-allocation check, add deterministic cancellation/exception/ownership regressions, then validate exact production/test SHA via draft-PR GitHub Actions. Keep PR #1 draft/unmerged; never touch `main`.
+- Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
+- Cycle 115 E115/F117/US-R115-P2-01A ACTIVE / INCOMPLETE before production/test mutation. Source evidence: PdfCompareTool.pageSize opens PdfRenderer.Page without a cancellation preflight; the compare loop checks once before reading left/right sizes, so cancellation during left-page dimension access may still open the right page. Add a preflight before each non-null pageSize open using a pure JVM-testable dimension-reader seam. Preserve missing-page behavior, page closing, exception identity and geometry. Add deterministic JVM tests and require exact-SHA draft-PR CI; no Android device or measured speedup claim.
+- **Next exact action:** implement a cancellation-aware dimension-reader helper in `PdfCompareTool.kt`, thread `checkCancelled` through `pageSize` for both left/right reads, add pure JVM tests for no-open cancellation, correct dimensions, close and exception behavior. Commit only to `codex/anydoc-continuous-improvement`, inspect exact production/test SHA CI, and reconcile documents after terminal validation.
 - **PR #1:** open/draft/unmerged; `main` untouched.
 
 ## History preservation
+- Cycle 113 exact code/test SHA `c95a0c28094b7e4b958726b6a47584e0cbd7d13c` passed Actions #876 / API `39125693956`.
 - Cycle 112 exact code/test SHA `418c37ccaa3e91ce4c717c65538685a7f2dfdbd8` passed Actions #871 / API `39119917326`.
-- Cycle 111 exact code/test SHA `2a44f5eb09990bfcb43d1bf5902b90fc5a9285a5` passed Actions #865 / API `39113962627`.
 - Earlier history remains in BACKLOG.md, VALIDATION.md and cycle reports. Original main SHA `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`.
