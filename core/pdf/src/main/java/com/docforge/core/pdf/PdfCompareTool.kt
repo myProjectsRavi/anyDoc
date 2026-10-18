@@ -182,6 +182,15 @@ internal inline fun checkCompareCacheCopyPreflight(checkCancelled: () -> Unit) {
     checkCancelled()
 }
 
+/** Avoid output-directory filesystem effects after cancellation. */
+internal inline fun <T> resolveCompareOutputDirectoryWithPreflight(
+    checkCancelled: () -> Unit,
+    resolveDirectory: () -> T
+): T {
+    checkCancelled()
+    return resolveDirectory()
+}
+
 /** Avoid acquiring a cached PDF descriptor after comparison cancellation. */
 internal inline fun <T> openCompareDescriptorWithPreflight(
     checkCancelled: () -> Unit,
@@ -289,10 +298,12 @@ class PdfCompareTool(
                                 val pageCount = max(leftRenderer.pageCount, rightRenderer.pageCount)
                                 require(pageCount > 0) { "Both PDFs have no pages." }
 
-                                val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
-                                    context = context,
-                                    bucket = DocForgeOutputBucket.DOCUMENTS
-                                )
+                                val outputDir = resolveCompareOutputDirectoryWithPreflight(checkCancelled) {
+                                    DocForgeSettingsStore.resolveOutputDirectory(
+                                        context = context,
+                                        bucket = DocForgeOutputBucket.DOCUMENTS
+                                    )
+                                }
                                 val sanitized = sanitizedCompareOutputBaseName(outputName)
                                 val stagedResult = withStagedOutputFile(
                                     directory = outputDir,
