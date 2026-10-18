@@ -292,7 +292,7 @@ class PdfCompareTool(
                                                     outputPageSize.height,
                                                     pageIndex + 1
                                                 ).create()
-                                                val page = pdfDoc.startPage(pageInfo)
+                                                val page = startComparePdfPageWithPreflight(checkCancelled) { pdfDoc.startPage(pageInfo) }
                                                 page.canvas.drawBitmap(
                                                     diffBmp,
                                                     null,
@@ -419,6 +419,15 @@ class PdfCompareTool(
             output to pct
         }
     }
+}
+
+/** Avoid starting a PDF output page after the raster diff has been cancelled. */
+internal inline fun <T> startComparePdfPageWithPreflight(
+    checkCancelled: () -> Unit,
+    startPage: () -> T
+): T {
+    checkCancelled()
+    return startPage()
 }
 
 /** Avoid allocating an output bitmap after comparison has already been cancelled. */
