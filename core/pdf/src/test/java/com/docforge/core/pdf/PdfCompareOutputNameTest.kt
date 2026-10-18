@@ -48,6 +48,56 @@ class PdfCompareOutputNameTest {
     }
 
     @Test
+    fun supplementaryUnicodeUsesOneReplacementPerCodePointAtBoundary() {
+        assertEquals("_".repeat(200), sanitizedCompareOutputBaseName("😀".repeat(250)))
+        assertEquals("a".repeat(199) + "_", sanitizedCompareOutputBaseName("a".repeat(199) + "😀" + "z"))
+        assertEquals("a".repeat(198) + "__", sanitizedCompareOutputBaseName("a".repeat(198) + "😀😀"))
+    }
+
+    @Test
+    fun unpairedSurrogatesUseOneReplacementEach() {
+        assertEquals("a".repeat(198) + "_b", sanitizedCompareOutputBaseName("a".repeat(198) + "\uD83D" + "b" + "z"))
+        assertEquals("__", sanitizedCompareOutputBaseName("\uDE00\uD83D"))
+    }
+
+    @Test
+    fun blankUnicodeWhitespaceUsesFallbackLazily() {
+        var calls = 0
+        assertEquals("compare_456", sanitizedCompareOutputBaseName("\u2003\t\n") {
+            calls++
+            "compare_456"
+        })
+        assertEquals(1, calls)
+        assertEquals("valid", sanitizedCompareOutputBaseName("valid") {
+            calls++
+            "unexpected"
+        })
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun hugeSupplementaryInputIsBoundedAndEquivalent() {
+        val input = "😀".repeat(250_000) + "suffix"
+        assertEquals("_".repeat(200), sanitizedCompareOutputBaseName(input))
+    }
+
+    @Test
+    fun boundedScannerMatchesLegacyRegexOnDeterministicUtf16Cases() {
+        val random = kotlin.random.Random(108)
+        val alphabet = charArrayOf('a', 'Z', '0', '-', '_', ' ', '\n', '?',
+            '\uD800', '\uDC00', '\uD83D', '\uDE00', '\u00E9', '\u4E2D', '\u2003', '\u0000')
+        repeat(10_000) { iteration ->
+            val input = buildString {
+                repeat(random.nextInt(0, 280)) { append(alphabet[random.nextInt(alphabet.size)]) }
+            }
+            val expected = input.ifBlank { "compare_123" }
+                .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                .take(MAX_COMPARE_OUTPUT_BASE_NAME_LENGTH)
+            assertEquals("UTF-16 case $iteration", expected, sanitizedCompareOutputBaseName(input) { "compare_123" })
+        }
+    }
+
+    @Test
     fun longNameStillSupportsNumberedCollisionWithoutOverwrite() = runBlocking {
         val directory = Files.createTempDirectory("anydoc-compare-long-name").toFile()
         try {

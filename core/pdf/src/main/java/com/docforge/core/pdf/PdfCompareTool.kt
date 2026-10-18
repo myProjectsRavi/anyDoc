@@ -191,9 +191,24 @@ internal const val MAX_COMPARE_OUTPUT_BASE_NAME_LENGTH = 200
 internal fun sanitizedCompareOutputBaseName(
     outputName: String,
     fallback: () -> String = { "compare_${System.currentTimeMillis()}" }
-): String = outputName.ifBlank(fallback)
-    .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-    .take(MAX_COMPARE_OUTPUT_BASE_NAME_LENGTH)
+): String {
+    val input = outputName.ifBlank(fallback)
+    val sanitized = StringBuilder(minOf(input.length, MAX_COMPARE_OUTPUT_BASE_NAME_LENGTH))
+    var index = 0
+    while (index < input.length && sanitized.length < MAX_COMPARE_OUTPUT_BASE_NAME_LENGTH) {
+        val current = input[index]
+        sanitized.append(
+            if (current in 'a'..'z' || current in 'A'..'Z' ||
+                current in '0'..'9' || current == '_' || current == '-'
+            ) current else '_'
+        )
+        // Java Regex replaces a valid surrogate pair as one code point, not two chars.
+        index += if (current.isHighSurrogate() && index + 1 < input.length &&
+            input[index + 1].isLowSurrogate()
+        ) 2 else 1
+    }
+    return sanitized.toString()
+}
 
 class PdfCompareTool(
     private val context: Context
