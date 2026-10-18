@@ -1,20 +1,21 @@
-# Cycle 112 — PDF compare pre-allocation cancellation
+# Cycle 113 — PDF render-page allocation cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E112 / F114 / US-R112-P2-01A
-**Activation baseline:** `2a44f5eb09990bfcb43d1bf5902b90fc5a9285a5`
-**Latest documentation checkpoint before reconciliation:** `1bb5ce89e52a25617a918b9f4cdd339dfe472c7c`
+**Epic / Feature / Story:** E113 / F115 / US-R113-P2-01A
+**Activation baseline:** `418c37ccaa3e91ce4c717c65538685a7f2dfdbd8`
+**Previous cycle:** Cycle 112 COMPLETE, Actions #871/API `39119917326` SUCCESS.
 
-## Evidence and scope
-In `PdfCompareTool.diffBitmaps`, the normal two-page path creates a new ARGB bitmap before the first row cancellation check. The both-null fallback also allocates before checking cancellation. The missing-page copy branch already calls `checkCancelled()` before copy. A small preflight helper can check cancellation immediately before the two allocations, preserving cancellation exception identity and avoiding allocation when already cancelled.
+## Source evidence
+In `PdfCompareTool.compare`, cancellation is checked at the start of each page loop, but `pageSize`, raster fitting and left/right rendering follow. `renderPage` calls `Bitmap.createBitmap` after opening the renderer page without a fresh cancellation preflight. Cancellation after the loop check or between left/right renders can therefore still allocate a large bitmap.
 
-## Acceptance
-- Preflight must run before normal and both-null output bitmap allocations, and allocation must be skipped when preflight throws.
-- Preserve bitmap ownership, output bytes/pixels, missing-page overlay, exception propagation and staged publication.
-- Add focused deterministic JVM regressions for successful allocation, cancelled preflight, exception identity, allocation failure and cleanup.
-- Validate the exact production/test SHA using authoritative draft-PR GitHub Actions: six JVM groups, debug APK, unsigned release/R8 and Android lint.
-- No device/emulator/OEM or performance benchmark claims.
+## Acceptance and scope
+- Check cancellation before each non-null rendered-page bitmap allocation; do not alter missing-page behavior.
+- Preserve `PdfRenderer.Page` close semantics and bitmap recycling when rendering fails.
+- Preserve successful raster content, output publication, exception identity and cancellation propagation.
+- Add deterministic JVM regressions for cancelled preflight, successful allocation, cleanup on render failure and right-page cancellation timing.
+- Validate the exact code/test SHA through authoritative draft-PR CI, including all six JVM groups, debug APK, unsigned release/R8 and Android lint.
+- Do not claim device/emulator/OEM validation or measured speedup.
 
 ## Next executable step
-Apply the smallest production/test correction on the authorized branch, inspect authoritative CI, then reconcile STATE.md, CURRENT_REPORT.md, BACKLOG.md, VALIDATION.md and this report only after terminal CI. Keep PR #1 draft and `main` untouched.
+Review `renderPage` and `PdfCompareRenderPageCleanupTest.kt`; implement one bounded cancellation-preflight seam, focused JVM tests and exact-SHA CI. Keep PR #1 draft/unmerged and `main` untouched.
