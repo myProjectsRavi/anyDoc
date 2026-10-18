@@ -1,12 +1,14 @@
-# Cycle 106 — PDF compare output filename length safety
+# Cycle 107 — PDF compare staged serialization cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E106 / F108 / US-R106-P2-01A
-**Previous cycle:** Cycle 105 COMPLETE; exact production/test SHA `b836e2e0ec17f50db35f8b1e6143715c713269d1` passed authoritative draft-PR Actions #842/API `39090705908`, job `117566684347`, all nine gates.
+**Epic / Feature / Story:** E107 / F109 / US-R107-P2-01A
 
-## Evidence and acceptance
-`PdfCompareTool.compare` sanitizes `outputName` using an ASCII replacement regex but does not bound its length. `withStagedOutputFile` builds `baseName.pdf` and may append numeric collision suffixes. Excessively long user-supplied names can exceed filesystem component limits and fail publication. Source-level risk only, not reproduced on an Android device. Audit shared filename policies and current tests; implement a conservative deterministic basename limit preserving ordinary names, collision handling, staging and cancellation. Add focused host JVM regressions for long input, fallback, normal input, and collision-suffix allowance. Obtain authoritative exact-SHA draft-PR CI.
+## Previous validation
+Cycle 106 COMPLETE. Exact code/test SHA `3e5f464aff7800dba908c3a746586b89fca32704` passed draft-PR Actions #845/API `39093774353`, job `117576728460`, all nine gates SUCCESS. Docs HEAD `2e543f66900d81b15365f7f891be0c81e1c4ca74` passed API `39095923023`. No device/emulator/benchmark evidence.
 
-## Next action
-Inspect existing output-name helpers/tests and implement only the smallest compatible fix; run exact-code/test-SHA CI, then reconcile canonical docs. Keep PR #1 draft/unmerged; main untouched. No device/OEM/benchmark claims.
+## Evidence
+`PdfCompareTool.compare` serializes PDF bytes with `pdfDoc.writeTo(FileOutputStream(stagedFile))`, without intra-write coroutine cancellation checks. The staged publisher checks cancellation after the writer returns, but cancellation can be delayed during large writes. This is a source-level risk, not measured on a device.
+
+## Acceptance
+Implement a JVM-testable cancellation-checking OutputStream adapter that splits writes into <=64 KiB chunks and checks cancellation before each chunk. Preserve byte fidelity, exception propagation, staging cleanup and stream ownership. Add JVM regressions; validate exact production/test SHA with draft-PR CI. Keep PR #1 draft/unmerged; main untouched.
