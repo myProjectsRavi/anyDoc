@@ -371,7 +371,6 @@ class PdfCompareTool(
         val h = max(left.height, right.height)
         val output = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         return withCleanupOnFailure(output, Bitmap::recycle) {
-            output.eraseColor(Color.WHITE)
     
             var diffPixels = 0L
             val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
@@ -391,13 +390,11 @@ class PdfCompareTool(
                 fillCompareMissingChunkPixels(pixels, copied, count)
             }
 
-            forEachDiffRow(h, checkCancelled) { y ->
-                forEachDiffChunk(w, checkCancelled) { x, count ->
-                    readChunk(left, leftPixels, x, y, count)
-                    readChunk(right, rightPixels, x, y, count)
-                    diffPixels += compareDiffArgbChunk(leftPixels, rightPixels, outputPixels, count, threshold)
-                    output.setPixels(outputPixels, 0, count, x, y, count, 1)
-                }
+            forEachDiffRasterChunk(w, h, checkCancelled) { y, x, count ->
+                readChunk(left, leftPixels, x, y, count)
+                readChunk(right, rightPixels, x, y, count)
+                diffPixels += compareDiffArgbChunk(leftPixels, rightPixels, outputPixels, count, threshold)
+                output.setPixels(outputPixels, 0, count, x, y, count, 1)
             }
 
             val pct = if (totalPixels > 0) (diffPixels.toFloat() / totalPixels * 100f) else 0f
@@ -504,6 +501,20 @@ internal inline fun forEachDiffChunk(
         val count = minOf(COMPARE_DIFF_ROW_CHUNK_PIXELS, width - start)
         block(start, count)
         start += count
+    }
+}
+
+/** The normal two-page diff writes every output pixel before returning its bitmap. */
+internal inline fun forEachDiffRasterChunk(
+    width: Int,
+    height: Int,
+    checkCancelled: () -> Unit,
+    block: (row: Int, start: Int, count: Int) -> Unit
+) {
+    forEachDiffRow(height, checkCancelled) { row ->
+        forEachDiffChunk(width, checkCancelled) { start, count ->
+            block(row, start, count)
+        }
     }
 }
 
