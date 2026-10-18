@@ -238,7 +238,10 @@ class PdfCompareTool(
                                             var leftBmp: Bitmap? = null
                                             var rightBmp: Bitmap? = null
                                             var diffBmp: Bitmap? = null
-                                            try {
+                                            withComparePageBitmapCleanup(
+                                                resources = { listOf(leftBmp, rightBmp, diffBmp) },
+                                                recycle = Bitmap::recycle
+                                            ) {
                                                 val leftPageSize = pageSize(leftRenderer, pageIndex)
                                                 val rightPageSize = pageSize(rightRenderer, pageIndex)
                                                 val (leftSize, rightSize) = CompareRasterBudget.fit(
@@ -272,10 +275,6 @@ class PdfCompareTool(
                                                     null
                                                 )
                                                 pdfDoc.finishPage(page)
-                                            } finally {
-                                                leftBmp?.recycle()
-                                                rightBmp?.recycle()
-                                                diffBmp?.recycle()
                                             }
                                         }
 
@@ -375,6 +374,31 @@ class PdfCompareTool(
         }
     }
 }
+
+/** Attempt all page bitmap recycles and keep page-processing exceptions primary. */
+internal fun <T, R> withComparePageBitmapCleanup(
+    resources: () -> List<T?>,
+    recycle: (T) -> Unit,
+    block: () -> R
+): R = withClosePreservingPrimaryFailure(
+    resource = Unit,
+    close = {
+        var firstFailure: Throwable? = null
+        for (resource in resources()) {
+            if (resource != null) {
+                try {
+                    recycle(resource)
+                } catch (failure: Throwable) {
+                    val first = firstFailure
+                    if (first == null) firstFailure = failure
+                    else if (failure !== first) first.addSuppressed(failure)
+                }
+            }
+        }
+        firstFailure?.let { throw it }
+    },
+    block = { block() }
+)
 
 /** Rendering owns the bitmap until success; failed rendering recycles without masking its cause. */
 internal inline fun <T> renderComparePageWithCleanup(
