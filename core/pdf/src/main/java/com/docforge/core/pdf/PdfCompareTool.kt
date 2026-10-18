@@ -267,8 +267,8 @@ class PdfCompareTool(
                                                 resources = { listOf(leftBmp, rightBmp, diffBmp) },
                                                 recycle = Bitmap::recycle
                                             ) {
-                                                val leftPageSize = pageSize(leftRenderer, pageIndex)
-                                                val rightPageSize = pageSize(rightRenderer, pageIndex)
+                                                val leftPageSize = pageSize(leftRenderer, pageIndex, checkCancelled)
+                                                val rightPageSize = pageSize(rightRenderer, pageIndex, checkCancelled)
                                                 val (leftSize, rightSize) = CompareRasterBudget.fit(
                                                     left = leftPageSize?.let { scaledCompareRasterSize(it, scale) },
                                                     right = rightPageSize?.let { scaledCompareRasterSize(it, scale) },
@@ -323,11 +323,17 @@ class PdfCompareTool(
         }
     }
 
-    private fun pageSize(renderer: PdfRenderer, pageIndex: Int): CompareRasterSize? {
+    private fun pageSize(
+        renderer: PdfRenderer,
+        pageIndex: Int,
+        checkCancelled: () -> Unit
+    ): CompareRasterSize? {
         if (pageIndex >= renderer.pageCount) return null
-        renderer.openPage(pageIndex).use { page ->
-            return CompareRasterSize(width = page.width, height = page.height)
-        }
+        return readComparePageSizeWithPreflight(
+            checkCancelled = checkCancelled,
+            openPage = { renderer.openPage(pageIndex) },
+            readDimensions = { page -> CompareRasterSize(width = page.width, height = page.height) }
+        )
     }
 
     private fun renderPage(
@@ -456,6 +462,15 @@ internal inline fun <T> openComparePageWithPreflight(
 ): T {
     checkCancelled()
     return openPage()
+}
+
+/** Check cancellation before opening a page just to read its dimensions; always close it. */
+internal inline fun <T : AutoCloseable> readComparePageSizeWithPreflight(
+    checkCancelled: () -> Unit,
+    openPage: () -> T,
+    readDimensions: (T) -> CompareRasterSize
+): CompareRasterSize = openComparePageWithPreflight(checkCancelled, openPage).use { page ->
+    readDimensions(page)
 }
 
 /** Check cancellation immediately before acquiring a rendered-page bitmap.
