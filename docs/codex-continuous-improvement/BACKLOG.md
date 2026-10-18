@@ -798,3 +798,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E103 — PDF compare page-render cleanup safety
 #### Feature F105 — Preserve primary rendering failure during bitmap recycling
 - [ACTIVE / P2] `US-R103-P2-01A`: Cycle 103 `E103/F105/US-R103-P2-01A` ACTIVE / INCOMPLETE before any production mutation. Source evidence: `PdfCompareTool.renderPage` catch block calls `bitmap.recycle()` directly before rethrowing `page.render` failure; a secondary recycle failure could mask the primary rendering exception. Source-level risk only, not an observed Android error. Inspect callers and test seam; reuse `withCleanupOnFailure` if compatible, add focused host JVM regressions, validate exact code/test SHA via draft-PR CI. Preserve cancellation and bitmap ownership. PR #1 remains draft/unmerged; main untouched.
+
+
+## Cycle 103 completion / Cycle 104 activation — 2026-10-18 UTC
+- [COMPLETE / PR CI #835] `US-R103-P2-01A`: Cycle 103 E103/F105/US-R103-P2-01A COMPLETE: exact production/test SHA `372629e02698968168f521850e674113821dd1ed` passed draft-PR Actions #835/API `39084723314`, job `117548786248`, nine configured gates SUCCESS (six JVM regression tests). Push run `39084721401` cancelled. No Android device/emulator/benchmark evidence. PR #1 draft, main untouched.
+### Epic E104 — PDF compare per-page bitmap cleanup safety
+#### Feature F106 — Attempt all bitmap cleanup and preserve primary failures
+- [ACTIVE / P2] `US-R104-P2-01A`: Cycle 104 E104/F106/US-R104-P2-01A ACTIVE before code mutation. `PdfCompareTool.compare` per-page finally (lines 275-279) recycles left, right and diff bitmaps sequentially. A recycle exception can skip remaining cleanup and mask the primary page-processing failure. This is a source-level risk, not an observed Android recycle exception. Add a small JVM-testable all-bitmap cleanup helper preserving primary errors/cancellation, suppressing cleanup failures without self-suppression, attempting all non-null bitmaps, and retaining success behavior. Obtain exact-SHA draft-PR CI.
