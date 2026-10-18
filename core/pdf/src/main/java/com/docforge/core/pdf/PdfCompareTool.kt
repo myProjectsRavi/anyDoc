@@ -349,7 +349,9 @@ class PdfCompareTool(
      */
     private fun diffBitmaps(left: Bitmap?, right: Bitmap?, threshold: Int, checkCancelled: () -> Unit): Pair<Bitmap, Float> {
         if (left == null && right == null) {
-            val blank = Bitmap.createBitmap(595, 842, Bitmap.Config.ARGB_8888)
+            val blank = allocateCompareDiffRaster(checkCancelled) {
+                Bitmap.createBitmap(595, 842, Bitmap.Config.ARGB_8888)
+            }
             blank.eraseColor(Color.LTGRAY)
             return blank to 0f
         }
@@ -369,7 +371,9 @@ class PdfCompareTool(
 
         val w = max(left.width, right.width)
         val h = max(left.height, right.height)
-        val output = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val output = allocateCompareDiffRaster(checkCancelled) {
+            Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        }
         return withCleanupOnFailure(output, Bitmap::recycle) {
     
             var diffPixels = 0L
@@ -401,6 +405,15 @@ class PdfCompareTool(
             output to pct
         }
     }
+}
+
+/** Avoid allocating an output bitmap after comparison has already been cancelled. */
+internal inline fun <T> allocateCompareDiffRaster(
+    checkCancelled: () -> Unit,
+    allocate: () -> T
+): T {
+    checkCancelled()
+    return allocate()
 }
 
 /** Attempt all page bitmap recycles and keep page-processing exceptions primary. */
