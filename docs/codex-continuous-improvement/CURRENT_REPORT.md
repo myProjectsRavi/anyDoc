@@ -1,20 +1,20 @@
-# Cycle 123 — PDF compare staging-setup cancellation
+# Cycle 124 — Shared staged-output setup cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E123 / F125 / US-R123-P2-01A
-**Activation baseline:** `8d1bdf2c7be2f646d89d7e19421b5e3169a529be`
-**Last validated production/test SHA:** `d4921e0b47f414c009a433e7d9adf599096cebb2` (Cycle 122, Actions #909 / API `39166370082`, job `117790052942`, nine configured gates SUCCESS).
+**Epic / Feature / Story:** E124 / F126 / US-R124-P2-01A
+**Activation baseline:** `f853ab1672e0f9002ac2962c8d9648defecdb7a2`
+**Last validated production/test SHA:** `f853ab1672e0f9002ac2962c8d9648defecdb7a2` (Cycle 123, authoritative draft-PR Actions #913 / API `39172488960`, job `117808338166`, all nine configured gates SUCCESS).
 
 ## Source evidence
-After `resolveCompareOutputDirectoryWithPreflight`, `PdfCompareTool.compare` sanitizes the name and invokes `withStagedOutputFile` without another cancellation preflight. `withStagedOutputFilesUsingIdentityReaders` validates names, checks directory symlinks and can create a directory before its first `ensureActive()`. Cancellation between directory resolution and staging entry may cause avoidable filesystem checks or effects. Source-level P2 responsiveness issue, not a reproduced crash.
+At `f853ab1672e0f9002ac2962c8d9648defecdb7a2`, `PdfIoUtils.withStagedOutputFilesUsingIdentityReaders` calls `validateOutputName`, `requireNonSymlinkOutputDirectory`, and `directory.exists() || directory.mkdirs()` before the first `currentCoroutineContext().ensureActive()` inside the request loop. Other callers of the shared staging helper are not protected by the new Cycle 123 compare-specific preflight. A cancelled coroutine may still trigger avoidable directory validation or creation, including with empty requests. Source-level P2 responsiveness risk only.
 
 ## Acceptance
-- Check cancellation immediately before entering staged output setup.
-- Preserve output naming, directory validation, ownership-aware cleanup, staged publication and exception identity.
-- Add deterministic JVM regression tests for cancellation, successful staging ordering and exception preservation.
-- Validate exact production/test SHA through draft-PR CI: six JVM test groups, debug APK, unsigned release/R8, Android lint.
-- Do not claim emulator/device/OEM/benchmark/measured latency/heap/race-freedom evidence.
+- Check coroutine cancellation at shared staging entry before output-directory filesystem validation/creation, including empty requests.
+- Preserve successful output naming, symlink protection, staged ownership-aware cleanup, collision/no-overwrite and exception identity.
+- Add focused deterministic core PDF JVM tests for cancelled no-directory-creation, normal staging, errors and repeated invocations, without weakening existing tests.
+- Validate the exact production/test SHA with all nine draft-PR CI gates before canonical completion.
+- Do not claim emulator, physical-device, OEM, benchmark, peak-heap, measured latency or race-freedom evidence.
 
 ## Next executable step
-Implement the minimal preflight in `PdfCompareTool.kt` and focused core PDF JVM tests, commit only to `codex/anydoc-continuous-improvement`, inspect authoritative CI, then reconcile STATE.md, CURRENT_REPORT.md, BACKLOG.md, VALIDATION.md and this report after terminal CI. Keep PR #1 draft/unmerged and main unchanged.
+Audit existing staging-helper tests and implement the smallest safe shared-entry cancellation preflight on `codex/anydoc-continuous-improvement` only. Add targeted regressions, inspect exact-HEAD draft-PR CI and reconcile all canonical documents only after authoritative terminal success. Keep PR #1 draft/unmerged and main unchanged.

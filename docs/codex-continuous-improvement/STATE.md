@@ -3,23 +3,23 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** 2026-10-18_cycle-123
+**Current report:** 2026-10-18_cycle-124
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 123
-**Current Epic:** `E123` — PDF compare staging-setup cancellation
-**Current Feature:** `F125` — Preflight before staged output setup
-**Current User Story:** `US-R123-P2-01A` — Avoid staging setup after cancellation (ACTIVE / INCOMPLETE)
-**Last completed cycle:** Cycle 122
+**Cycle:** 124
+**Current Epic:** `E124` — Shared staged-output setup cancellation
+**Current Feature:** `F126` — Cancellation before shared staging filesystem setup
+**Current User Story:** `US-R124-P2-01A` — Reject cancelled staging before directory effects (ACTIVE / INCOMPLETE)
+**Last completed cycle:** Cycle 123
 **State checkpoint timestamp:** 2026-10-18 UTC
-**Last validated code/test HEAD:** `d4921e0b47f414c009a433e7d9adf599096cebb2`
-**Current branch HEAD at activation:** 8d1bdf2c7be2f646d89d7e19421b5e3169a529be
+**Last validated code/test HEAD:** `f853ab1672e0f9002ac2962c8d9648defecdb7a2`
+**Current branch HEAD at activation:** f853ab1672e0f9002ac2962c8d9648defecdb7a2
 
 ## Canonical checkpoint
 - Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
 - Cycle 115 E115/F117/US-R115-P2-01A COMPLETE: exact production/test SHA `6be844634382b60203f8c6813b39d95794517ad2` passed authoritative draft-PR Actions #882 / API `39131997093`, job `117688922042`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM groups, debug APK, unsigned release/R8 and Android lint. Eight focused JVM regressions in PdfComparePageSizeCancellationTest cover cancellation, page dimensions, closing, exceptions and left/right sequencing. Documentation-only #883 / API `39134307442` also succeeded at `8945dab4b8521e71b5e284641757ce9f8b9678c0`; it is not the production validation. No emulator, physical device, benchmark or measured latency evidence.
 - Cycle 116 E116/F118/US-R116-P2-01A COMPLETE: exact production/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed authoritative draft-PR Actions #886 / API `39136348187`, job `117701568583`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). New `openCompareRendererWithPreflight` checks cancellation before left/right PdfRenderer construction; eight focused JVM regressions cover no-open cancellation, ordering, two-renderer ownership and original/suppressed exceptions. Supplementary isolated Kotlin host checks 4/4 PASS; these do not establish Android device performance. The paired push #885 was cancelled by concurrency. No emulator/physical-device/OEM/benchmark or measured latency evidence.
 - Cycle 117 E117/F119/US-R117-P2-01A COMPLETE; exact production/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed Actions #889.
-- **Next exact action:** Cycle 123: add cancellation preflight immediately before staged PDF output setup, add deterministic JVM regressions, validate exact production/test SHA in draft-PR CI. Cycle 123 is active before source mutation.
+- **Next exact action:** Cycle 124: add shared staging-helper cancellation preflight before directory checks/creation, focused JVM regressions and exact-SHA draft-PR CI. Cycle 124 is active before source mutation.
 - **PR #1:** open/draft/unmerged; `main` untouched.
 
 ## History preservation
@@ -55,3 +55,7 @@
 ## Cycle 122 authoritative completion / Cycle 123 activation — 2026-10-18 UTC
 - Cycle 122 E122/F124/US-R122-P2-01A COMPLETE: exact production/test SHA `d4921e0b47f414c009a433e7d9adf599096cebb2` passed draft-PR Actions #909 / API `39166370082`, job `117790052942`, on 2026-10-18 UTC. Six JVM groups, debug APK, unsigned release/R8, Android lint all SUCCESS. `resolveCompareOutputDirectoryWithPreflight` checks cancellation before preference/directory resolution; seven focused JVM regressions committed. Push #908 was cancelled by concurrency, not authoritative validation. Docs-head Actions #910 / API `39170730224` also passed at `8d1bdf2c7be2f646d89d7e19421b5e3169a529be`; it does not supersede the code SHA. No emulator, physical device, benchmark, measured latency, heap or race-freedom evidence.
 - Cycle 123 E123/F125/US-R123-P2-01A ACTIVE / INCOMPLETE before any production/test mutation. Source evidence at `8d1bdf2c7be2f646d89d7e19421b5e3169a529be`: `PdfCompareTool.compare` calls `withStagedOutputFile` after output-directory resolution and filename sanitation without a fresh cancellation preflight; `withStagedOutputFilesUsingIdentityReaders` validates names, checks directory symlinks and may call `mkdirs()` before its first `ensureActive()`. Cancellation in this interval can cause avoidable staging setup. Add a minimal JVM-testable preflight immediately before staging, preserve normal output and failure semantics, add focused tests, validate exact code/test SHA through draft-PR CI. P2 responsiveness concern, not reproduced crash. PR #1 draft/unmerged; main untouched.
+
+## Cycle 123 authoritative completion / Cycle 124 activation — 2026-10-18 UTC
+- Cycle 123 E123/F125/US-R123-P2-01A COMPLETE: exact production/test SHA `f853ab1672e0f9002ac2962c8d9648defecdb7a2` passed authoritative draft-PR Actions #913 / API `39172488960`, job `117808338166`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM test groups (domain, PDF, converter, scanner, PDF tools, app), debug APK, unsigned release/R8, Android lint. Production `PdfCompareTool.kt` checks cancellation immediately before `withStagedOutputFile`; eight focused JVM regressions in `PdfCompareStagingCancellationTest.kt` cover cancellation before staging, normal ordering, exception identity and renderer cleanup. Paired push #912 was cancelled by concurrency and is not acceptance evidence. No emulator, physical-device, OEM, benchmark, measured latency, heap or race-freedom evidence; PR #1 remains draft/unmerged and main unchanged.
+- Cycle 124 E124/F126/US-R124-P2-01A ACTIVE / INCOMPLETE before any source/test mutation. Source at `f853ab1672e0f9002ac2962c8d9648defecdb7a2`: `PdfIoUtils.withStagedOutputFilesUsingIdentityReaders` validates output names, checks the output directory and can call `directory.mkdirs()` BEFORE its first `currentCoroutineContext().ensureActive()` inside the request loop. The Cycle 123 compare-call-site preflight does not protect other staging callers, and even empty-request invocations may create a directory. Add a bounded coroutine cancellation preflight at the shared staging helper entry before filesystem checks/creation, preserve normal validation, staged ownership, collision/no-overwrite, symlink safety and exception identity. Add deterministic core PDF JVM regressions for already-cancelled no-directory-creation and normal/exception paths; validate exact code/test SHA with all nine draft-PR gates. This is a source-level P2 responsiveness concern, not a reproduced device defect.
