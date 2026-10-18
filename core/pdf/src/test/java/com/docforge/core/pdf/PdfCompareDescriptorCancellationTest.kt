@@ -162,8 +162,9 @@ class PdfCompareDescriptorCancellationTest {
             ) { _: Descriptor, _: Descriptor -> throw failure }
         }
         assertSame(failure, thrown)
-        assertSame(rightCleanup, thrown.suppressed.single())
-        assertSame(leftCleanup, rightCleanup.suppressed.single())
+        assertEquals(2, thrown.suppressed.size)
+        assertSame(rightCleanup, thrown.suppressed[0])
+        assertSame(leftCleanup, thrown.suppressed[1])
         assertEquals(1, left.closes)
         assertEquals(1, right.closes)
     }
