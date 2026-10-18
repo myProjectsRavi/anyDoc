@@ -818,3 +818,10 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E106 — PDF compare output filename safety
 #### Feature F108 — Bound sanitized filename length
 - [ACTIVE / P2] `US-R106-P2-01A`: source evidence: `PdfCompareTool.compare` replaces unsafe characters in `outputName` but does not cap its length; the staging publisher constructs `baseName.pdf` and may append numeric collision suffixes. Long names may exceed filesystem per-component limits. Audit shared filename policies/tests; implement a bounded ASCII basename sanitizer that preserves normal names and collision behavior, add focused JVM tests, validate exact-SHA PR CI. No device-observed failure claimed.
+
+
+## Cycle 106 completion / Cycle 107 activation — 2026-10-18 UTC
+- [COMPLETE / PR CI #845] `US-R106-P2-01A` (`E106/F108`): code/test SHA `3e5f464aff7800dba908c3a746586b89fca32704` passed draft-PR Actions API `39093774353`, job `117576728460`, all nine gates. No device/emulator evidence.
+### Epic E107 — PDF compare serialization cancellation
+#### Feature F109 — Cooperative cancellation during staged byte writes
+- [ACTIVE / P2] `US-R107-P2-01A`: `PdfCompareTool.compare` calls `pdfDoc.writeTo(FileOutputStream)` without cancellation checks during byte writes. Add cancellation-aware <=64 KiB chunked OutputStream and focused JVM tests; validate exact-SHA draft-PR CI. PR #1 draft/unmerged, main untouched.
