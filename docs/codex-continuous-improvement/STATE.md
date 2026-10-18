@@ -3,23 +3,23 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** 2026-10-18_cycle-120
+**Current report:** 2026-10-18_cycle-121
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 120
-**Current Epic:** `E120` — PDF compare descriptor-open cancellation
-**Current Feature:** `F122` — Preflight before opening either cached PDF descriptor
-**Current User Story:** `US-R120-P2-01A` — Avoid cached PDF descriptor acquisition after cancellation (ACTIVE / INCOMPLETE)
-**Last completed cycle:** Cycle 119
+**Cycle:** 121
+**Current Epic:** `E121` — PDF compare input cache-copy cancellation
+**Current Feature:** `F123` — Preflight before copying each input PDF to cache
+**Current User Story:** `US-R121-P2-01A` — Avoid cached PDF input copy setup after cancellation (ACTIVE / INCOMPLETE)
+**Last completed cycle:** Cycle 120
 **State checkpoint timestamp:** 2026-10-18 UTC
-**Last validated code/test HEAD:** `64967addfc3ebbd56506220899ad5ed0b70dcca9`
-**Current branch HEAD at activation:** 64967addfc3ebbd56506220899ad5ed0b70dcca9
+**Last validated code/test HEAD:** `8977edb8e6a6212eebd3299dc2ab945b8e0c4f74`
+**Current branch HEAD at activation:** 8977edb8e6a6212eebd3299dc2ab945b8e0c4f74
 
 ## Canonical checkpoint
 - Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
 - Cycle 115 E115/F117/US-R115-P2-01A COMPLETE: exact production/test SHA `6be844634382b60203f8c6813b39d95794517ad2` passed authoritative draft-PR Actions #882 / API `39131997093`, job `117688922042`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM groups, debug APK, unsigned release/R8 and Android lint. Eight focused JVM regressions in PdfComparePageSizeCancellationTest cover cancellation, page dimensions, closing, exceptions and left/right sequencing. Documentation-only #883 / API `39134307442` also succeeded at `8945dab4b8521e71b5e284641757ce9f8b9678c0`; it is not the production validation. No emulator, physical device, benchmark or measured latency evidence.
 - Cycle 116 E116/F118/US-R116-P2-01A COMPLETE: exact production/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed authoritative draft-PR Actions #886 / API `39136348187`, job `117701568583`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). New `openCompareRendererWithPreflight` checks cancellation before left/right PdfRenderer construction; eight focused JVM regressions cover no-open cancellation, ordering, two-renderer ownership and original/suppressed exceptions. Supplementary isolated Kotlin host checks 4/4 PASS; these do not establish Android device performance. The paired push #885 was cancelled by concurrency. No emulator/physical-device/OEM/benchmark or measured latency evidence.
 - Cycle 117 E117/F119/US-R117-P2-01A COMPLETE; exact production/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed Actions #889.
-- **Next exact action:** Cycle 120: add cancellation preflight before opening the first and second cached PDF ParcelFileDescriptor, preserving close-on-failure, then add deterministic JVM regressions and validate exact code/test SHA with draft-PR CI. No source mutation before this activation.
+- **Next exact action:** Cycle 121: check cancellation before the first and second URI-to-cache PDF copies, add focused JVM regressions, and validate the exact code/test SHA through draft-PR CI. Do not mutate source before this checkpoint.
 - **PR #1:** open/draft/unmerged; `main` untouched.
 
 ## History preservation
@@ -43,3 +43,7 @@
 ## Cycle 119 authoritative completion / Cycle 120 activation — 2026-10-18 UTC
 - Cycle 119 E119/F121/US-R119-P2-01A COMPLETE: exact production/test SHA `64967addfc3ebbd56506220899ad5ed0b70dcca9` passed authoritative draft-PR Actions #898 / API `39147699102`, job `117734802444`, all nine gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). `createComparePdfDocumentWithPreflight` checks cancellation immediately before constructing output PdfDocument; eight focused JVM regressions cover cancellation, constructor failure, ownership and suppressed cleanup. Paired push #897 cancelled by concurrency and is not validation evidence. No Android device/emulator/OEM/benchmark/peak heap/race-freedom proof.
 - Cycle 120 E120/F122/US-R120-P2-01A ACTIVE / INCOMPLETE before production mutation. Source at `64967addfc3ebbd56506220899ad5ed0b70dcca9`: after URI-to-cache copying, `withOpenedCloseables` calls `ParcelFileDescriptor.open(leftFile, MODE_READ_ONLY)` and then `ParcelFileDescriptor.open(rightFile, MODE_READ_ONLY)` without cancellation preflight. Existing renderer-open checks occur only afterward. Introduce a small pure JVM-testable descriptor-open preflight for both acquisitions; preserve first descriptor close if second preflight/open fails, error identity, staging and normal output. Add focused regressions; require exact-code/test-SHA draft-PR all-nine-gate CI. PR #1 remains draft/unmerged; main unchanged.
+
+## Cycle 120 authoritative completion / Cycle 121 activation — 2026-10-18 UTC
+- Cycle 120 E120/F122/US-R120-P2-01A COMPLETE: exact production/test SHA `8977edb8e6a6212eebd3299dc2ab945b8e0c4f74` passed authoritative draft-PR Actions run `39157338513`, job `117763175051`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM groups (domain, PDF, converter, scanner, PDF tools, app), debug APK, unsigned release/R8, Android lint. `openCompareDescriptorWithPreflight` checks cancellation before both cached ParcelFileDescriptor acquisitions; eight focused JVM regressions cover cancellation, normal ordering, first/second open failures, cleanup ownership and suppression. Initial candidate `2993bb98a8ad77ffcd3c44faf064f4ee04577ac9` failed CI due incorrect test expectation for two sibling suppressed cleanup failures; `8977edb8e6a6212eebd3299dc2ab945b8e0c4f74` corrected the assertion and passed. No emulator, physical-device, OEM, benchmark, measured cancellation latency, peak heap or race-freedom evidence. PR #1 remains draft/unmerged, main untouched.
+- Cycle 121 E121/F123/US-R121-P2-01A ACTIVE / INCOMPLETE before source/test mutation. Source at `8977edb8e6a6212eebd3299dc2ab945b8e0c4f74`: `PdfCompareTool.compare` enters `withUriCopiedToCacheFile` for left and then right input without cancellation preflight immediately before either cache copy. `copyUriToCacheFile` calls `preflightCacheCopy`, creates a temp file and opens the URI before the first chunk-level cancellation check, so cancellation between the left and right copies can still trigger unnecessary second-copy setup. Add a bounded JVM-testable cancellation preflight immediately before each copy, preserve scoped temp-file cleanup, URI behavior and exception identity. Add deterministic JVM regressions, validate exact code/test SHA through draft-PR CI. No Android device or measured latency claim.
