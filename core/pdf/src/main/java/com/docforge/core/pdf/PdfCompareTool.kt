@@ -177,6 +177,15 @@ internal inline fun <T, R> withClosePreservingPrimaryFailure(
     }
 }
 
+/** Avoid acquiring a cached PDF descriptor after comparison cancellation. */
+internal inline fun <T> openCompareDescriptorWithPreflight(
+    checkCancelled: () -> Unit,
+    openDescriptor: () -> T
+): T {
+    checkCancelled()
+    return openDescriptor()
+}
+
 /** Acquire the second resource only while the first is under a close-on-failure scope. */
 internal inline fun <A : java.io.Closeable, B : java.io.Closeable, T> withOpenedCloseables(
     openFirst: () -> A,
@@ -257,8 +266,16 @@ class PdfCompareTool(
         context.withUriCopiedToCacheFile(leftUri, prefix = "docforge_cmp_left_", suffix = ".pdf") { leftFile ->
             context.withUriCopiedToCacheFile(rightUri, prefix = "docforge_cmp_right_", suffix = ".pdf") { rightFile ->
                 withOpenedCloseables(
-                    openFirst = { ParcelFileDescriptor.open(leftFile, ParcelFileDescriptor.MODE_READ_ONLY) },
-                    openSecond = { ParcelFileDescriptor.open(rightFile, ParcelFileDescriptor.MODE_READ_ONLY) }
+                    openFirst = {
+                        openCompareDescriptorWithPreflight(checkCancelled) {
+                            ParcelFileDescriptor.open(leftFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        }
+                    },
+                    openSecond = {
+                        openCompareDescriptorWithPreflight(checkCancelled) {
+                            ParcelFileDescriptor.open(rightFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        }
+                    }
                 ) { lPfd, rPfd ->
                         openCompareRendererWithPreflight(checkCancelled) { PdfRenderer(lPfd) }.use { leftRenderer ->
                             openCompareRendererWithPreflight(checkCancelled) { PdfRenderer(rPfd) }.use { rightRenderer ->
