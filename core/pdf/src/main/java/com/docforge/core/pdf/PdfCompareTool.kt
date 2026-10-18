@@ -288,7 +288,9 @@ class PdfCompareTool(
                                             }
                                         }
 
-                                        FileOutputStream(stagedFile).use { pdfDoc.writeTo(it) }
+                                        FileOutputStream(stagedFile).use { fileStream ->
+                                            pdfDoc.writeTo(CancellationCheckingOutputStream(fileStream, checkCancelled))
+                                        }
                                     }
                                     diffPcts.toList()
                                 }
