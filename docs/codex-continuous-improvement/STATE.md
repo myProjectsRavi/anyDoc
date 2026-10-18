@@ -3,21 +3,21 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** `2026-10-18_cycle-106`
+**Current report:** `2026-10-18_cycle-107`
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 106
-**Current Epic:** `E106` — PDF compare output filename safety
-**Current Feature:** `F108` — Bound sanitized PDF compare filename length
-**Current User Story:** `US-R106-P2-01A` — Handle excessively long output names without changing collision behavior (ACTIVE)
-**Last completed cycle:** Cycle 105
+**Cycle:** 107
+**Current Epic:** `E107` — PDF compare serialization cancellation
+**Current Feature:** `F109` — Cooperative cancellation in staged PDF byte writes
+**Current User Story:** `US-R107-P2-01A` — Bound cancellation latency while writing PDF compare output (ACTIVE)
+**Last completed cycle:** Cycle 106
 **State checkpoint timestamp:** 2026-10-18 UTC
-**Starting HEAD:** `b836e2e0ec17f50db35f8b1e6143715c713269d1`
+**Starting HEAD:** `2e543f66900d81b15365f7f891be0c81e1c4ca74`
 
 ## Canonical checkpoint
-- Cycle 105 `E105/F107/US-R105-P2-01A` COMPLETE: exact code/test SHA `b836e2e0ec17f50db35f8b1e6143715c713269d1` passed authoritative draft-PR Actions #842/API `39090705908`, job `117566684347`, all nine configured gates SUCCESS: domain, PDF, converter, scanner, PDF tools, app JVM, debug APK, unsigned release/R8, Android lint. Six focused host JVM regressions cover 4096-column checkpoints, empty rows, ordinary iteration and cancellation propagation. No Android device/emulator/benchmark or measured latency evidence.
-- Cycle 106 `E106/F108/US-R106-P2-01A` ACTIVE before production/test mutation. Source: `PdfCompareTool.compare` sanitizes `outputName` to ASCII characters without a length bound; `withStagedOutputFile` eventually constructs `baseName.extension` (and numbered collision variants), potentially exceeding per-component filename limits for long user input. This is a source-level reliability/UX concern, not a device-observed failure. First audit existing filename policies and tests; add a conservative ASCII basename limit that reserves suffix/collision space without changing ordinary names, plus focused deterministic JVM tests; validate exact code/test SHA via draft-PR CI.
-- **Next exact action:** audit filename construction and existing tests, implement smallest bounded sanitizer and regression tests, run authoritative exact-SHA CI; reconcile canonical docs only after terminal success.
+- Cycle 106 COMPLETE: exact code/test SHA `3e5f464aff7800dba908c3a746586b89fca32704` passed authoritative draft-PR Actions #845 / API `39093774353`, job `117576728460`, all nine gates SUCCESS. Documentation-only HEAD `2e543f66900d81b15365f7f891be0c81e1c4ca74` passed #846 / API `39095923023`. Six JVM regression tests; no device/emulator evidence.
+- Cycle 107 E107/F109/US-R107-P2-01A ACTIVE before production/test mutation. Source evidence: `PdfCompareTool.compare` calls `pdfDoc.writeTo(FileOutputStream(stagedFile))` with no cancellation checks during byte serialization. Staging guards publication after writer returns, but cancellation may be delayed for large writes. Implement a JVM-testable cancellation-checking OutputStream with <=64 KiB chunks, preserving exact bytes and IO failures. Add focused JVM tests, run exact-SHA draft-PR CI.
+- **Next exact action:** implement cancellation-aware staged PDF output byte writing and regression tests. No unrelated stories before exact-SHA CI and canonical reconciliation.
 - **PR #1:** open/draft/unmerged; main untouched.
 
 ## History preservation
-- Previous Cycle 105 STATE.md at `b836e2e0ec17f50db35f8b1e6143715c713269d1`. Earlier history remains in BACKLOG.md, VALIDATION.md and cycle reports. Original main SHA `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`.
+- Previous Cycle 106 STATE.md at `2e543f66900d81b15365f7f891be0c81e1c4ca74`. History remains in BACKLOG.md, VALIDATION.md and cycle reports. Original main SHA `a2c484b025b1dafb21c9f75bd6e5deb742341f5f`.
