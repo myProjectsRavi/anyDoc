@@ -1,3 +1,0 @@
-stable class StableUriRef {
-  stable val encoded: String
-}

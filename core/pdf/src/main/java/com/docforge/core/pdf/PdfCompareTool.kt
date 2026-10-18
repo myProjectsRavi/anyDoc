@@ -337,7 +337,7 @@ class PdfCompareTool(
         checkCancelled: () -> Unit
     ): Bitmap? {
         if (size == null || pageIndex >= renderer.pageCount) return null
-        renderer.openPage(pageIndex).use { page ->
+        openComparePageWithPreflight(checkCancelled) { renderer.openPage(pageIndex) }.use { page ->
             return renderComparePageWithPreflight(
                 checkCancelled = checkCancelled,
                 allocate = { Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ARGB_8888) },
@@ -448,6 +448,15 @@ internal fun <T, R> withComparePageBitmapCleanup(
     },
     block = { block() }
 )
+
+/** Avoid opening a renderer page after cancellation while retaining the bitmap preflight. */
+internal inline fun <T> openComparePageWithPreflight(
+    checkCancelled: () -> Unit,
+    openPage: () -> T
+): T {
+    checkCancelled()
+    return openPage()
+}
 
 /** Check cancellation immediately before acquiring a rendered-page bitmap.
  * The page owner closes independently; the bitmap is recycled on render failure.
