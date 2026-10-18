@@ -893,3 +893,9 @@ This backlog is ordered by user-data safety, correctness, reliability, performan
 ### Epic E117 — PDF output-page start cancellation
 #### Feature F119 — Preflight immediately before starting an output page
 - [ACTIVE / P2] `US-R117-P2-01A`: after raster diff completes, `PdfCompareTool.compare` computes geometry and invokes `pdfDoc.startPage(pageInfo)` without fresh cancellation preflight. Add minimal JVM-testable preflight, preserve page lifecycle/error handling, bitmap cleanup, staged output and collision behavior, deterministic tests and exact-SHA draft-PR CI. PR #1 draft/unmerged, `main` untouched.
+
+
+## Cycle 117 authoritative validation — 2026-10-18 UTC
+- `E117/F119/US-R117-P2-01A` COMPLETE for the bounded cancellation preflight immediately before starting a diff PDF output page. Exact source/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed draft-PR Actions #889 / API `39137841432`, job `117705942735`, all nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF tools/app JVM, debug APK, unsigned release/R8, Android lint).
+- `PdfCompareTool.kt` calls `startComparePdfPageWithPreflight(checkCancelled)` before `pdfDoc.startPage`; six `PdfCompareOutputPageStartCancellationTest` JVM regressions cover cancellation before start, success ordering, preflight/start errors, cancellation after raster work and between output pages. Scope: source and JVM CI only; no Android emulator, device, OEM, performance or cancellation-latency proof.
+- Keep PR #1 draft/unmerged and main untouched. Next: inspect remaining highest-priority concrete risks and activate the next cycle before any code mutation.
