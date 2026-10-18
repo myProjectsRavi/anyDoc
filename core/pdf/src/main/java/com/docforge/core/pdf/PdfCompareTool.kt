@@ -350,7 +350,7 @@ class PdfCompareTool(
             val totalPixels = Math.multiplyExact(w.toLong(), h.toLong())
     
             forEachDiffRow(h, checkCancelled) { y ->
-                for (x in 0 until w) {
+                forEachDiffColumn(w, checkCancelled) { x ->
                     val lPixel = if (x < left.width && y < left.height) left.getPixel(x, y) else Color.WHITE
                     val rPixel = if (x < right.width && y < right.height) right.getPixel(x, y) else Color.WHITE
     
@@ -436,5 +436,17 @@ internal inline fun forEachDiffRow(
     for (y in 0 until height) {
         checkCancelled()
         block(y)
+    }
+}
+
+/** Keep cancellation responsive even when a single PDF raster row is extremely wide. */
+internal inline fun forEachDiffColumn(
+    width: Int,
+    checkCancelled: () -> Unit,
+    block: (Int) -> Unit
+) {
+    for (x in 0 until width) {
+        if (x % 4096 == 0) checkCancelled()
+        block(x)
     }
 }
