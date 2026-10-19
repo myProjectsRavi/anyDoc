@@ -1,19 +1,19 @@
-# Cycle 138 — Provider metadata interruption and cancellation
+# Cycle 139 — Interrupted provider metadata I/O
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E138/F140/US-R138-P2-01A
-**Activation baseline:** `9a6a936c5f61194bf240ffce4eaac9e47ae7cb16`
-**Last validated production/test SHA:** `9a6a936c5f61194bf240ffce4eaac9e47ae7cb16`, authoritative draft-PR Actions #965 / API `39291026016`, job `118191420770`, nine gates SUCCESS (Cycle 137).
+**Epic / Feature / Story:** E139/F141/US-R139-P2-01A
+**Activation baseline:** `2069608de118b7bb8a47b185d4e798e9c9c1bfc7`
+**Last validated production/test SHA:** `2069608de118b7bb8a47b185d4e798e9c9c1bfc7`, authoritative draft-PR Actions #968 / API `39302617044`, job `118231464639`, nine gates SUCCESS (Cycle 138).
 
 ## Source-backed risk
-`PdfIoUtils.metadataProbeOrNull` rethrows Java `CancellationException` but its generic exception fallback suppresses `InterruptedException` and Android `OperationCanceledException`. A cancelled/interrupted metadata query should not trigger a descriptor fallback or continue copying. This is source-level P2 cancellation correctness, not a reproduced device defect.
+`PdfIoUtils.metadataProbeOrNull` preserves Java `CancellationException`, `InterruptedException` and Android `OperationCanceledException`, but still treats `java.io.InterruptedIOException` as an ordinary metadata failure and falls back. An interrupted provider metadata operation can therefore be obscured, allowing subsequent descriptor probing or cache-copy setup. This is a source-level P2 correctness concern, not a reproduced device defect.
 
 ## Acceptance
-- Preserve interruption and Android provider cancellation without masking original exception identity.
-- Preserve fallback for ordinary query/descriptor failures and known-size behavior.
-- Add focused JVM regressions for interruption and ordinary fallback, and require exact-code/test-SHA nine-gate draft-PR CI.
-- Keep PR #1 draft/unmerged and `main` untouched; no device, emulator or benchmark claims.
+- Verify interrupted-I/O semantics and preserve original `InterruptedIOException` identity when appropriate; do not broaden cancellation handling without source evidence.
+- Keep ordinary `IOException`/security metadata fallback and known-size behavior unchanged.
+- Add focused deterministic core PDF JVM tests for interrupted query/descriptor, descriptor-skip, ordinary fallback, and exception identity.
+- Require exact-code/test-SHA authoritative draft-PR all-nine-gate CI. Keep PR #1 draft/unmerged, `main` unchanged; do not claim Android runtime/OEM/benchmark proof.
 
 ## Next executable step
-Implement minimal metadata-probe exception propagation in `PdfIoUtils.kt`, add deterministic JVM tests, commit only on authorized branch, inspect exact-SHA CI, then synchronize all canonical documents after terminal validation.
+Audit current source and tests; implement only a justified bounded metadata-probe interruption fix, add JVM regressions, validate exact commit via draft-PR CI, then reconcile canonical documents after terminal success.
