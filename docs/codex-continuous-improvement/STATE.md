@@ -3,16 +3,16 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** 2026-10-19_cycle-133
+**Current report:** 2026-10-19_cycle-134
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 133
-**Current Epic:** `E133` — Preserve writer failures during staged cleanup
-**Current Feature:** `F135` — Self-suppression-safe per-stage cleanup
-**Current User Story:** `US-R133-P2-01A` — Preserve writer failure when owned-stage cleanup throws same Throwable (ACTIVE / INCOMPLETE)
-**Last completed cycle:** Cycle 132
+**Cycle:** 134
+**Current Epic:** `E134` — Preserve prepared-stage cleanup failure evidence
+**Current Feature:** `F136` — Prepared-stage cleanup exception ownership
+**Current User Story:** `US-R134-P2-01A` — Preserve earlier-stage cleanup failure evidence (ACTIVE / INCOMPLETE)
+**Last completed cycle:** Cycle 133
 **State checkpoint timestamp:** 2026-10-19 UTC
-**Last validated code/test HEAD:** `826cc7c813ead8fd0674392a1aac65e9f5a22821`
-**Current branch HEAD at activation:** 826cc7c813ead8fd0674392a1aac65e9f5a22821
+**Last validated code/test HEAD:** `d5a15b024809faf4abd09e6687de6ba7cb5b6fd9`
+**Current branch HEAD at activation:** d5a15b024809faf4abd09e6687de6ba7cb5b6fd9
 
 ## Canonical checkpoint
 - Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
@@ -99,3 +99,8 @@
 ## Cycle 132 authoritative completion / Cycle 133 activation — 2026-10-19 UTC
 - Cycle 132 E132/F134/US-R132-P2-01A COMPLETE: exact production/test SHA `826cc7c813ead8fd0674392a1aac65e9f5a22821` passed authoritative draft-PR GitHub Actions #949 / API `39233506367`, job `117997004291`, on 2026-10-19 UTC. All nine configured gates SUCCESS: six JVM unit-test groups, debug APK, unsigned release/R8, and Android lint. `PdfIoUtils.kt` guards both staged publication rollback suppression sites against attaching the primary Throwable to itself; five focused JVM regressions in `PdfStagedRollbackSelfSuppressionTest.kt` cover same/different exceptions, rollback, and successful publication. Paired push #948 was cancelled by concurrency and is not a failing gate. No emulator, physical device, benchmark, latency, or race-freedom evidence. PR #1 remains draft/unmerged; main unchanged.
 - Cycle 133 E133/F135/US-R133-P2-01A ACTIVE / INCOMPLETE before production mutation. Source-backed P2: `PdfIoUtils.withStagedOutputFilesUsingIdentityReaders` catches writer/identity errors around lines 424-454, and its per-stage cleanup still uses `.exceptionOrNull()?.let(t::addSuppressed)` without an identity guard. If a request writer throws a Throwable and the injected `readAndroidIdentity` cleanup callback throws that same instance, Java self-suppression raises `IllegalArgumentException` and masks the writer failure. Reuse `addSuppressedUnlessSame` at this remaining cleanup site, add deterministic core PDF JVM regressions for same Throwable identity, distinct suppressed cleanup error, successful owned-temp cleanup and normal publication. Preserve fail-closed cleanup and output ownership. Require exact code/test SHA through draft-PR all-nine-gate CI; no device or performance claims.
+
+
+## Cycle 133 authoritative completion / Cycle 134 activation — 2026-10-19 UTC
+- Cycle 133 E133/F135/US-R133-P2-01A COMPLETE: exact production/test SHA `d5a15b024809faf4abd09e6687de6ba7cb5b6fd9` passed authoritative draft-PR Actions #952 / API `39237737247`, job `118010917722`, completed SUCCESS on 2026-10-19 UTC across all nine configured gates (six JVM groups, debug APK, unsigned release/R8, Android lint). `PdfIoUtils.kt` now uses `addSuppressedUnlessSame` in the per-stage writer cleanup handler; five focused host JVM tests in `PdfStagedWriterCleanupSelfSuppressionTest.kt` cover same-Throwable preservation, distinct suppression, owned-stage cleanup, successful publication and writer sequencing. Scope is host JVM/build/lint only; no Android device/emulator, visual, benchmark, peak-heap or race-freedom proof. PR #1 remains draft/unmerged; main unchanged.
+- Cycle 134 E134/F136/US-R134-P2-01A ACTIVE / INCOMPLETE before source mutation. In `PdfIoUtils.withStagedOutputFilesUsingIdentityReaders`, the outer `finally` loop over `prepared` uses `runCatching { deleteOwnedStagedEntry(...) }` and discards its exception. When an earlier stage is prepared and a later writer fails, a cleanup identity-reader exception for that earlier stage is silently lost rather than attached to the primary writer failure. This obscures evidence of an unremoved staging file; an identity mismatch must still fail closed without deleting unrelated entries. Audit the exact failure/cleanup ordering and add deterministic JVM regressions before changing behavior. Source-level P2 diagnostics and cleanup correctness risk, not a measured Android defect. Next: audit source and tests, implement bounded correction, require exact-code/test-SHA CI; no device claims.
