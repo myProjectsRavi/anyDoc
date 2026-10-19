@@ -51,10 +51,14 @@ internal suspend fun pageCountOrZero(readPageCount: suspend () -> Int): Int {
         throw interrupted
     } catch (interrupted: java.io.InterruptedIOException) {
         // Timeouts are recoverable preview failures, not proof of interruption.
-        if (interrupted is java.net.SocketTimeoutException) 0 else throw interrupted
+        if (interrupted is java.net.SocketTimeoutException) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            0
+        } else throw interrupted
     } catch (interrupted: java.nio.channels.ClosedByInterruptException) {
         throw interrupted
     } catch (_: Exception) {
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
         0
     }
 }

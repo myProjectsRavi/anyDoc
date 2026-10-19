@@ -112,6 +112,40 @@ class PdfCompressorPageCountCancellationTest {
         assertEquals(0, pageCountOrZero { throw AsynchronousCloseException() })
     }
 
+    @Test fun cancelledCoroutineWithRecoverableIoFailureDoesNotReturnZero() = runBlocking {
+        var cancellationObserved = false
+        val worker = launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                pageCountOrZero {
+                    coroutineContext.cancel()
+                    throw IOException("provider failed during cancellation")
+                }
+                fail("Expected cancellation, not a zero-page hint")
+            } catch (_: CancellationException) {
+                cancellationObserved = true
+            }
+        }
+        worker.join()
+        assertTrue(cancellationObserved)
+    }
+
+    @Test fun cancelledCoroutineWithSocketTimeoutDoesNotReturnZero() = runBlocking {
+        var cancellationObserved = false
+        val worker = launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                pageCountOrZero {
+                    coroutineContext.cancel()
+                    throw SocketTimeoutException("provider timed out during cancellation")
+                }
+                fail("Expected cancellation, not a zero-page hint")
+            } catch (_: CancellationException) {
+                cancellationObserved = true
+            }
+        }
+        worker.join()
+        assertTrue(cancellationObserved)
+    }
+
     @Test fun fatalErrorIsNotSilenced() = runBlocking {
         val original = LinkageError("runtime failure")
         try {
