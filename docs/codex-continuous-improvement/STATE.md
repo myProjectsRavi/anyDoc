@@ -3,23 +3,23 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** 2026-10-19_cycle-137
+**Current report:** 2026-10-19_cycle-138
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 137
-**Current Epic:** `E137` — Respect cancellation after cache-copy resource closure
-**Current Feature:** `F139` — Final cache-copy completion preflight
-**Current User Story:** `US-R137-P2-01A` — Recheck cancellation before returning copied cache file (ACTIVE / INCOMPLETE)
-**Last completed cycle:** Cycle 136
+**Cycle:** 138
+**Current Epic:** `E138` — Preserve provider metadata interruption and cancellation
+**Current Feature:** `F140` — Fail-fast metadata-probe cancellation propagation
+**Current User Story:** `US-R138-P2-01A` — Propagate interrupted/Android-cancelled metadata probes (ACTIVE / INCOMPLETE)
+**Last completed cycle:** Cycle 137
 **State checkpoint timestamp:** 2026-10-19 UTC
-**Last validated code/test HEAD:** `acb2c57c0a7756fe3292a51915a9c8707dc0cefe`
-**Current branch HEAD at activation:** acb2c57c0a7756fe3292a51915a9c8707dc0cefe
+**Last validated code/test HEAD:** `9a6a936c5f61194bf240ffce4eaac9e47ae7cb16`
+**Current branch HEAD at activation:** 9a6a936c5f61194bf240ffce4eaac9e47ae7cb16
 
 ## Canonical checkpoint
 - Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
 - Cycle 115 E115/F117/US-R115-P2-01A COMPLETE: exact production/test SHA `6be844634382b60203f8c6813b39d95794517ad2` passed authoritative draft-PR Actions #882 / API `39131997093`, job `117688922042`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM groups, debug APK, unsigned release/R8 and Android lint. Eight focused JVM regressions in PdfComparePageSizeCancellationTest cover cancellation, page dimensions, closing, exceptions and left/right sequencing. Documentation-only #883 / API `39134307442` also succeeded at `8945dab4b8521e71b5e284641757ce9f8b9678c0`; it is not the production validation. No emulator, physical device, benchmark or measured latency evidence.
 - Cycle 116 E116/F118/US-R116-P2-01A COMPLETE: exact production/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed authoritative draft-PR Actions #886 / API `39136348187`, job `117701568583`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). New `openCompareRendererWithPreflight` checks cancellation before left/right PdfRenderer construction; eight focused JVM regressions cover no-open cancellation, ordering, two-renderer ownership and original/suppressed exceptions. Supplementary isolated Kotlin host checks 4/4 PASS; these do not establish Android device performance. The paired push #885 was cancelled by concurrency. No emulator/physical-device/OEM/benchmark or measured latency evidence.
 - Cycle 117 E117/F119/US-R117-P2-01A COMPLETE; exact production/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed Actions #889.
-- **Next exact action:** Cycle 137: implement final registered-scope cancellation preflight after cache-copy stream closure, add focused JVM regression tests, and require exact-code/test-SHA draft-PR nine-gate CI.
+- **Next exact action:** Cycle 138: preserve provider metadata interruption/Android cancellation, add focused JVM tests, and require exact-code/test-SHA draft-PR nine-gate CI.
 - **PR #1:** open/draft/unmerged; `main` untouched.
 
 ## History preservation
@@ -119,3 +119,7 @@
 ## Cycle 136 authoritative completion / Cycle 137 activation — 2026-10-19 UTC
 - Cycle 136 E136/F138/US-R136-P2-01A COMPLETE: exact production/test SHA `acb2c57c0a7756fe3292a51915a9c8707dc0cefe` passed authoritative draft-PR Actions #962 / API `39273664657`, job `118133050266`, on 2026-10-19 UTC. All nine configured gates SUCCESS (six JVM test groups, debug APK, unsigned release/R8, Android lint). `PdfIoUtils.kt` now checks cancellation after cache input-channel acquisition inside channel ownership; seven core PDF JVM regressions in `PdfCacheCopyPostChannelCancellationTest.kt` cover cancellation/close, other-owner preservation, unchanged bytes, output failure, channel-close failure and suppressed cleanup. Paired push #961 cancelled by concurrency, not acceptance evidence. No emulator, physical device, OEM, benchmark, measured latency, peak heap or race-freedom proof. PR #1 remains draft/unmerged; main untouched.
 - Cycle 137 E137/F139/US-R137-P2-01A ACTIVE / INCOMPLETE before production/test mutation. Source at `acb2c57c0a7756fe3292a51915a9c8707dc0cefe`: `Context.copyUriToCacheFile` completes the channel copy and closes its input/output resources, then returns `tempFile` from the registered-copy ownership callback without a final coroutine cancellation preflight. If cancellation arrives during final channel or provider-stream closure, the callback can report success and `withRegisteredCacheCopy(keepRegistered=false)` unregisters without deleting the partial/cancelled temp file. Add a small testable completion preflight INSIDE registered ownership immediately before returning `tempFile`; preserve original exceptions, file bytes, keepRegistered behavior and cleanup of cancelled copies. Add focused deterministic core PDF JVM tests, then require exact-code/test-SHA nine-gate draft-PR CI. This is a source-level P2 cancellation/temporary-file-lifecycle risk, not a reproduced device defect.
+
+## Cycle 137 authoritative completion / Cycle 138 activation — 2026-10-19 UTC
+- Cycle 137 E137/F139/US-R137-P2-01A COMPLETE: exact production/test SHA `9a6a936c5f61194bf240ffce4eaac9e47ae7cb16` passed authoritative draft-PR Actions #965 / API `39291026016`, job `118191420770`, on 2026-10-19 UTC. All nine configured gates SUCCESS: six JVM groups, debug APK, unsigned release/R8, Android lint. `PdfIoUtils.kt` now checks cancellation after cache-copy stream/channel closure while the temp file remains registered; nine focused JVM regressions in `PdfCacheCopyCompletionCancellationTest.kt` cover provider/channel-close cancellation, temp ownership, successful bytes, retained leases and original exception preservation. Push #964 / API `39291016815` was cancelled by concurrency, not acceptance. No emulator, physical device, benchmark, measured latency, peak heap or race-freedom evidence. PR #1 stays draft/unmerged, main untouched.
+- Cycle 138 E138/F140/US-R138-P2-01A ACTIVE / INCOMPLETE before production/test mutation. Source at `9a6a936c5f61194bf240ffce4eaac9e47ae7cb16`: `metadataProbeOrNull` in `PdfIoUtils.kt` rethrows `java.util.concurrent.CancellationException`, but its broad `catch (Exception)` silently converts `InterruptedException` and Android `android.os.OperationCanceledException` into optional-metadata fallback. This can ignore a provider's interruption/cancellation, proceed to descriptor lookup or cache-copy setup, and lose the original failure. Preserve these cancellation/interruption signals while retaining ordinary metadata fallback; add deterministic JVM tests for interruption on query/descriptor and normal fallback, and require exact-SHA draft-PR nine-gate CI. This is a source-level P2 correctness concern, not a reproduced device crash.
