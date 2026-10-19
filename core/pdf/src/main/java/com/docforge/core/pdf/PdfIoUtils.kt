@@ -20,7 +20,16 @@ internal const val FILE_CHANNEL_COPY_CHUNK_BYTES = 8L * 1024L * 1024L
 
 internal suspend fun copyChunkWithCancellation(copyChunk: () -> Long): Long {
     currentCoroutineContext().ensureActive()
-    return copyChunk()
+    val transferred = copyChunk()
+    currentCoroutineContext().ensureActive()
+    return transferred
+}
+
+internal suspend fun <T> withCacheCopySpaceCheck(checkSpace: () -> T): T {
+    currentCoroutineContext().ensureActive()
+    val result = checkSpace()
+    currentCoroutineContext().ensureActive()
+    return result
 }
 internal const val CACHE_COPY_FREE_SPACE_RESERVE_BYTES = 32L * 1024L * 1024L
 internal const val CACHE_COPY_SPACE_MULTIPLIER = 2L
@@ -55,7 +64,9 @@ internal suspend fun Context.copyUriToCacheFile(
                 FileOutputStream(tempFile).channel.use { targetChannel ->
                     var position = 0L
                     while (true) {
-                        require(canStartUnknownSizeCacheCopy(StatFs(cacheDir.absolutePath).availableBytes)) {
+                        require(withCacheCopySpaceCheck {
+                            canStartUnknownSizeCacheCopy(StatFs(cacheDir.absolutePath).availableBytes)
+                        }) {
                             "Not enough temporary storage to safely continue copying this file."
                         }
                         val transferred = copyChunkWithCancellation {
@@ -67,7 +78,9 @@ internal suspend fun Context.copyUriToCacheFile(
                         }
                         if (transferred <= 0L) break
                         position += transferred
-                        require(canContinueUnknownSizeCacheCopy(StatFs(cacheDir.absolutePath).availableBytes))
+                        require(withCacheCopySpaceCheck {
+                            canContinueUnknownSizeCacheCopy(StatFs(cacheDir.absolutePath).availableBytes)
+                        })
                     }
                 }
             }
