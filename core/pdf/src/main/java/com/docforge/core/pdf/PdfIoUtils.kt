@@ -449,7 +449,7 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
                 )
             } catch (t: Throwable) {
                 runCatching { deleteOwnedStagedEntry(stagedFile, stagedFileKey, stagedAndroidIdentity, readAndroidIdentity) }
-                    .exceptionOrNull()?.let(t::addSuppressed)
+                    .exceptionOrNull()?.let { addSuppressedUnlessSame(t, it) }
                 throw t
             }
         }
