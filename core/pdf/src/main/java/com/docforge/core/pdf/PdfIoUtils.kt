@@ -374,6 +374,14 @@ suspend fun <T> withStagedOutputFiles(
     directory, requests, ::readNioStagedFileKey, ::readAndroidStagedIdentity
 )
 
+/** Check cancellation before and after each final staged-file validation. */
+internal suspend fun <T> withStagedValidationPreflight(validate: () -> T): T {
+    currentCoroutineContext().ensureActive()
+    val result = validate()
+    currentCoroutineContext().ensureActive()
+    return result
+}
+
 /** JVM injection seam for simulating providers without NIO file keys. */
 internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
     directory: File,
@@ -431,8 +439,10 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
 
         currentCoroutineContext().ensureActive()
         prepared.forEach {
-            requireRegularStagedOutput(it.stagedFile)
-            requireOriginalStagedIdentity(it.stagedFile, it.stagedFileKey, it.stagedAndroidIdentity, readAndroidIdentity)
+            withStagedValidationPreflight {
+                requireRegularStagedOutput(it.stagedFile)
+                requireOriginalStagedIdentity(it.stagedFile, it.stagedFileKey, it.stagedAndroidIdentity, readAndroidIdentity)
+            }
         }
         val published = mutableListOf<PublishedStagedOutput>()
         try {
