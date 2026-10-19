@@ -1,20 +1,20 @@
-# Cycle 124 — Shared staged-output setup cancellation
+# Cycle 125 — Staged-writer cancellation precedence
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E124 / F126 / US-R124-P2-01A
-**Activation baseline:** `f853ab1672e0f9002ac2962c8d9648defecdb7a2`
-**Last validated production/test SHA:** `f853ab1672e0f9002ac2962c8d9648defecdb7a2` (Cycle 123, authoritative draft-PR Actions #913 / API `39172488960`, job `117808338166`, all nine configured gates SUCCESS).
+**Epic / Feature / Story:** E125 / F127 / US-R125-P2-01A
+**Activation baseline:** `7d3a735e8547c3abb9d458bebcb78c37d74afbb0`
+**Last validated production/test SHA:** `7d3a735e8547c3abb9d458bebcb78c37d74afbb0` (Cycle 124, draft-PR Actions #916 / API `39177197162`, job `117822197047`, nine gates SUCCESS).
 
 ## Source evidence
-At `f853ab1672e0f9002ac2962c8d9648defecdb7a2`, `PdfIoUtils.withStagedOutputFilesUsingIdentityReaders` calls `validateOutputName`, `requireNonSymlinkOutputDirectory`, and `directory.exists() || directory.mkdirs()` before the first `currentCoroutineContext().ensureActive()` inside the request loop. Other callers of the shared staging helper are not protected by the new Cycle 123 compare-specific preflight. A cancelled coroutine may still trigger avoidable directory validation or creation, including with empty requests. Source-level P2 responsiveness risk only.
+Cycle 125 E125/F127/US-R125-P2-01A ACTIVE / INCOMPLETE before production/test mutation. Source at `7d3a735e8547c3abb9d458bebcb78c37d74afbb0`: `PdfIoUtils.withStagedOutputFilesUsingIdentityReaders` calls `request.block(stagedFile)` then immediately performs `requireRegularStagedOutput` and `requireOriginalStagedIdentity` without a cancellation preflight. If a writer cancels its coroutine but returns after removing/replacing the staged file, filesystem validation can throw a different exception before the later `ensureActive()` check, obscuring cancellation and performing avoidable I/O. Add `currentCoroutineContext().ensureActive()` immediately after the writer returns, preserving cleanup and exception identity. Add deterministic core PDF JVM regressions for cancelled writer with missing staged file, ordinary cancellation, normal output and original writer exceptions; require exact-SHA draft-PR CI. This is a source-level P2 correctness/responsiveness concern, not a reproduced device crash.
 
 ## Acceptance
-- Check coroutine cancellation at shared staging entry before output-directory filesystem validation/creation, including empty requests.
-- Preserve successful output naming, symlink protection, staged ownership-aware cleanup, collision/no-overwrite and exception identity.
-- Add focused deterministic core PDF JVM tests for cancelled no-directory-creation, normal staging, errors and repeated invocations, without weakening existing tests.
-- Validate the exact production/test SHA with all nine draft-PR CI gates before canonical completion.
-- Do not claim emulator, physical-device, OEM, benchmark, peak-heap, measured latency or race-freedom evidence.
+- Check cancellation immediately after the staging writer returns, before regular-file and identity validation.
+- A writer that cancels and removes its staging file must surface cancellation rather than a staged-file validation error.
+- Preserve ordinary successful staging, output collisions, symlink checks, identity ownership and cleanup; preserve original writer errors.
+- Add focused deterministic core PDF JVM tests and obtain authoritative exact-code/test-SHA draft-PR CI (all nine configured gates).
+- Do not claim emulator, device, benchmark or race-freedom evidence.
 
 ## Next executable step
-Audit existing staging-helper tests and implement the smallest safe shared-entry cancellation preflight on `codex/anydoc-continuous-improvement` only. Add targeted regressions, inspect exact-HEAD draft-PR CI and reconcile all canonical documents only after authoritative terminal success. Keep PR #1 draft/unmerged and main unchanged.
+Implement one cancellation preflight after `request.block(stagedFile)` in PdfIoUtils, add focused tests, review the diff, run exact-SHA PR CI, and reconcile canonical documents after terminal validation. Keep PR #1 draft/unmerged and main untouched.
