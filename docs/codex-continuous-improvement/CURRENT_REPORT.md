@@ -1,23 +1,20 @@
-# Cycle 143 — Preserve cancellation before compression serialization
+# Cycle 144 — Cancellation before compression output-directory resolution
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E143/F145/US-R143-P2-01A
-**Activation baseline:** `dfcfa4e6400a0b01b8efb83c7685413bbcd1f32a`
-**Last validated code/test SHA:** `dfcfa4e6400a0b01b8efb83c7685413bbcd1f32a`, authoritative draft-PR Actions #981 / API `39331493841`, job `118330932885`, all nine configured gates SUCCESS (Cycle 142).
+**Epic / Feature / Story:** E144/F146/US-R144-P2-01A
+**Activation baseline:** `10fef67dc697a0046dce0fe5d628a8dc9c55e39f`
+**Last validated code/test SHA:** `10fef67dc697a0046dce0fe5d628a8dc9c55e39f`, authoritative draft-PR Actions #984 / API `39335370125`, job `118343523855`, all nine configured gates SUCCESS (Cycle 143).
 
 ## Source-backed risk
-At `dfcfa4e6400a0b01b8efb83c7685413bbcd1f32a`, `PdfCompressor.compressWithJpegRasterization` calls `onProgress` after each page and immediately calls `outDoc.save(outputFile)` after the final callback without another cancellation check. A callback cancelling the Job on the final page can therefore cause unnecessary PDF serialization before scoped staging cleanup. This is a P2 source-level responsiveness concern, not a reproduced crash.
+At exact validated SHA `10fef67dc697a0046dce0fe5d628a8dc9c55e39f`, `PdfCompressor.compress` invokes `PdfBoxInit.ensure(context)` and then `DocForgeSettingsStore.resolveOutputDirectory` without a fresh cancellation preflight between them. If initialization cancels the coroutine (or cancellation occurs during it), output-directory resolution may still access preferences or create directories before the later staging/copy checks. This is a source-backed P2 responsiveness/side-effect concern, not a reproduced device failure.
 
 ## Acceptance
-- Check cancellation immediately before `outDoc.save(outputFile)`, including after final-page progress callback.
-- Preserve successful output, exception identity and staged-file cleanup semantics.
-- Add deterministic core PDF JVM tests for cancellation, ordering, save failure identity and successful save.
-- Validate exact source/test SHA via draft-PR nine-gate CI; do not claim device/emulator/benchmark evidence.
-- Keep PR #1 draft/unmerged; never modify main.
+- Recheck coroutine cancellation immediately after `PdfBoxInit.ensure(context)` and before `DocForgeSettingsStore.resolveOutputDirectory`.
+- Introduce only the smallest JVM-testable preflight seam; preserve settings resolution, invalid output names, symlink protections, staging/collision/no-overwrite, output bytes and exception identity.
+- Add deterministic core PDF JVM tests for cancellation after initialization skipping directory resolution, normal ordering/result, preflight failure identity, directory-resolution failure identity, and repeated success.
+- Require authoritative exact-code/test-SHA draft-PR CI with all nine configured gates before closing Cycle 144.
+- Keep PR #1 draft/unmerged and main unchanged. Host JVM tests do not prove device/OEM behavior, benchmark, peak heap or race freedom.
 
 ## Next executable step
-Introduce a minimal JVM-testable save preflight in `PdfCompressor.kt`, add focused tests, publish only on `codex/anydoc-continuous-improvement`, inspect exact candidate CI, and reconcile canonical documents after terminal validation.
-
-## Validation
-No Cycle 143 source/test candidate exists at activation. Cycle 142 code/test SHA `dfcfa4e6400a0b01b8efb83c7685413bbcd1f32a` passed CI #981.
+Freshly inspect `PdfCompressor.kt`, `DocForgeSettingsStore.resolveOutputDirectory` and existing compressor JVM tests; implement bounded post-init pre-directory cancellation preflight on `codex/anydoc-continuous-improvement`, commit source and focused tests via non-force expected-SHA CAS, then inspect exact-code/test-SHA authoritative draft-PR CI.
