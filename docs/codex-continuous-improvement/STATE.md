@@ -3,23 +3,23 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** 2026-10-19_cycle-131
+**Current report:** 2026-10-19_cycle-132
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 131
-**Current Epic:** `E131` — Preserve provider metadata cancellation
-**Current Feature:** `F133` — Cancellation-safe URI metadata fallback
-**Current User Story:** `US-R131-P2-01A` — Preserve provider metadata CancellationException without suppressing ordinary fallback (ACTIVE / INCOMPLETE)
-**Last completed cycle:** Cycle 130
+**Cycle:** 132
+**Current Epic:** `E132` — Preserve primary errors during staged rollback
+**Current Feature:** `F134` — Self-suppression-safe staged publication cleanup
+**Current User Story:** `US-R132-P2-01A` — Preserve primary staged publication failure when rollback throws same Throwable (ACTIVE / INCOMPLETE)
+**Last completed cycle:** Cycle 131
 **State checkpoint timestamp:** 2026-10-19 UTC
-**Last validated code/test HEAD:** `1b8c660f264249a9f0db505103b15c36be9fae5a`
-**Current branch HEAD at activation:** 1b8c660f264249a9f0db505103b15c36be9fae5a
+**Last validated code/test HEAD:** `ea5e30e3fe4b99daf6ba043431e3db7dfb38cc0e`
+**Current branch HEAD at activation:** ea5e30e3fe4b99daf6ba043431e3db7dfb38cc0e
 
 ## Canonical checkpoint
 - Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
 - Cycle 115 E115/F117/US-R115-P2-01A COMPLETE: exact production/test SHA `6be844634382b60203f8c6813b39d95794517ad2` passed authoritative draft-PR Actions #882 / API `39131997093`, job `117688922042`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM groups, debug APK, unsigned release/R8 and Android lint. Eight focused JVM regressions in PdfComparePageSizeCancellationTest cover cancellation, page dimensions, closing, exceptions and left/right sequencing. Documentation-only #883 / API `39134307442` also succeeded at `8945dab4b8521e71b5e284641757ce9f8b9678c0`; it is not the production validation. No emulator, physical device, benchmark or measured latency evidence.
 - Cycle 116 E116/F118/US-R116-P2-01A COMPLETE: exact production/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed authoritative draft-PR Actions #886 / API `39136348187`, job `117701568583`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). New `openCompareRendererWithPreflight` checks cancellation before left/right PdfRenderer construction; eight focused JVM regressions cover no-open cancellation, ordering, two-renderer ownership and original/suppressed exceptions. Supplementary isolated Kotlin host checks 4/4 PASS; these do not establish Android device performance. The paired push #885 was cancelled by concurrency. No emulator/physical-device/OEM/benchmark or measured latency evidence.
 - Cycle 117 E117/F119/US-R117-P2-01A COMPLETE; exact production/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed Actions #889.
-- **Next exact action:** Cycle 131: preserve cancellation exceptions from URI size metadata query/descriptor probes without breaking ordinary failure fallback; focused JVM tests and exact-SHA CI.
+- **Next exact action:** Cycle 132: reproduce staged rollback self-suppression using injected Android identity reader, preserve primary Throwable identity, add deterministic JVM regression, then exact-SHA draft-PR CI.
 - **PR #1:** open/draft/unmerged; `main` untouched.
 
 ## History preservation
@@ -89,3 +89,8 @@
 ## Cycle 130 authoritative completion / Cycle 131 activation — 2026-10-19 UTC
 - Cycle 130 E130/F132/US-R130-P2-01A COMPLETE: exact production/test SHA `1b8c660f264249a9f0db505103b15c36be9fae5a` passed authoritative draft-PR Actions #942 / API `39218339422`, job `117947505058`, on 2026-10-19 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Commits `a3cc350`, `98a04ea`, `1b8c660` add cancellation preflight inside registered temp ownership, use it before provider open, and add three core PDF JVM regressions. No emulator/device/OEM/benchmark/latency/race-freedom proof. PR #1 remains draft/unmerged; main unchanged.
 - Cycle 131 E131/F133/US-R131-P2-01A ACTIVE / INCOMPLETE. Source at `1b8c660f264249a9f0db505103b15c36be9fae5a`: `queryKnownInputSize` uses `runCatching { contentResolver.query(...) }.getOrNull()` and the same pattern for `openAssetFileDescriptor`. Both swallow `CancellationException` from provider metadata access and may continue fallback work while cancellation is signaled by a provider even if the coroutine job is still active. Preserve cancellation identity while retaining ordinary metadata-probe fallback; add focused core PDF JVM tests and exact-code/test-SHA draft-PR CI. Do not modify main or merge PR #1.
+
+
+## Cycle 131 authoritative completion / Cycle 132 activation — 2026-10-19 UTC
+- Cycle 131 E131/F133/US-R131-P2-01A COMPLETE: exact production/test SHA `ea5e30e3fe4b99daf6ba043431e3db7dfb38cc0e` passed authoritative draft-PR Actions #946 / API `39231141696`, job `117989118935`, on 2026-10-19 UTC. All nine configured gates SUCCESS (six JVM test groups, debug APK, unsigned release/R8, Android lint). `PdfIoUtils.kt` now preserves provider-thrown `CancellationException` during URI query/descriptor metadata probes while retaining ordinary failure fallback; eight focused JVM regressions in `PdfCacheMetadataCancellationTest.kt`. An isolated Kotlin smoke harness also passed 8/8 but is not Android CI. Paired push #945 was cancelled by concurrency and is not authoritative validation. No emulator, physical device, OEM, benchmark, measured latency or race-freedom proof. PR #1 remains draft/unmerged; main untouched.
+- Cycle 132 E132/F134/US-R132-P2-01A ACTIVE / INCOMPLETE before any source/test mutation. Source at `ea5e30e3fe4b99daf6ba043431e3db7dfb38cc0e`: `publishCheckedStagedOutput` catches a post-move publication validation failure, then invokes `rollbackPublishedOutputIfUnchanged` through `runCatching` and calls `failure.addSuppressed(rollbackFailure)` without checking whether the rollback failure is the exact same Throwable instance as the original failure. A deterministic injected `readAndroidIdentity` callback could throw that same instance twice; Java self-suppression then raises `IllegalArgumentException`, obscuring the primary publication failure. First reproduce this narrowly in a JVM regression using injected identity readers, then guard self-suppression without changing rollback ownership, fail-closed identity checks, normal publication, or error identity. Require exact-source/test-SHA draft-PR all-nine-gate CI. This is a source-level P2 edge case, not a reproduced Android device defect.

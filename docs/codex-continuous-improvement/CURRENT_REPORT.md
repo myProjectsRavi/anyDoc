@@ -1,18 +1,18 @@
-# Cycle 131 — Preserve provider metadata cancellation
+# Cycle 132 — Preserve primary errors during staged rollback
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E131/F133/US-R131-P2-01A
-**Activation baseline:** `1b8c660f264249a9f0db505103b15c36be9fae5a`
-**Last validated production/test SHA:** `1b8c660f264249a9f0db505103b15c36be9fae5a`, draft-PR Actions #942 / API `39218339422`, job `117947505058`, SUCCESS all nine gates (Cycle 130).
+**Epic / Feature / Story:** E132/F134/US-R132-P2-01A
+**Activation baseline:** `ea5e30e3fe4b99daf6ba043431e3db7dfb38cc0e`
+**Last validated production/test SHA:** `ea5e30e3fe4b99daf6ba043431e3db7dfb38cc0e`, draft-PR Actions #946 / API `39231141696`, job `117989118935`, SUCCESS all nine gates (Cycle 131).
 
 ## Source-backed risk
-`Context.queryKnownInputSize` currently uses `runCatching` for ContentResolver query and descriptor metadata probes. This catches `CancellationException` and converts it to null, potentially masking a provider cancellation and triggering fallback work. The enclosing coroutine's `ensureActive` does not guarantee detecting a provider-thrown cancellation when the job itself is still active.
+`publishCheckedStagedOutput` invokes rollback in a `runCatching` catch handler, then attaches its exception using `failure.addSuppressed`. When an injected identity reader throws the exact same Throwable during publication validation and rollback, self-suppression throws `IllegalArgumentException` and masks the primary failure. Source-level P2 edge case, not an observed Android crash.
 
 ## Acceptance
-- Preserve the exact `CancellationException` thrown by either metadata probe and skip subsequent probes.
-- Ordinary provider query failures still fall back to asset descriptor; successful sizes and unknown-size behavior unchanged.
-- Focused deterministic JVM regressions and authoritative exact-code/test-SHA draft-PR nine-gate CI.
+- Reproduce same-Throwable failure via injected identity reader in a focused JVM test; original exception identity survives.
+- Preserve normal rollback, staged-file ownership, existing identity guards, exception suppression for distinct failures, and successful publication.
+- Obtain authoritative exact-source/test-SHA draft-PR nine-gate CI; no Android device or performance claims.
 
 ## Next executable step
-Implement the smallest JVM-testable metadata probe helper that rethrows cancellation and returns null for ordinary recoverable exceptions; use it in both `queryKnownInputSize` probes, add regression tests, review diff and validate exact SHA. Keep PR #1 draft/unmerged; never modify main. No Android device/benchmark claims.
+Inspect `publishCheckedStagedOutput` and related JVM tests; add a narrow guard before `addSuppressed`, with focused regressions for same and distinct Throwable objects. Do not modify main or merge PR #1.
