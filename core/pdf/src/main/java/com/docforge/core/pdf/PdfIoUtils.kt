@@ -165,6 +165,8 @@ internal inline fun <T> metadataProbeOrNull(probe: () -> T): T? = try {
 } catch (interrupted: java.io.InterruptedIOException) {
     // A socket timeout is an optional metadata failure, not proof of cancellation.
     if (interrupted is java.net.SocketTimeoutException) null else throw interrupted
+} catch (interrupted: java.nio.channels.ClosedByInterruptException) {
+    throw interrupted
 } catch (_: Exception) {
     null
 }

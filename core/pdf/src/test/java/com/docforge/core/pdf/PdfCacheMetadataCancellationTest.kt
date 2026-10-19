@@ -108,6 +108,55 @@ class PdfCacheMetadataCancellationTest {
         }
     }
 
+    @Test fun closedByInterruptQueryPropagatesWithoutDescriptorFallback() {
+        val interrupted = java.nio.channels.ClosedByInterruptException()
+        var descriptorCalled = false
+        try {
+            knownInputSizeFromProbes(
+                querySize = { throw interrupted },
+                descriptorSize = { descriptorCalled = true; 42L }
+            )
+            fail("Expected interrupted channel")
+        } catch (actual: java.nio.channels.ClosedByInterruptException) {
+            assertSame(interrupted, actual)
+        }
+        assertFalse(descriptorCalled)
+    }
+
+    @Test fun closedByInterruptDescriptorPreservesOriginalException() {
+        val interrupted = java.nio.channels.ClosedByInterruptException()
+        try {
+            knownInputSizeFromProbes(querySize = { -1L }, descriptorSize = { throw interrupted })
+            fail("Expected interrupted channel")
+        } catch (actual: java.nio.channels.ClosedByInterruptException) {
+            assertSame(interrupted, actual)
+        }
+    }
+
+    @Test fun directMetadataProbeClosedByInterruptPropagates() {
+        val interrupted = java.nio.channels.ClosedByInterruptException()
+        try {
+            metadataProbeOrNull<Long> { throw interrupted }
+            fail("Expected interrupted channel")
+        } catch (actual: java.nio.channels.ClosedByInterruptException) {
+            assertSame(interrupted, actual)
+        }
+    }
+
+    @Test fun asynchronousCloseQueryStillFallsBackToDescriptor() {
+        assertEquals(42L, knownInputSizeFromProbes(
+            querySize = { throw java.nio.channels.AsynchronousCloseException() },
+            descriptorSize = { 42L }
+        ))
+    }
+
+    @Test fun asynchronousCloseDescriptorStillReturnsUnknownSize() {
+        assertNull(knownInputSizeFromProbes(
+            querySize = { null },
+            descriptorSize = { throw java.nio.channels.AsynchronousCloseException() }
+        ))
+    }
+
     @Test fun socketTimeoutInQueryFallsBackToDescriptor() {
         assertEquals(42L, knownInputSizeFromProbes(
             querySize = { throw java.net.SocketTimeoutException("query timed out") },
