@@ -491,7 +491,7 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
                         publishedOutput.androidIdentity,
                         readAndroidIdentity
                     )
-                }.exceptionOrNull()?.let(t::addSuppressed)
+                }.exceptionOrNull()?.let { addSuppressedUnlessSame(t, it) }
             }
             throw t
         }
@@ -528,6 +528,11 @@ internal fun rollbackPublishedOutputIfUnchanged(
     ) != true) return false
     // The ownership check and unlink are not atomic against concurrent replacement.
     return Files.deleteIfExists(path)
+}
+
+/** A cleanup callback can throw the primary Throwable instance; Java rejects self-suppression. */
+internal fun addSuppressedUnlessSame(primary: Throwable, cleanupFailure: Throwable) {
+    if (primary !== cleanupFailure) primary.addSuppressed(cleanupFailure)
 }
 
 /** Same-process publication lock prevents two staged writers selecting the same destination. */
@@ -614,7 +619,7 @@ internal fun publishCheckedStagedOutput(
                 candidate, expectedFileKey, expectedAndroidIdentity, readAndroidIdentity
             )
         }
-            .exceptionOrNull()?.let(failure::addSuppressed)
+            .exceptionOrNull()?.let { addSuppressedUnlessSame(failure, it) }
         throw failure
     }
 }
