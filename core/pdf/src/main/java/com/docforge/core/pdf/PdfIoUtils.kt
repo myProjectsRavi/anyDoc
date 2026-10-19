@@ -158,6 +158,10 @@ internal inline fun <T> metadataProbeOrNull(probe: () -> T): T? = try {
     probe()
 } catch (cancelled: java.util.concurrent.CancellationException) {
     throw cancelled
+} catch (cancelled: android.os.OperationCanceledException) {
+    throw cancelled
+} catch (interrupted: InterruptedException) {
+    throw interrupted
 } catch (_: Exception) {
     null
 }

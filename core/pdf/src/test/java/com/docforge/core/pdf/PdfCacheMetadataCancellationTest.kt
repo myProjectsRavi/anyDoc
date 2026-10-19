@@ -35,6 +35,44 @@ class PdfCacheMetadataCancellationTest {
         }
     }
 
+    @Test fun queryInterruptionPropagatesWithoutDescriptorFallback() {
+        val interrupted = InterruptedException("query interrupted")
+        var descriptorCalled = false
+        try {
+            knownInputSizeFromProbes(
+                querySize = { throw interrupted },
+                descriptorSize = { descriptorCalled = true; 42L }
+            )
+            fail("Expected interruption")
+        } catch (actual: InterruptedException) {
+            assertSame(interrupted, actual)
+        }
+        assertFalse(descriptorCalled)
+    }
+
+    @Test fun descriptorInterruptionPreservesOriginalException() {
+        val interrupted = InterruptedException("descriptor interrupted")
+        try {
+            knownInputSizeFromProbes(
+                querySize = { null },
+                descriptorSize = { throw interrupted }
+            )
+            fail("Expected interruption")
+        } catch (actual: InterruptedException) {
+            assertSame(interrupted, actual)
+        }
+    }
+
+    @Test fun directMetadataProbeInterruptionIsNotSilenced() {
+        val interrupted = InterruptedException("provider interrupted")
+        try {
+            metadataProbeOrNull<Long> { throw interrupted }
+            fail("Expected interruption")
+        } catch (actual: InterruptedException) {
+            assertSame(interrupted, actual)
+        }
+    }
+
     @Test fun ordinaryQueryFailureFallsBackToDescriptor() {
         assertEquals(42L, knownInputSizeFromProbes(
             querySize = { throw SecurityException("metadata unavailable") },
