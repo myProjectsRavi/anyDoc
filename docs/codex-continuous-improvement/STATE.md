@@ -3,23 +3,23 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** 2026-10-19_cycle-139
+**Current report:** 2026-10-19_cycle-140
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 139
-**Current Epic:** `E139` — Preserve interrupted provider metadata I/O
-**Current Feature:** `F141` — Propagate interrupted metadata I/O without fallback
-**Current User Story:** `US-R139-P2-01A` — Preserve InterruptedIOException from metadata probes (ACTIVE / INCOMPLETE)
-**Last completed cycle:** Cycle 138
+**Cycle:** 140
+**Current Epic:** `E140` — Preserve NIO interrupted metadata I/O
+**Current Feature:** `F142` — Propagate ClosedByInterruptException without fallback
+**Current User Story:** `US-R140-P2-01A` — Preserve ClosedByInterruptException from metadata probes (ACTIVE / INCOMPLETE)
+**Last completed cycle:** Cycle 139
 **State checkpoint timestamp:** 2026-10-19 UTC
-**Last validated code/test HEAD:** `2069608de118b7bb8a47b185d4e798e9c9c1bfc7`
-**Current branch HEAD at activation:** 2069608de118b7bb8a47b185d4e798e9c9c1bfc7
+**Last validated code/test HEAD:** `e0dfc902e0cd988022616b3ada28fa55877129f1`
+**Current branch HEAD at activation:** e0dfc902e0cd988022616b3ada28fa55877129f1
 
 ## Canonical checkpoint
 - Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
 - Cycle 115 E115/F117/US-R115-P2-01A COMPLETE: exact production/test SHA `6be844634382b60203f8c6813b39d95794517ad2` passed authoritative draft-PR Actions #882 / API `39131997093`, job `117688922042`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM groups, debug APK, unsigned release/R8 and Android lint. Eight focused JVM regressions in PdfComparePageSizeCancellationTest cover cancellation, page dimensions, closing, exceptions and left/right sequencing. Documentation-only #883 / API `39134307442` also succeeded at `8945dab4b8521e71b5e284641757ce9f8b9678c0`; it is not the production validation. No emulator, physical device, benchmark or measured latency evidence.
 - Cycle 116 E116/F118/US-R116-P2-01A COMPLETE: exact production/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed authoritative draft-PR Actions #886 / API `39136348187`, job `117701568583`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). New `openCompareRendererWithPreflight` checks cancellation before left/right PdfRenderer construction; eight focused JVM regressions cover no-open cancellation, ordering, two-renderer ownership and original/suppressed exceptions. Supplementary isolated Kotlin host checks 4/4 PASS; these do not establish Android device performance. The paired push #885 was cancelled by concurrency. No emulator/physical-device/OEM/benchmark or measured latency evidence.
 - Cycle 117 E117/F119/US-R117-P2-01A COMPLETE; exact production/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed Actions #889.
-- **Next exact action:** Cycle 139: audit metadata InterruptedIOException propagation, implement the smallest safe fix and focused JVM regressions, then require exact-code/test-SHA draft-PR nine-gate CI.
+- **Next exact action:** Cycle 140: reproduce swallowed ClosedByInterruptException in metadata query/descriptor probes, add minimal propagation and focused core PDF JVM tests, then require exact-code/test-SHA authoritative draft-PR nine-gate CI.
 - **PR #1:** open/draft/unmerged; `main` untouched.
 
 ## History preservation
@@ -127,3 +127,7 @@
 ## Cycle 138 authoritative completion / Cycle 139 activation — 2026-10-19 UTC
 - Cycle 138 E138/F140/US-R138-P2-01A COMPLETE: exact production/test SHA `2069608de118b7bb8a47b185d4e798e9c9c1bfc7` passed authoritative draft-PR Actions #968 / API `39302617044`, job `118231464639`, on 2026-10-19 UTC. All nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM, debug APK, unsigned release/R8, Android lint). `PdfIoUtils.metadataProbeOrNull` now propagates Java `CancellationException`, `InterruptedException`, and Android `OperationCanceledException`; three new JVM regressions in `PdfCacheMetadataCancellationTest.kt` verify interrupted query/descriptor identity and descriptor-skip behavior. Paired push #967 / API `39302598003` CANCELLED by concurrency, not acceptance. Android OperationCanceledException runtime behavior, emulator/device/OEM, benchmark, measured latency, peak heap and race freedom remain unverified. PR #1 stays draft/unmerged; main unchanged.
 - Cycle 139 E139/F141/US-R139-P2-01A ACTIVE / INCOMPLETE before production mutation. Source at `2069608de118b7bb8a47b185d4e798e9c9c1bfc7`: `metadataProbeOrNull` still converts `java.io.InterruptedIOException` (including interrupted provider metadata I/O) into optional-metadata fallback through `catch (Exception)`. This can lose interruption evidence and continue descriptor fallback or copying. Audit whether propagation is appropriate for this signal and provider behavior, then add only the smallest compatible fix and deterministic JVM regressions for query/descriptor interruption identity, ordinary IOException fallback, and fatal errors. This is a source-level P2 risk, not a reproduced Android device defect. Require exact-code/test-SHA nine-gate draft-PR CI before closing Cycle 139.
+
+## Cycle 139 authoritative completion / Cycle 140 activation — 2026-10-19 UTC
+- Cycle 139 E139/F141/US-R139-P2-01A COMPLETE: exact production/test SHA `e0dfc902e0cd988022616b3ada28fa55877129f1` passed authoritative draft-PR Actions #971 / API `39316414595`, job `118278969825`, on 2026-10-19 UTC. All nine configured gates SUCCESS (six JVM test groups, debug APK, unsigned release/R8, Android lint). `PdfIoUtils.metadataProbeOrNull` propagates `InterruptedIOException` except `SocketTimeoutException`, which remains optional-metadata fallback; five focused JVM tests cover interrupted query/descriptor, exception identity, socket timeout and ordinary IOException fallback. Paired push run `39316403273` cancelled by concurrency and is not acceptance. No Android emulator, physical device, OEM, benchmark, measured latency or race-freedom proof. PR #1 remains draft/unmerged; main untouched.
+- Cycle 140 E140/F142/US-R140-P2-01A ACTIVE / INCOMPLETE before any production/test mutation. At exact validated source SHA `e0dfc902e0cd988022616b3ada28fa55877129f1`, `PdfIoUtils.metadataProbeOrNull` catches `java.nio.channels.ClosedByInterruptException` in its generic `catch (Exception)` and returns null, because this interruption signal extends `IOException` but not `InterruptedIOException`. A provider metadata operation that surfaces this exception could silently trigger descriptor fallback or cache-copy work. This is a source-level P2 risk, not a reproduced Android device defect. Keep ordinary IOException, SocketTimeoutException, and AsynchronousCloseException fallback unchanged. Next: implement narrowly scoped propagation and deterministic query/descriptor tests, then exact-code/test-SHA draft-PR nine-gate CI; reconcile all canonical documents after terminal validation.
