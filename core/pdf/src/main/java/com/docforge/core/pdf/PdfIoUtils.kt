@@ -127,21 +127,38 @@ private fun Context.preflightCacheCopy(uri: Uri) {
     }
 }
 
-private fun Context.queryKnownInputSize(uri: Uri): Long? {
-    val cursorSize = runCatching {
+/** Provider metadata is optional, but a provider cancellation must not become a fallback. */
+internal inline fun <T> metadataProbeOrNull(probe: () -> T): T? = try {
+    probe()
+} catch (cancelled: java.util.concurrent.CancellationException) {
+    throw cancelled
+} catch (_: Exception) {
+    null
+}
+
+/** Keep metadata fallback deterministic and independently testable on the JVM. */
+internal inline fun knownInputSizeFromProbes(
+    querySize: () -> Long?,
+    descriptorSize: () -> Long?
+): Long? {
+    val cursorSize = metadataProbeOrNull(querySize)
+    if (cursorSize != null && cursorSize >= 0L) return cursorSize
+    return metadataProbeOrNull(descriptorSize)?.takeIf { it >= 0L }
+}
+
+private fun Context.queryKnownInputSize(uri: Uri): Long? = knownInputSizeFromProbes(
+    querySize = {
         contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
             val index = cursor.getColumnIndex(OpenableColumns.SIZE)
             if (index >= 0 && cursor.moveToFirst() && !cursor.isNull(index)) cursor.getLong(index) else null
         }
-    }.getOrNull()
-    if (cursorSize != null && cursorSize >= 0L) return cursorSize
-
-    return runCatching {
+    },
+    descriptorSize = {
         contentResolver.openAssetFileDescriptor(uri, "r")?.use { descriptor ->
             descriptor.length.takeIf { it >= 0L }
         }
-    }.getOrNull()
-}
+    }
+)
 
 internal fun guessTempSuffix(uri: Uri, defaultSuffix: String): String {
     val extension = uri.lastPathSegment
