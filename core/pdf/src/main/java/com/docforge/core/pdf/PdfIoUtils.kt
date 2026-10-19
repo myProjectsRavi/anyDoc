@@ -392,6 +392,7 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
                 }
                 currentCoroutineContext().ensureActive()
                 val value = request.block(stagedFile)
+                currentCoroutineContext().ensureActive()
                 requireRegularStagedOutput(stagedFile)
                 requireOriginalStagedIdentity(stagedFile, stagedFileKey, stagedAndroidIdentity, readAndroidIdentity)
                 prepared += PreparedStagedOutput(
