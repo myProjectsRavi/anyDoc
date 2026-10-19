@@ -36,6 +36,29 @@ enum class PdfCompressionLevel(
     LOW(renderDpi = 96, jpegQuality = 58, estimatedRatio = 0.30f)
 }
 
+/** A page-count hint may fail to parse, but cancellation must not look like an empty PDF. */
+internal suspend fun pageCountOrZero(readPageCount: suspend () -> Int): Int {
+    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+    return try {
+        val count = readPageCount()
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        count
+    } catch (cancelled: java.util.concurrent.CancellationException) {
+        throw cancelled
+    } catch (cancelled: android.os.OperationCanceledException) {
+        throw cancelled
+    } catch (interrupted: InterruptedException) {
+        throw interrupted
+    } catch (interrupted: java.io.InterruptedIOException) {
+        // Timeouts are recoverable preview failures, not proof of interruption.
+        if (interrupted is java.net.SocketTimeoutException) 0 else throw interrupted
+    } catch (interrupted: java.nio.channels.ClosedByInterruptException) {
+        throw interrupted
+    } catch (_: Exception) {
+        0
+    }
+}
+
 class PdfCompressor(
     private val context: Context
 ) {
@@ -85,11 +108,11 @@ class PdfCompressor(
     }
 
     suspend fun getPageCount(inputUri: Uri): Int = withContext(Dispatchers.IO) {
-        runCatching {
+        pageCountOrZero {
             context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_compress_count_", suffix = ".pdf") { sourceFile ->
                 loadPdfDocument(sourceFile).use { sourceDoc -> sourceDoc.numberOfPages }
             }
-        }.getOrDefault(0)
+        }
     }
 
     /**
