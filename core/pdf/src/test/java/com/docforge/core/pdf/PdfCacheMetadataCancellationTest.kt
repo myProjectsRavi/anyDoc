@@ -73,6 +73,79 @@ class PdfCacheMetadataCancellationTest {
         }
     }
 
+    @Test fun interruptedIoQueryPropagatesWithoutDescriptorFallback() {
+        val interrupted = java.io.InterruptedIOException("query interrupted")
+        var descriptorCalled = false
+        try {
+            knownInputSizeFromProbes(
+                querySize = { throw interrupted },
+                descriptorSize = { descriptorCalled = true; 42L }
+            )
+            fail("Expected interrupted I/O")
+        } catch (actual: java.io.InterruptedIOException) {
+            assertSame(interrupted, actual)
+        }
+        assertFalse(descriptorCalled)
+    }
+
+    @Test fun interruptedIoDescriptorPreservesOriginalException() {
+        val interrupted = java.io.InterruptedIOException("descriptor interrupted")
+        try {
+            knownInputSizeFromProbes(querySize = { -1L }, descriptorSize = { throw interrupted })
+            fail("Expected interrupted I/O")
+        } catch (actual: java.io.InterruptedIOException) {
+            assertSame(interrupted, actual)
+        }
+    }
+
+    @Test fun directMetadataProbeInterruptedIoPropagates() {
+        val interrupted = java.io.InterruptedIOException("probe interrupted")
+        try {
+            metadataProbeOrNull<Long> { throw interrupted }
+            fail("Expected interrupted I/O")
+        } catch (actual: java.io.InterruptedIOException) {
+            assertSame(interrupted, actual)
+        }
+    }
+
+    @Test fun socketTimeoutInQueryFallsBackToDescriptor() {
+        assertEquals(42L, knownInputSizeFromProbes(
+            querySize = { throw java.net.SocketTimeoutException("query timed out") },
+            descriptorSize = { 42L }
+        ))
+    }
+
+    @Test fun socketTimeoutInDescriptorReturnsUnknownSize() {
+        assertNull(knownInputSizeFromProbes(
+            querySize = { null },
+            descriptorSize = { throw java.net.SocketTimeoutException("descriptor timed out") }
+        ))
+    }
+
+    @Test fun ordinaryQueryIOExceptionStillFallsBackToDescriptor() {
+        assertEquals(42L, knownInputSizeFromProbes(
+            querySize = { throw IOException("query metadata unavailable") },
+            descriptorSize = { 42L }
+        ))
+    }
+
+    @Test fun ordinaryDescriptorIOExceptionStillReturnsUnknownSize() {
+        assertNull(knownInputSizeFromProbes(
+            querySize = { null },
+            descriptorSize = { throw IOException("descriptor metadata unavailable") }
+        ))
+    }
+
+    @Test fun fatalDescriptorErrorPreservesIdentity() {
+        val fatal = LinkageError("descriptor provider failure")
+        try {
+            knownInputSizeFromProbes(querySize = { null }, descriptorSize = { throw fatal })
+            fail("Expected fatal error")
+        } catch (actual: LinkageError) {
+            assertSame(fatal, actual)
+        }
+    }
+
     @Test fun ordinaryQueryFailureFallsBackToDescriptor() {
         assertEquals(42L, knownInputSizeFromProbes(
             querySize = { throw SecurityException("metadata unavailable") },
