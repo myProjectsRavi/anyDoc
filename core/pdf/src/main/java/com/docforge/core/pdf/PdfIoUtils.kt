@@ -68,6 +68,12 @@ internal suspend inline fun <T> withCancellationCheckedCacheSourceChannel(
     useChannel(sourceChannel)
 }
 
+/** Detect cancellation after streams close, while the registered temp is still owned. */
+internal suspend fun withCacheCopyCompletionPreflight(file: File): File {
+    currentCoroutineContext().ensureActive()
+    return file
+}
+
 internal suspend fun Context.copyUriToCacheFile(
     uri: Uri,
     prefix: String,
@@ -105,7 +111,7 @@ internal suspend fun Context.copyUriToCacheFile(
                 }
             }
         }
-        tempFile
+        withCacheCopyCompletionPreflight(tempFile)
     }
 }
 
