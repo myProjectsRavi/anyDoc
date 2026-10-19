@@ -415,6 +415,7 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
     if (requests.isEmpty()) return emptyList()
 
     val prepared = mutableListOf<PreparedStagedOutput<T>>()
+    var primaryFailure: Throwable? = null
     try {
         requests.forEach { request ->
             currentCoroutineContext().ensureActive()
@@ -495,10 +496,25 @@ internal suspend fun <T> withStagedOutputFilesUsingIdentityReaders(
             }
             throw t
         }
+    } catch (t: Throwable) {
+        primaryFailure = t
+        throw t
     } finally {
+        var cleanupFailure: Throwable? = null
         prepared.forEach { item ->
-            runCatching { deleteOwnedStagedEntry(item.stagedFile, item.stagedFileKey, item.stagedAndroidIdentity, readAndroidIdentity) }
+            runCatching {
+                deleteOwnedStagedEntry(item.stagedFile, item.stagedFileKey, item.stagedAndroidIdentity, readAndroidIdentity)
+            }.exceptionOrNull()?.let { failure ->
+                val primary = primaryFailure
+                if (primary != null) addSuppressedUnlessSame(primary, failure)
+                else {
+                    val previous = cleanupFailure
+                    if (previous == null) cleanupFailure = failure
+                    else addSuppressedUnlessSame(previous, failure)
+                }
+            }
         }
+        if (primaryFailure == null) cleanupFailure?.let { throw it }
     }
 }
 
