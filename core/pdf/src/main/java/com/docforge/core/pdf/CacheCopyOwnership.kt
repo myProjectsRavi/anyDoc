@@ -2,6 +2,8 @@ package com.docforge.core.pdf
 
 import com.docforge.core.domain.io.ActiveTempFileRegistry
 import java.io.File
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /** Releases one owner and deletes only when the registry reports no owners. */
 internal fun releaseCacheCopyFile(file: File) {
@@ -51,4 +53,13 @@ internal inline fun <T> withScopedCacheCopy(file: File, block: (File) -> T): T {
     } finally {
         if (succeeded) releaseCacheCopyFile(file)
     }
+}
+
+/** Checks cancellation inside the ownership scope so a skipped callback still releases the copy. */
+internal suspend inline fun <T> withCancellationCheckedScopedCacheCopy(
+    file: File,
+    block: (File) -> T
+): T = withScopedCacheCopy(file) {
+    currentCoroutineContext().ensureActive()
+    block(it)
 }

@@ -101,7 +101,7 @@ internal suspend inline fun <T> Context.withUriCopiedToCacheFile(
         suffix = suffix,
         keepRegistered = true
     )
-    return withScopedCacheCopy(tempFile, block)
+    return withCancellationCheckedScopedCacheCopy(tempFile, block)
 }
 
 internal fun canStartUnknownSizeCacheCopy(availableBytes: Long): Boolean =

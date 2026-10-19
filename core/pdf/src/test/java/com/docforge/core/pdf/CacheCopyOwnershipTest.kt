@@ -7,6 +7,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -174,6 +176,84 @@ class CacheCopyOwnershipTest {
             fail("Expected cancellation")
         } catch (failure: CancellationException) {
             assertSame(cancelled, failure)
+        }
+        assertFalse(file.exists())
+        assertFalse(ActiveTempFileRegistry.isActive(file))
+    }
+
+
+    @Test
+    fun cancelledScopedCallbackIsSkippedAndReleasesItsFile() = withFile { file ->
+        ActiveTempFileRegistry.register(file)
+        var invoked = false
+        try {
+            runBlocking {
+                currentCoroutineContext()[Job]!!.cancel(CancellationException("cancel before callback"))
+                withCancellationCheckedScopedCacheCopy(file) {
+                    invoked = true
+                    it.readText()
+                }
+            }
+            fail("Expected cancellation")
+        } catch (_: CancellationException) {
+            // Cancellation must take precedence over the callback.
+        }
+        assertFalse(invoked)
+        assertFalse(file.exists())
+        assertFalse(ActiveTempFileRegistry.isActive(file))
+    }
+
+    @Test
+    fun cancelledScopedCallbackKeepsAnotherOwnersFile() = withFile { file ->
+        ActiveTempFileRegistry.register(file)
+        ActiveTempFileRegistry.register(file)
+        var invoked = false
+        try {
+            runBlocking {
+                currentCoroutineContext()[Job]!!.cancel()
+                withCancellationCheckedScopedCacheCopy(file) {
+                    invoked = true
+                }
+            }
+            fail("Expected cancellation")
+        } catch (_: CancellationException) {
+            // Expected.
+        }
+        assertFalse(invoked)
+        assertTrue(file.exists())
+        assertTrue(ActiveTempFileRegistry.isActive(file))
+        releaseCacheCopyFile(file)
+        assertFalse(file.exists())
+    }
+
+    @Test
+    fun activeScopedCallbackRunsAndReleasesFile() = withFile { file ->
+        ActiveTempFileRegistry.register(file)
+        var invoked = 0
+        val result = runBlocking {
+            withCancellationCheckedScopedCacheCopy(file) {
+                invoked++
+                assertTrue(ActiveTempFileRegistry.isActive(it))
+                it.readText()
+            }
+        }
+        assertEquals("owned", result)
+        assertEquals(1, invoked)
+        assertFalse(file.exists())
+        assertFalse(ActiveTempFileRegistry.isActive(file))
+    }
+
+    @Test
+    fun scopedCallbackFailureKeepsOriginalErrorAndReleasesFile() = withFile { file ->
+        ActiveTempFileRegistry.register(file)
+        val original = IllegalStateException("callback failed")
+        try {
+            runBlocking {
+                withCancellationCheckedScopedCacheCopy(file) { throw original }
+            }
+            fail("Expected callback failure")
+        } catch (failure: IllegalStateException) {
+            assertSame(original, failure)
         }
         assertFalse(file.exists())
         assertFalse(ActiveTempFileRegistry.isActive(file))
