@@ -63,6 +63,15 @@ internal suspend fun pageCountOrZero(readPageCount: suspend () -> Int): Int {
     }
 }
 
+/** Check the coroutine before potentially expensive final PDF serialization. */
+internal fun <T> saveCompressedPdfWithPreflight(
+    checkCancelled: () -> Unit,
+    save: () -> T
+): T {
+    checkCancelled()
+    return save()
+}
+
 class PdfCompressor(
     private val context: Context
 ) {
@@ -192,7 +201,7 @@ class PdfCompressor(
                         onProgress?.invoke(i + 1, renderer.pageCount)
                     }
 
-                    outDoc.save(outputFile)
+                    saveCompressedPdfWithPreflight(checkCancelled) { outDoc.save(outputFile) }
                 }
             }
         }
