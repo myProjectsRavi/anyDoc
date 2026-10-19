@@ -13,6 +13,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.channels.Channels
+import java.nio.channels.ReadableByteChannel
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.LinkOption
 import java.nio.file.Files
@@ -58,6 +59,15 @@ internal suspend inline fun <T> withCancellationCheckedOpenedCacheInput(
     copy(source)
 }
 
+/** Skip output setup after channel acquisition, closing the channel on cancellation. */
+internal suspend inline fun <T> withCancellationCheckedCacheSourceChannel(
+    channel: ReadableByteChannel,
+    useChannel: (ReadableByteChannel) -> T
+): T = channel.use { sourceChannel ->
+    currentCoroutineContext().ensureActive()
+    useChannel(sourceChannel)
+}
+
 internal suspend fun Context.copyUriToCacheFile(
     uri: Uri,
     prefix: String,
@@ -70,7 +80,7 @@ internal suspend fun Context.copyUriToCacheFile(
     return withCancellationCheckedRegisteredCacheCopy(tempFile, keepRegistered) {
         val input = contentResolver.openInputStream(uri) ?: error("Unable to open input: $uri")
         withCancellationCheckedOpenedCacheInput(input) { source ->
-            Channels.newChannel(source).use { sourceChannel ->
+            withCancellationCheckedCacheSourceChannel(Channels.newChannel(source)) { sourceChannel ->
                 FileOutputStream(tempFile).channel.use { targetChannel ->
                     var position = 0L
                     while (true) {
