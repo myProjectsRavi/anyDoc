@@ -57,7 +57,7 @@ internal suspend fun Context.copyUriToCacheFile(
     withCacheCopyEntryPreflight { preflightCacheCopy(uri) }
     val tempFile = File.createTempFile(prefix, suffix, cacheDir)
     ActiveTempFileRegistry.register(tempFile)
-    return withRegisteredCacheCopy(tempFile, keepRegistered) {
+    return withCancellationCheckedRegisteredCacheCopy(tempFile, keepRegistered) {
         val input = contentResolver.openInputStream(uri) ?: error("Unable to open input: $uri")
         input.use { source ->
             Channels.newChannel(source).use { sourceChannel ->
