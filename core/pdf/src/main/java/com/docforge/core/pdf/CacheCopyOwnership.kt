@@ -63,3 +63,13 @@ internal suspend inline fun <T> withCancellationCheckedScopedCacheCopy(
     currentCoroutineContext().ensureActive()
     block(it)
 }
+
+/** Avoid provider acquisition after cancellation while registered cleanup owns the temp file. */
+internal suspend inline fun <T> withCancellationCheckedRegisteredCacheCopy(
+    file: File,
+    keepRegistered: Boolean,
+    acquireAndCopy: () -> T
+): T = withRegisteredCacheCopy(file, keepRegistered) {
+    currentCoroutineContext().ensureActive()
+    acquireAndCopy()
+}
