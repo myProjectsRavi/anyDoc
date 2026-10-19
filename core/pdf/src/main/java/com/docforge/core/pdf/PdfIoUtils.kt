@@ -32,13 +32,20 @@ private fun validateOutputName(baseName: String, extension: String) {
     require(valid(baseName) && valid(extension)) { "Invalid output name." }
 }
 
+internal suspend fun <T> withCacheCopyEntryPreflight(preflight: () -> T): T {
+    currentCoroutineContext().ensureActive()
+    val result = preflight()
+    currentCoroutineContext().ensureActive()
+    return result
+}
+
 internal suspend fun Context.copyUriToCacheFile(
     uri: Uri,
     prefix: String,
     suffix: String = guessTempSuffix(uri, defaultSuffix = ".bin"),
     keepRegistered: Boolean = false
 ): File {
-    preflightCacheCopy(uri)
+    withCacheCopyEntryPreflight { preflightCacheCopy(uri) }
     val tempFile = File.createTempFile(prefix, suffix, cacheDir)
     ActiveTempFileRegistry.register(tempFile)
     return withRegisteredCacheCopy(tempFile, keepRegistered) {
