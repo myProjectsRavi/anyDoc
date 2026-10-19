@@ -11,6 +11,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.nio.channels.Channels
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.LinkOption
@@ -48,6 +49,15 @@ internal suspend fun <T> withCacheCopyEntryPreflight(preflight: () -> T): T {
     return result
 }
 
+/** Close an acquired provider stream even if cancellation arrived during its open call. */
+internal suspend inline fun <T> withCancellationCheckedOpenedCacheInput(
+    input: InputStream,
+    copy: (InputStream) -> T
+): T = input.use { source ->
+    currentCoroutineContext().ensureActive()
+    copy(source)
+}
+
 internal suspend fun Context.copyUriToCacheFile(
     uri: Uri,
     prefix: String,
@@ -59,7 +69,7 @@ internal suspend fun Context.copyUriToCacheFile(
     ActiveTempFileRegistry.register(tempFile)
     return withCancellationCheckedRegisteredCacheCopy(tempFile, keepRegistered) {
         val input = contentResolver.openInputStream(uri) ?: error("Unable to open input: $uri")
-        input.use { source ->
+        withCancellationCheckedOpenedCacheInput(input) { source ->
             Channels.newChannel(source).use { sourceChannel ->
                 FileOutputStream(tempFile).channel.use { targetChannel ->
                     var position = 0L
