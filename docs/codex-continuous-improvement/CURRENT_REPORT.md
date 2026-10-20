@@ -1,20 +1,20 @@
-# Cycle 144 — Cancellation before compression output-directory resolution
+# Cycle 145 — Compression resource acquisition cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E144/F146/US-R144-P2-01A
-**Activation baseline:** `10fef67dc697a0046dce0fe5d628a8dc9c55e39f`
-**Last validated code/test SHA:** `10fef67dc697a0046dce0fe5d628a8dc9c55e39f`, authoritative draft-PR Actions #984 / API `39335370125`, job `118343523855`, all nine configured gates SUCCESS (Cycle 143).
+**Epic / Feature / Story:** E145/F147/US-R145-P2-01A
+**Activation baseline:** `1055f5def96a9ccb05d6408817f70defa550dd79`
+**Last validated code/test SHA:** `1055f5def96a9ccb05d6408817f70defa550dd79` (draft-PR CI #987, job 118395389633, nine gates SUCCESS).
 
 ## Source-backed risk
-At exact validated SHA `10fef67dc697a0046dce0fe5d628a8dc9c55e39f`, `PdfCompressor.compress` invokes `PdfBoxInit.ensure(context)` and then `DocForgeSettingsStore.resolveOutputDirectory` without a fresh cancellation preflight between them. If initialization cancels the coroutine (or cancellation occurs during it), output-directory resolution may still access preferences or create directories before the later staging/copy checks. This is a source-backed P2 responsiveness/side-effect concern, not a reproduced device failure.
+Cycle 145 E145/F147/US-R145-P2-01A ACTIVE / INCOMPLETE before production mutation. Source at 1055f5def96a9ccb05d6408817f70defa550dd79: PdfCompressor.compressWithJpegRasterization opens ParcelFileDescriptor and constructs PdfRenderer before its first cancellation check in the page loop. Cancellation during cache-copy completion can cause avoidable descriptor/renderer acquisition. Add JVM-testable cancellation preflight before both opens; preserve nested resource ownership, error identity, page-count handling and output bytes. Add focused JVM regressions, require exact-SHA nine-gate draft-PR CI. P2 source-backed responsiveness concern, not a reproduced device crash.
 
 ## Acceptance
-- Recheck coroutine cancellation immediately after `PdfBoxInit.ensure(context)` and before `DocForgeSettingsStore.resolveOutputDirectory`.
-- Introduce only the smallest JVM-testable preflight seam; preserve settings resolution, invalid output names, symlink protections, staging/collision/no-overwrite, output bytes and exception identity.
-- Add deterministic core PDF JVM tests for cancellation after initialization skipping directory resolution, normal ordering/result, preflight failure identity, directory-resolution failure identity, and repeated success.
-- Require authoritative exact-code/test-SHA draft-PR CI with all nine configured gates before closing Cycle 144.
-- Keep PR #1 draft/unmerged and main unchanged. Host JVM tests do not prove device/OEM behavior, benchmark, peak heap or race freedom.
+- Check cancellation before opening ParcelFileDescriptor and before constructing PdfRenderer.
+- Preserve nested use cleanup, original exception identity, output and page-count behavior.
+- Add deterministic core PDF JVM tests for cancellation, resource ordering and cleanup.
+- Require exact-code/test-SHA draft-PR CI across all nine gates.
+- Keep PR #1 draft/unmerged, main unchanged. Do not claim device or benchmark evidence.
 
 ## Next executable step
-Freshly inspect `PdfCompressor.kt`, `DocForgeSettingsStore.resolveOutputDirectory` and existing compressor JVM tests; implement bounded post-init pre-directory cancellation preflight on `codex/anydoc-continuous-improvement`, commit source and focused tests via non-force expected-SHA CAS, then inspect exact-code/test-SHA authoritative draft-PR CI.
+Implement minimal resource-open preflight and focused tests on authorized branch; inspect exact-SHA CI, then reconcile canonical docs only after terminal validation.
