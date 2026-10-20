@@ -72,6 +72,15 @@ internal fun <T> saveCompressedPdfWithPreflight(
     return save()
 }
 
+/** Check cancellation immediately before acquiring a compression input resource. */
+internal fun <T> openCompressionResourceWithPreflight(
+    checkCancelled: () -> Unit,
+    open: () -> T
+): T {
+    checkCancelled()
+    return open()
+}
+
 /** Recheck cancellation after PDFBox initialization before resolving a potentially mutating output directory. */
 internal suspend fun <T> initializePdfBoxAndResolveCompressionDirectory(
     initialize: () -> Unit,
@@ -161,8 +170,10 @@ class PdfCompressor(
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         var pageCount = 0
 
-        ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
-            PdfRenderer(pfd).use { renderer ->
+        openCompressionResourceWithPreflight(checkCancelled) {
+            ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
+        }.use { pfd ->
+            openCompressionResourceWithPreflight(checkCancelled) { PdfRenderer(pfd) }.use { renderer ->
                 pageCount = renderer.pageCount
                 require(pageCount > 0) { "Input PDF has no pages." }
 
