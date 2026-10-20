@@ -81,6 +81,18 @@ internal fun <T> openCompressionResourceWithPreflight(
     return open()
 }
 
+/** Skip stale compression progress callbacks after cancellation. */
+internal fun notifyCompressionProgressWithPreflight(
+    checkCancelled: () -> Unit,
+    completed: Int,
+    total: Int,
+    onProgress: ((completed: Int, total: Int) -> Unit)?
+) {
+    if (onProgress == null) return
+    checkCancelled()
+    onProgress(completed, total)
+}
+
 /** Recheck cancellation after PDFBox initialization before resolving a potentially mutating output directory. */
 internal suspend fun <T> initializePdfBoxAndResolveCompressionDirectory(
     initialize: () -> Unit,
@@ -234,7 +246,12 @@ class PdfCompressor(
                                 bitmap.recycle()
                             }
                         }
-                        onProgress?.invoke(i + 1, renderer.pageCount)
+                        notifyCompressionProgressWithPreflight(
+                            checkCancelled = checkCancelled,
+                            completed = i + 1,
+                            total = renderer.pageCount,
+                            onProgress = onProgress
+                        )
                     }
 
                     saveCompressedPdfWithPreflight(checkCancelled) { outDoc.save(outputFile) }
