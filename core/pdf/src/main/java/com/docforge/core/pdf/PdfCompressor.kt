@@ -207,11 +207,13 @@ class PdfCompressor(
                                 outDoc.addPage(pdPage)
 
                                 // Embed JPEG-compressed image
-                                val jpegImage = JPEGFactory.createFromImage(
-                                    outDoc,
-                                    bitmap,
-                                    jpegQuality / 100f
-                                )
+                                val jpegImage = openCompressionResourceWithPreflight(checkCancelled) {
+                                    JPEGFactory.createFromImage(
+                                        outDoc,
+                                        bitmap,
+                                        jpegQuality / 100f
+                                    )
+                                }
 
                                 PDPageContentStream(outDoc, pdPage).use { stream ->
                                     stream.drawImage(
