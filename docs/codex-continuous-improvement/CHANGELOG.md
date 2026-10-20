@@ -31,3 +31,9 @@
 - Hardened business-card OCR bitmap/recognizer cleanup.
 - Reconfirmed sandbox DNS prevents local clone/Gradle execution.
 - GitHub Actions run #60 passed core PDF unit tests and was still building the debug APK at the last checkpoint.
+
+## 2026-10-20 — Cycle 146 validated, Cycle 147 activated
+- Cycle 146 code/test `aa8addd54ce046e39ca6ea5787e8caf3fbb73500` passed draft-PR CI #994 (39367662646), job 118448084104, all nine gates SUCCESS.
+- Seven core PDF JVM regressions cover cancellation before compression output PDDocument allocation, ownership, and exception identity.
+- Cycle 147 E147/F149/US-R147-P2-01A ACTIVE for preflight before compression ARGB_8888 bitmap allocation. No production mutation in this checkpoint.
+- No Android device/emulator/benchmark proof; PR #1 draft/unmerged; main unchanged.

@@ -3,23 +3,23 @@
 **Canonical state:** this file
 **Branch:** `codex/anydoc-continuous-improvement`
 **Main safety rule:** never modify or merge `main`.
-**Current report:** 2026-10-20_cycle-146
+**Current report:** 2026-10-20_cycle-147
 **Report status:** ACTIVE / INCOMPLETE
-**Cycle:** 146
-**Current Epic:** `E146` — Preserve cancellation before compression document allocation
-**Current Feature:** `F148` — Preflight output PDF document construction
-**Current User Story:** `US-R146-P2-01A` — Skip compression output document allocation after cancellation (ACTIVE / INCOMPLETE)
-**Last completed cycle:** Cycle 145
+**Cycle:** 147
+**Current Epic:** `E147` — Preserve cancellation before compression bitmap allocation
+**Current Feature:** `F149` — Preflight raster bitmap allocation
+**Current User Story:** `US-R147-P2-01A` — Skip compression bitmap allocation after cancellation (ACTIVE / INCOMPLETE)
+**Last completed cycle:** Cycle 146
 **State checkpoint timestamp:** 2026-10-20 UTC
-**Last validated code/test HEAD:** `278427532d09d29bcadb5d9c4bc44ba8d7fb545d`
-**Current branch HEAD at activation:** 278427532d09d29bcadb5d9c4bc44ba8d7fb545d
+**Last validated code/test HEAD:** `aa8addd54ce046e39ca6ea5787e8caf3fbb73500`
+**Current branch HEAD at activation:** aa8addd54ce046e39ca6ea5787e8caf3fbb73500
 
 ## Canonical checkpoint
 - Cycle 114 E114/F116/US-R114-P2-01A COMPLETE: exact code/test SHA `1ad7ed5e777219a13db58a3772dd6c3246fa693c` passed authoritative draft-PR Actions #879 / API `39128006515`, job `117677147217`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). Seven focused JVM tests in PdfComparePageOpenCancellationTest cover cancellation before opening, preflight/open errors, successful render and cleanup. The initial production commit `1609f7f0d172ad3f33954b94b8b7bab2e0db524b` inadvertently omitted the base tree; forward recovery `1ad7ed5e777219a13db58a3772dd6c3246fa693c` restored the full repository tree and exact candidate passed CI. No emulator, physical device, benchmark, or measured latency evidence. PR #1 stays draft/unmerged; main untouched.
 - Cycle 115 E115/F117/US-R115-P2-01A COMPLETE: exact production/test SHA `6be844634382b60203f8c6813b39d95794517ad2` passed authoritative draft-PR Actions #882 / API `39131997093`, job `117688922042`, on 2026-10-18 UTC. All nine configured gates SUCCESS: six JVM groups, debug APK, unsigned release/R8 and Android lint. Eight focused JVM regressions in PdfComparePageSizeCancellationTest cover cancellation, page dimensions, closing, exceptions and left/right sequencing. Documentation-only #883 / API `39134307442` also succeeded at `8945dab4b8521e71b5e284641757ce9f8b9678c0`; it is not the production validation. No emulator, physical device, benchmark or measured latency evidence.
 - Cycle 116 E116/F118/US-R116-P2-01A COMPLETE: exact production/test SHA `a6ef1d8c7d989155fd3a4217e65301066c8a2369` passed authoritative draft-PR Actions #886 / API `39136348187`, job `117701568583`, on 2026-10-18 UTC. All nine configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint). New `openCompareRendererWithPreflight` checks cancellation before left/right PdfRenderer construction; eight focused JVM regressions cover no-open cancellation, ordering, two-renderer ownership and original/suppressed exceptions. Supplementary isolated Kotlin host checks 4/4 PASS; these do not establish Android device performance. The paired push #885 was cancelled by concurrency. No emulator/physical-device/OEM/benchmark or measured latency evidence.
 - Cycle 117 E117/F119/US-R117-P2-01A COMPLETE; exact production/test SHA `8599bc47cd87872ed3e35bacffcec214eaef397d` passed Actions #889.
-- **Next exact action:** Cycle 146: check cancellation before compression PDDocument allocation, add focused JVM regressions, require exact-SHA nine-gate CI.
+- **Next exact action:** Cycle 147: preflight cancellation before compression bitmap allocation, add focused JVM regressions, require exact-SHA nine-gate CI.
 - **PR #1:** open/draft/unmerged; `main` untouched.
 
 ## History preservation
@@ -156,3 +156,7 @@
 ## Cycle 145 authoritative completion / Cycle 146 activation — 2026-10-20 UTC
 - Cycle 145 E145/F147/US-R145-P2-01A COMPLETE: exact production/test SHA `278427532d09d29bcadb5d9c4bc44ba8d7fb545d` passed authoritative draft-PR Actions #990 / API `39354257316`, job `118405368286`, on 2026-10-20 UTC. All NINE configured gates SUCCESS (six JVM groups, debug APK, unsigned release/R8, Android lint); full 180130-character job logs inspected with BUILD SUCCESSFUL. `PdfCompressor.kt` adds cancellation preflights immediately before ParcelFileDescriptor and PdfRenderer opens; seven deterministic JVM regressions in `PdfCompressorResourceOpenPreflightTest.kt` cover cancelled opens, order, descriptor ownership/close, original exception identity, and successful nested cleanup. Paired push #989 cancelled by concurrency, not acceptance. No emulator, physical device, OEM, benchmark, peak-heap or complete race-freedom proof; PR #1 draft/unmerged and main untouched.
 - Cycle 146 E146/F148/US-R146-P2-01A ACTIVE / INCOMPLETE before production mutation. At exact source/test SHA `278427532d09d29bcadb5d9c4bc44ba8d7fb545d`, `PdfCompressor.compressWithJpegRasterization` reads `renderer.pageCount` and validates a nonempty document, then constructs `PDDocument()` before the next cancellation check at the beginning of the page loop (`PdfCompressor.kt` lines 177-182). Cancellation during renderer page-count acquisition can therefore still allocate an output PDF document unnecessarily. Add a minimal JVM-testable cancellation preflight immediately before `PDDocument()` construction; preserve descriptor/renderer close ordering, empty-page error, original exception identity, page-count behavior, bitmap recycling, staging/no-overwrite, and output bytes. This is a source-backed P2 responsiveness concern, not a reproduced device failure. Require exact-SHA authoritative draft-PR nine-gate CI before closure.
+
+## Cycle 146 authoritative completion / Cycle 147 activation — 2026-10-20 UTC
+- Cycle 146 E146/F148/US-R146-P2-01A COMPLETE: exact production/test SHA `aa8addd54ce046e39ca6ea5787e8caf3fbb73500` passed draft-PR Actions #994 / API `39367662646`, job `118448084104`, completed SUCCESS 2026-10-20 04:21 UTC. All nine configured gates SUCCESS (domain/PDF/converter/scanner/PDF-tools/app JVM tests, debug APK, unsigned release/R8, Android lint). `PdfCompressor.kt` preflights cancellation before `PDDocument()` allocation after nonempty page-count validation; seven committed core PDF JVM regressions in `PdfCompressorDocumentOpenPreflightTest.kt` cover cancellation, ordering, constructor/processing failures, exception identity and nested cleanup. Paired push run `39367659901` cancelled by concurrency and is not acceptance. No emulator, physical device, OEM, benchmark, measured latency or race-freedom proof. PR #1 remains draft/unmerged, main unchanged.
+- Cycle 147 E147/F149/US-R147-P2-01A ACTIVE / INCOMPLETE before production/test mutation. At `aa8addd54ce046e39ca6ea5787e8caf3fbb73500`, `PdfCompressor.compressWithJpegRasterization` calculates `boundedPdfRasterSize` and immediately allocates `Bitmap.createBitmap` without a fresh cancellation preflight. Cancellation during `renderer.openPage` or size computation can therefore still allocate a large ARGB_8888 bitmap before the next cooperative check. Introduce a minimal preflight directly before bitmap allocation, preserve bitmap recycling, page close, output staging, render behavior and exception identity; add focused deterministic core PDF JVM tests; validate exact code/test SHA via draft-PR nine-gate CI. Source-backed P2 responsiveness concern, not a reproduced Android device defect.
