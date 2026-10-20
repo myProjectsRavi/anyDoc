@@ -215,7 +215,9 @@ class PdfCompressor(
                                     )
                                 }
 
-                                PDPageContentStream(outDoc, pdPage).use { stream ->
+                                openCompressionResourceWithPreflight(checkCancelled) {
+                                    PDPageContentStream(outDoc, pdPage)
+                                }.use { stream ->
                                     stream.drawImage(
                                         jpegImage,
                                         0f, 0f,
