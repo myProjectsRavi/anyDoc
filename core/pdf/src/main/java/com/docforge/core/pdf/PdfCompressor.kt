@@ -72,6 +72,16 @@ internal fun <T> saveCompressedPdfWithPreflight(
     return save()
 }
 
+/** Recheck cancellation after PDFBox initialization before resolving a potentially mutating output directory. */
+internal suspend fun <T> initializePdfBoxAndResolveCompressionDirectory(
+    initialize: () -> Unit,
+    resolve: () -> T
+): T {
+    initialize()
+    coroutineContext.ensureActive()
+    return resolve()
+}
+
 class PdfCompressor(
     private val context: Context
 ) {
@@ -85,10 +95,14 @@ class PdfCompressor(
         level: PdfCompressionLevel,
         onProgress: ((completed: Int, total: Int) -> Unit)? = null
     ): PdfCreationResult = withContext(Dispatchers.IO) {
-        PdfBoxInit.ensure(context)
-        val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
-            context = context,
-            bucket = DocForgeOutputBucket.DOCUMENTS
+        val outputDir = initializePdfBoxAndResolveCompressionDirectory(
+            initialize = { PdfBoxInit.ensure(context) },
+            resolve = {
+                DocForgeSettingsStore.resolveOutputDirectory(
+                    context = context,
+                    bucket = DocForgeOutputBucket.DOCUMENTS
+                )
+            }
         )
 
         val sanitized = outputName.ifBlank { "compressed_${System.currentTimeMillis()}" }
