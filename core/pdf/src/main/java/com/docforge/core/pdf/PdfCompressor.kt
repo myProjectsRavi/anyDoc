@@ -177,7 +177,7 @@ class PdfCompressor(
                 pageCount = renderer.pageCount
                 require(pageCount > 0) { "Input PDF has no pages." }
 
-                PDDocument().use { outDoc ->
+                openCompressionResourceWithPreflight(checkCancelled) { PDDocument() }.use { outDoc ->
                     for (i in 0 until renderer.pageCount) {
                         checkCancelled()
                         renderer.openPage(i).use { page ->
