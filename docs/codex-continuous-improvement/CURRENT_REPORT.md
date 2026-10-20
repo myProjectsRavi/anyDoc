@@ -1,20 +1,20 @@
-# Cycle 147 — Compression bitmap allocation cancellation
+# Cycle 148 — Compression JPEG encoding cancellation
 
 **Status:** ACTIVE / INCOMPLETE
 **Branch:** `codex/anydoc-continuous-improvement`
-**Epic / Feature / Story:** E147/F149/US-R147-P2-01A
-**Activation baseline:** `aa8addd54ce046e39ca6ea5787e8caf3fbb73500`
-**Last validated code/test SHA:** `aa8addd54ce046e39ca6ea5787e8caf3fbb73500` (draft-PR CI #994, API 39367662646, job 118448084104, nine gates SUCCESS).
+**Epic / Feature / Story:** E148/F150/US-R148-P2-01A
+**Activation baseline:** `626af3903dc940fc52591d42993241ecb2b96da8`
+**Last validated code/test SHA:** `626af3903dc940fc52591d42993241ecb2b96da8` (draft-PR CI #997, API 39372246599, job 118462490112, nine gates SUCCESS).
 
 ## Source-backed risk
-In `PdfCompressor.compressWithJpegRasterization`, `boundedPdfRasterSize` computes dimensions and the next statement allocates `Bitmap.createBitmap` without a fresh cancellation preflight. Cancellation during page opening or size computation can lead to avoidable ARGB_8888 allocation before the next cancellation check. This is a bounded P2 responsiveness/memory concern, not a reproduced device crash.
+After `PdfRenderer.Page.render`, compression constructs a PDF page, adds it to `PDDocument`, then calls `JPEGFactory.createFromImage` without a fresh cancellation check. Cancellation during rendering can lead to avoidable JPEG encoding before the next cooperative check. This is a bounded P2 responsiveness/memory concern, not a reproduced Android device crash.
 
 ## Acceptance
-- Check coroutine cancellation immediately before compression bitmap allocation, without changing dimensions, JPEG quality, page rendering or output bytes.
-- Preserve `bitmap.recycle()` in `finally`, page/document/descriptor ownership, original exceptions, staging and no-overwrite behavior.
-- Add deterministic core PDF JVM regressions for cancellation before allocation, ordering, successful processing, allocation failure, render failure and resource cleanup.
-- Require exact code/test SHA nine-gate draft-PR Actions success. Do not infer emulator, device, OEM, benchmark or race-freedom evidence.
-- Keep PR #1 draft/unmerged; never modify main.
+- Check cancellation immediately before `JPEGFactory.createFromImage`, without changing successful output bytes, JPEG quality, dimensions or page count.
+- Preserve bitmap.recycle() in finally, page/document/descriptor close ownership, original exceptions, staging and no-overwrite behavior.
+- Add deterministic core PDF JVM regressions for cancellation before encode, ordering, successful encode, encoder failure and cleanup.
+- Require exact production/test SHA nine-gate draft-PR Actions success. No emulator, physical-device, benchmark or race-freedom claims.
+- Keep PR #1 draft/unmerged and never modify main.
 
 ## Next executable step
-Implement a small cancellation preflight before `Bitmap.createBitmap` using the existing JVM-testable preflight helper, add focused regressions, commit on the authorized branch, then inspect authoritative exact-SHA CI.
+Implement smallest cancellation preflight before JPEGFactory.createFromImage using the existing JVM-testable preflight helper, add focused tests, commit on authorized branch, then inspect authoritative exact-SHA CI.

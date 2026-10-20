@@ -37,3 +37,9 @@
 - Seven core PDF JVM regressions cover cancellation before compression output PDDocument allocation, ownership, and exception identity.
 - Cycle 147 E147/F149/US-R147-P2-01A ACTIVE for preflight before compression ARGB_8888 bitmap allocation. No production mutation in this checkpoint.
 - No Android device/emulator/benchmark proof; PR #1 draft/unmerged; main unchanged.
+
+## 2026-10-20 — Cycle 147 validated, Cycle 148 activated
+- Exact production/test `626af3903dc940fc52591d42993241ecb2b96da8` passed draft-PR CI #997 / API `39372246599`, job `118462490112`, all nine gates SUCCESS.
+- Eight core PDF JVM regressions validate cancellation before ARGB_8888 bitmap allocation and cleanup behavior.
+- Cycle 148 E148/F150/US-R148-P2-01A ACTIVE before code changes, focused on preflight before JPEG encoding after raster rendering.
+- No device/emulator/benchmark proof; PR #1 draft/unmerged; main untouched.
