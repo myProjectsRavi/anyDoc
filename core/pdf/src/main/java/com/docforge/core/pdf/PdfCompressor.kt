@@ -200,7 +200,9 @@ class PdfCompressor(
                             try {
                                 val canvas = Canvas(bitmap)
                                 canvas.drawColor(Color.WHITE)
-                                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                                openCompressionResourceWithPreflight(checkCancelled) {
+                                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                                }
 
                                 // Create a PdfBox page with original PDF point dimensions
                                 val pdPage = PDPage(PDRectangle(page.width.toFloat(), page.height.toFloat()))
