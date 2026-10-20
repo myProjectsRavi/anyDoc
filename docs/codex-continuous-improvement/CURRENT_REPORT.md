@@ -1,6 +1,6 @@
 # Cycle 152 — Compression progress-callback cancellation preflight
 
-**Status:** ACTIVE / INCOMPLETE
+**Status:** COMPLETE / REVIEW READY
 **Branch:** `codex/anydoc-continuous-improvement`
 **Epic / Feature / Story:** E152/F154/US-R152-P2-01A
 **Activation baseline:** `7a1beab654c06e34c4acdf7dfe900805a0079ffa`
@@ -18,3 +18,14 @@ After PDF page rendering, JPEG encoding and output-page content drawing, `PdfCom
 
 ## Next executable step
 Inspect callback and cancellation helper placement, implement the smallest safe preflight, add focused tests, publish candidate on this branch and inspect exact-SHA authoritative CI. After terminal validation reconcile canonical documentation.
+
+
+## Cycle 152 authoritative completion / review freeze — 2026-10-20 UTC
+- Cycle 152 `E152/F154/US-R152-P2-01A` COMPLETE. Exact production/test SHA `1d7ed3b50cca63ab53e903b74352962575a4cdd1` passed authoritative draft-PR Actions #1019 / API `39461182825`, job `118760852338`. All nine configured gates SUCCESS: core domain, core PDF, converter, scanner, PDF-tools and app JVM tests; debug APK; unsigned release/R8; Android lint.
+- Production adds a cancellation preflight immediately before non-null compression progress callbacks. Six committed `PdfCompressorProgressPreflightTest` JVM regressions cover cancellation skip, ordering/arguments, absent callback behavior, callback exception identity, multi-page ordering and actual coroutine cancellation. A missing `ensureActive` test import was corrected in the final validated SHA.
+- Review-readiness audit: PR #1 is mergeable, branch was 0 commits behind `main` at the audit, and there were no unresolved inline review threads or submitted change-request reviews. The cumulative PR is intentionally large and requires human review before merge.
+- REVIEW FREEZE: do not activate another autonomous improvement cycle or mutate production code until explicit reviewer/user feedback reopens engineering. This is review readiness, not production certification.
+- Residual evidence limits: no Android emulator/physical-device/OEM compatibility run, benchmark, measured cancellation latency, exhaustive race proof, or claim that every latent defect is eliminated. `main` remains untouched.
+
+## Reviewer handoff
+Review cumulative safety/correctness changes against `main`, with special attention to filesystem ownership/TOCTOU boundaries, cancellation/resource lifecycle, Android storage/provider behavior and PDF rendering/compression. CI is green; device/OEM validation remains outside the evidence set.
