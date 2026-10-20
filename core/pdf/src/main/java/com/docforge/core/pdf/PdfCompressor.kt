@@ -204,9 +204,12 @@ class PdfCompressor(
                                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
                                 }
 
-                                // Create a PdfBox page with original PDF point dimensions
-                                val pdPage = PDPage(PDRectangle(page.width.toFloat(), page.height.toFloat()))
-                                outDoc.addPage(pdPage)
+                                // Do not allocate or append a PDFBox page after render-time cancellation.
+                                val pdPage = openCompressionResourceWithPreflight(checkCancelled) {
+                                    PDPage(PDRectangle(page.width.toFloat(), page.height.toFloat())).also {
+                                        outDoc.addPage(it)
+                                    }
+                                }
 
                                 // Embed JPEG-compressed image
                                 val jpegImage = openCompressionResourceWithPreflight(checkCancelled) {
