@@ -194,7 +194,9 @@ class PdfCompressor(
                             // Using RGB_565 throws "unsupported pixel format". We pre-fill the canvas
                             // with white to ensure transparent PDFs (vector logos / slides) don't render
                             // as black blocks after JPEG encoding (JPEG has no alpha channel).
-                            val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+                            val bitmap = openCompressionResourceWithPreflight(checkCancelled) {
+                                Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+                            }
                             try {
                                 val canvas = Canvas(bitmap)
                                 canvas.drawColor(Color.WHITE)
