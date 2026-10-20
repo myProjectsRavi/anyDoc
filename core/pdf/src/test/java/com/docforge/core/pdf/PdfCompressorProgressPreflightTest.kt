@@ -3,6 +3,7 @@ package com.docforge.core.pdf
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
