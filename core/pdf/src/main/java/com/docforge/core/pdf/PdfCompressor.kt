@@ -20,7 +20,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.coroutineContext
-import kotlin.math.roundToInt
+import kotlin.math.round
+import kotlin.math.sqrt
 
 enum class PdfCompressionLevel(
     /** DPI to render source pages at for rasterization-based compression */
@@ -33,6 +34,73 @@ enum class PdfCompressionLevel(
     HIGH(renderDpi = 150, jpegQuality = 82, estimatedRatio = 0.65f),
     MEDIUM(renderDpi = 120, jpegQuality = 70, estimatedRatio = 0.45f),
     LOW(renderDpi = 96, jpegQuality = 58, estimatedRatio = 0.30f)
+}
+
+/** A page-count hint may fail to parse, but cancellation must not look like an empty PDF. */
+internal suspend fun pageCountOrZero(readPageCount: suspend () -> Int): Int {
+    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+    return try {
+        val count = readPageCount()
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        count
+    } catch (cancelled: java.util.concurrent.CancellationException) {
+        throw cancelled
+    } catch (cancelled: android.os.OperationCanceledException) {
+        throw cancelled
+    } catch (interrupted: InterruptedException) {
+        throw interrupted
+    } catch (interrupted: java.io.InterruptedIOException) {
+        // Timeouts are recoverable preview failures, not proof of interruption.
+        if (interrupted is java.net.SocketTimeoutException) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            0
+        } else throw interrupted
+    } catch (interrupted: java.nio.channels.ClosedByInterruptException) {
+        throw interrupted
+    } catch (_: Exception) {
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        0
+    }
+}
+
+/** Check the coroutine before potentially expensive final PDF serialization. */
+internal fun <T> saveCompressedPdfWithPreflight(
+    checkCancelled: () -> Unit,
+    save: () -> T
+): T {
+    checkCancelled()
+    return save()
+}
+
+/** Check cancellation immediately before acquiring a compression input resource. */
+internal fun <T> openCompressionResourceWithPreflight(
+    checkCancelled: () -> Unit,
+    open: () -> T
+): T {
+    checkCancelled()
+    return open()
+}
+
+/** Skip stale compression progress callbacks after cancellation. */
+internal fun notifyCompressionProgressWithPreflight(
+    checkCancelled: () -> Unit,
+    completed: Int,
+    total: Int,
+    onProgress: ((completed: Int, total: Int) -> Unit)?
+) {
+    if (onProgress == null) return
+    checkCancelled()
+    onProgress(completed, total)
+}
+
+/** Recheck cancellation after PDFBox initialization before resolving a potentially mutating output directory. */
+internal suspend fun <T> initializePdfBoxAndResolveCompressionDirectory(
+    initialize: () -> Unit,
+    resolve: () -> T
+): T {
+    initialize()
+    coroutineContext.ensureActive()
+    return resolve()
 }
 
 class PdfCompressor(
@@ -48,39 +116,51 @@ class PdfCompressor(
         level: PdfCompressionLevel,
         onProgress: ((completed: Int, total: Int) -> Unit)? = null
     ): PdfCreationResult = withContext(Dispatchers.IO) {
-        PdfBoxInit.ensure(context)
-        val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
-            context = context,
-            bucket = DocForgeOutputBucket.DOCUMENTS
+        val outputDir = initializePdfBoxAndResolveCompressionDirectory(
+            initialize = { PdfBoxInit.ensure(context) },
+            resolve = {
+                DocForgeSettingsStore.resolveOutputDirectory(
+                    context = context,
+                    bucket = DocForgeOutputBucket.DOCUMENTS
+                )
+            }
         )
 
         val sanitized = outputName.ifBlank { "compressed_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
-        context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_compress_src_", suffix = ".pdf") { sourceFile ->
-            val pageCount = compressWithJpegRasterization(
-                sourceFile = sourceFile,
-                outputFile = outputFile,
-                renderDpi = level.renderDpi,
-                jpegQuality = level.jpegQuality,
-                onProgress = onProgress
-            )
-
-            PdfCreationResult(
-                outputFile = outputFile,
-                pageCount = pageCount,
-                outputSizeBytes = outputFile.length()
-            )
+        val staged = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "pdf"
+        ) { stagedFile ->
+            context.withUriCopiedToCacheFile(
+                inputUri,
+                prefix = "docforge_compress_src_",
+                suffix = ".pdf"
+            ) { sourceFile ->
+                compressWithJpegRasterization(
+                    sourceFile = sourceFile,
+                    outputFile = stagedFile,
+                    renderDpi = level.renderDpi,
+                    jpegQuality = level.jpegQuality,
+                    onProgress = onProgress
+                )
+            }
         }
+
+        PdfCreationResult(
+            outputFile = staged.outputFile,
+            pageCount = staged.value,
+            outputSizeBytes = staged.outputFile.length()
+        )
     }
 
     suspend fun getPageCount(inputUri: Uri): Int = withContext(Dispatchers.IO) {
-        runCatching {
+        pageCountOrZero {
             context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_compress_count_", suffix = ".pdf") { sourceFile ->
                 loadPdfDocument(sourceFile).use { sourceDoc -> sourceDoc.numberOfPages }
             }
-        }.getOrDefault(0)
+        }
     }
 
     /**
@@ -98,44 +178,63 @@ class PdfCompressor(
         onProgress: ((completed: Int, total: Int) -> Unit)? = null
     ): Int = withContext(Dispatchers.IO) {
         val checkCancelled = { coroutineContext.ensureActive() }
-        val scale = renderDpi / 72f  // PDF native unit = 1/72 inch
+        val bitmapBudgetBytes = pdfCompressionBitmapBudgetBytes(Runtime.getRuntime().maxMemory())
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         var pageCount = 0
 
-        ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
-            PdfRenderer(pfd).use { renderer ->
+        openCompressionResourceWithPreflight(checkCancelled) {
+            ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
+        }.use { pfd ->
+            openCompressionResourceWithPreflight(checkCancelled) { PdfRenderer(pfd) }.use { renderer ->
                 pageCount = renderer.pageCount
                 require(pageCount > 0) { "Input PDF has no pages." }
 
-                PDDocument().use { outDoc ->
+                openCompressionResourceWithPreflight(checkCancelled) { PDDocument() }.use { outDoc ->
                     for (i in 0 until renderer.pageCount) {
                         checkCancelled()
                         renderer.openPage(i).use { page ->
-                            val bitmapWidth = (page.width * scale).roundToInt().coerceAtLeast(1)
-                            val bitmapHeight = (page.height * scale).roundToInt().coerceAtLeast(1)
+                            val rasterSize = boundedPdfRasterSize(
+                                pageWidthPoints = page.width,
+                                pageHeightPoints = page.height,
+                                renderDpi = renderDpi,
+                                maxBitmapBytes = bitmapBudgetBytes
+                            )
+                            val bitmapWidth = rasterSize.width
+                            val bitmapHeight = rasterSize.height
 
                             // PdfBox-Android JPEGFactory.createFromImage REQUIRES Bitmap.Config.ARGB_8888.
                             // Using RGB_565 throws "unsupported pixel format". We pre-fill the canvas
                             // with white to ensure transparent PDFs (vector logos / slides) don't render
                             // as black blocks after JPEG encoding (JPEG has no alpha channel).
-                            val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+                            val bitmap = openCompressionResourceWithPreflight(checkCancelled) {
+                                Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+                            }
                             try {
                                 val canvas = Canvas(bitmap)
                                 canvas.drawColor(Color.WHITE)
-                                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                                openCompressionResourceWithPreflight(checkCancelled) {
+                                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                                }
 
-                                // Create a PdfBox page with original PDF point dimensions
-                                val pdPage = PDPage(PDRectangle(page.width.toFloat(), page.height.toFloat()))
-                                outDoc.addPage(pdPage)
+                                // Do not allocate or append a PDFBox page after render-time cancellation.
+                                val pdPage = openCompressionResourceWithPreflight(checkCancelled) {
+                                    PDPage(PDRectangle(page.width.toFloat(), page.height.toFloat())).also {
+                                        outDoc.addPage(it)
+                                    }
+                                }
 
                                 // Embed JPEG-compressed image
-                                val jpegImage = JPEGFactory.createFromImage(
-                                    outDoc,
-                                    bitmap,
-                                    jpegQuality / 100f
-                                )
+                                val jpegImage = openCompressionResourceWithPreflight(checkCancelled) {
+                                    JPEGFactory.createFromImage(
+                                        outDoc,
+                                        bitmap,
+                                        jpegQuality / 100f
+                                    )
+                                }
 
-                                PDPageContentStream(outDoc, pdPage).use { stream ->
+                                openCompressionResourceWithPreflight(checkCancelled) {
+                                    PDPageContentStream(outDoc, pdPage)
+                                }.use { stream ->
                                     stream.drawImage(
                                         jpegImage,
                                         0f, 0f,
@@ -147,10 +246,15 @@ class PdfCompressor(
                                 bitmap.recycle()
                             }
                         }
-                        onProgress?.invoke(i + 1, renderer.pageCount)
+                        notifyCompressionProgressWithPreflight(
+                            checkCancelled = checkCancelled,
+                            completed = i + 1,
+                            total = renderer.pageCount,
+                            onProgress = onProgress
+                        )
                     }
 
-                    outDoc.save(outputFile)
+                    saveCompressedPdfWithPreflight(checkCancelled) { outDoc.save(outputFile) }
                 }
             }
         }
@@ -159,3 +263,64 @@ class PdfCompressor(
     }
 }
 
+
+
+internal data class PdfRasterSize(
+    val width: Int,
+    val height: Int
+)
+
+private const val PDF_COMPRESS_BYTES_PER_PIXEL = 4L
+private const val PDF_COMPRESS_MIN_BITMAP_BUDGET_BYTES = 8L * 1024L * 1024L
+private const val PDF_COMPRESS_MAX_BITMAP_BUDGET_BYTES = 32L * 1024L * 1024L
+
+internal fun pdfCompressionBitmapBudgetBytes(maxHeapBytes: Long): Long {
+    val heapAwareBudget = (maxHeapBytes / 8L).coerceAtLeast(1L)
+    return heapAwareBudget.coerceIn(
+        PDF_COMPRESS_MIN_BITMAP_BUDGET_BYTES,
+        PDF_COMPRESS_MAX_BITMAP_BUDGET_BYTES
+    )
+}
+
+internal fun boundedPdfRasterSize(
+    pageWidthPoints: Int,
+    pageHeightPoints: Int,
+    renderDpi: Int,
+    maxBitmapBytes: Long
+): PdfRasterSize {
+    require(pageWidthPoints > 0 && pageHeightPoints > 0) { "PDF page dimensions must be positive." }
+    require(renderDpi > 0) { "Render DPI must be positive." }
+    require(maxBitmapBytes >= PDF_COMPRESS_BYTES_PER_PIXEL) { "Bitmap budget is too small." }
+
+    val scale = renderDpi.toDouble() / 72.0
+    val desiredWidth = round(pageWidthPoints.toDouble() * scale)
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+    val desiredHeight = round(pageHeightPoints.toDouble() * scale)
+        .coerceIn(1.0, Int.MAX_VALUE.toDouble())
+        .toInt()
+
+    val maxPixels = (maxBitmapBytes / PDF_COMPRESS_BYTES_PER_PIXEL).coerceAtLeast(1L)
+    val desiredPixels = desiredWidth.toDouble() * desiredHeight.toDouble()
+    if (desiredPixels <= maxPixels.toDouble()) {
+        return PdfRasterSize(desiredWidth, desiredHeight)
+    }
+
+    val downscale = sqrt(maxPixels.toDouble() / desiredPixels)
+    var width = (desiredWidth.toDouble() * downscale).toInt().coerceAtLeast(1)
+    var height = (desiredHeight.toDouble() * downscale).toInt().coerceAtLeast(1)
+
+    if (width.toLong() * height.toLong() > maxPixels) {
+        if (width >= height) {
+            width = minOf(width.toLong(), (maxPixels / height.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
+        } else {
+            height = minOf(height.toLong(), (maxPixels / width.toLong()).coerceAtLeast(1L))
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
+        }
+    }
+
+    return PdfRasterSize(width.coerceAtLeast(1), height.coerceAtLeast(1))
+}

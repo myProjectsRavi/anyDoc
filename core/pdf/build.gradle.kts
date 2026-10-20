@@ -27,4 +27,5 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.pdfbox.android)
     implementation(libs.mlkit.text.recognition)
+    testImplementation(libs.junit4)
 }

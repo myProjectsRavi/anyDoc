@@ -3,6 +3,7 @@ package com.docforge.core.domain.settings
 import android.content.Context
 import android.os.Environment
 import java.io.File
+import java.nio.file.Files
 
 enum class DocForgeOutputBucket(val mediaDirectory: String) {
     DOCUMENTS(Environment.DIRECTORY_DOCUMENTS),
@@ -69,14 +70,43 @@ object DocForgeSettingsStore {
 
     fun resolveOutputDirectory(context: Context, bucket: DocForgeOutputBucket): File {
         val folderName = readOutputFolderName(context, bucket)
+        // Resolve only Android-supplied storage roots. Android may use legitimate
+        // symlink aliases for shared storage; never canonicalize the user-controlled
+        // child folder, which must still pass the staged-output symlink guard.
         @Suppress("DEPRECATION")
         val publicBase = Environment.getExternalStoragePublicDirectory(bucket.mediaDirectory)
-        val publicDir = File(publicBase, folderName)
-        if (publicDir.exists() || publicDir.mkdirs()) {
-            return publicDir
+        val canonicalPublicBase = runCatching { publicBase.canonicalFile }.getOrNull()
+        if (canonicalPublicBase != null) {
+            val publicDir = File(canonicalPublicBase, folderName)
+            if (ensureUnlinkedOutputFolder(publicDir)) {
+                return publicDir
+            }
         }
         val fallbackBase = context.getExternalFilesDir(bucket.mediaDirectory) ?: context.filesDir
-        return File(fallbackBase, folderName).apply { mkdirs() }
+        val canonicalFallbackBase = runCatching { fallbackBase.canonicalFile }.getOrNull()
+            ?: error("Unable to resolve application output storage root.")
+        return File(canonicalFallbackBase, folderName).also {
+            require(ensureUnlinkedOutputFolder(it)) {
+                "Unable to create application output directory."
+            }
+        }
+    }
+
+    /**
+     * Check the configured child path without following its final component. A dangling
+     * link also occupies the name even though File.exists() returns false.
+     * This bounds accidental redirection; it is not an atomic defence against swaps.
+     */
+    internal fun ensureUnlinkedOutputFolder(folder: File): Boolean {
+        val path = folder.toPath()
+        require(!Files.isSymbolicLink(path)) {
+            "Configured output directory must not be a symbolic link."
+        }
+        val usable = folder.isDirectory || (!folder.exists() && folder.mkdirs())
+        require(!Files.isSymbolicLink(path)) {
+            "Configured output directory changed into a symbolic link."
+        }
+        return usable && folder.isDirectory
     }
 
     /**

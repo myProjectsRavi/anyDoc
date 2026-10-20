@@ -38,8 +38,6 @@ class PdfMerger(
 
         val sanitized = outputName.ifBlank { "merged_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
-
         val sourceBookmarks = mutableListOf<PdfSourceBookmark>()
 
         PDDocument().use { mergedDoc ->
@@ -75,13 +73,16 @@ class PdfMerger(
                     MergeInputType.IMAGE -> {
                         val bitmap = decodeBitmapConstrained(context, uri, maxLongEdge = 2200)
                             ?: error("Failed to decode image source: $uri")
-                        appendImagePage(
-                            document = mergedDoc,
-                            bitmap = bitmap,
-                            pageSizeMode = options.pageSizeMode
-                        )
-                        bitmap.recycle()
-                        outputPageNumber += 1
+                        try {
+                            appendImagePage(
+                                document = mergedDoc,
+                                bitmap = bitmap,
+                                pageSizeMode = options.pageSizeMode
+                            )
+                            outputPageNumber += 1
+                        } finally {
+                            bitmap.recycle()
+                        }
                     }
 
                     MergeInputType.UNSUPPORTED -> {
@@ -95,7 +96,13 @@ class PdfMerger(
                 options = options,
                 sourceBookmarks = sourceBookmarks
             )
-            mergedDoc.save(outputFile)
+            val outputFile = withStagedOutputFile(
+                directory = outputDir,
+                baseName = sanitized,
+                extension = "pdf"
+            ) { stagedFile ->
+                mergedDoc.save(stagedFile)
+            }.outputFile
 
             PdfCreationResult(
                 outputFile = outputFile,

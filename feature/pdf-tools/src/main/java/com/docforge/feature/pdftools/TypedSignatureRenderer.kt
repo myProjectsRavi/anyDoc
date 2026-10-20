@@ -13,6 +13,28 @@ import java.io.ByteArrayOutputStream
  *
  * Sprint 5 feature — Typed Signature (Font-Based Calligraphy).
  */
+internal data class TypedSignatureBitmapSize(val width: Int, val height: Int)
+
+internal fun boundedTypedSignatureBitmapSize(
+    textWidth: Float,
+    textHeight: Float,
+    padding: Int
+): TypedSignatureBitmapSize {
+    require(padding in 0..1024) { "Signature padding is out of range." }
+    require(textWidth.isFinite() && textWidth >= 0f) { "Signature width is invalid." }
+    require(textHeight.isFinite() && textHeight >= 0f) { "Signature height is invalid." }
+
+    val width = textWidth.toDouble() + padding.toDouble() * 2.0
+    val height = textHeight.toDouble() + padding.toDouble() * 2.0
+    require(width <= 4096.0) { "Signature is too wide to render safely." }
+    require(height <= 1024.0) { "Signature is too tall to render safely." }
+
+    return TypedSignatureBitmapSize(
+        width = width.toInt().coerceAtLeast(1),
+        height = height.toInt().coerceAtLeast(1)
+    )
+}
+
 class TypedSignatureRenderer {
 
     data class TypedSignatureResult(
@@ -61,10 +83,9 @@ class TypedSignatureRenderer {
         val metrics = paint.fontMetrics
         val textHeight = metrics.descent - metrics.ascent
 
-        val bitmapWidth = (textWidth + padding * 2).toInt().coerceAtLeast(1)
-        val bitmapHeight = (textHeight + padding * 2).toInt().coerceAtLeast(1)
+        val bitmapSize = boundedTypedSignatureBitmapSize(textWidth, textHeight, padding)
 
-        val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(bitmapSize.width, bitmapSize.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         // Transparent background — no drawColor
 

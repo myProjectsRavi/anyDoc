@@ -72,6 +72,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.docforge.core.opencv.DetectedDocument
 import com.docforge.core.opencv.DocumentEdgeDetector
+import com.docforge.core.pdf.bitmapDecodeBudgetBytes
+import com.docforge.core.pdf.boundedBitmapRegionSampleSize
 import com.docforge.core.pdf.decodeBitmapConstrained
 import com.docforge.core.pdf.PdfPageSize
 import com.docforge.core.ui.model.StableUriRef
@@ -1024,10 +1026,11 @@ private fun decodeDocumentRegionForPerspective(
     }
 
     val decodeRect = buildDocumentCropRect(cornersInFullImage, fullWidth, fullHeight)
-    val sampleSize = computeRegionSampleSize(
+    val sampleSize = boundedBitmapRegionSampleSize(
         width = decodeRect.width(),
         height = decodeRect.height(),
-        maxLongEdge = 3600
+        requestedLongEdge = 2000,
+        maxBitmapBytes = bitmapDecodeBudgetBytes(Runtime.getRuntime().maxMemory())
     )
 
     val decodedBitmap = context.contentResolver.openInputStream(inputUri)?.use { stream ->
@@ -1096,16 +1099,6 @@ private fun buildDocumentCropRect(
     val safeRight = if (right <= left) (left + 1).coerceAtMost(fullWidth) else right
     val safeBottom = if (bottom <= top) (top + 1).coerceAtMost(fullHeight) else bottom
     return Rect(left, top, safeRight, safeBottom)
-}
-
-private fun computeRegionSampleSize(width: Int, height: Int, maxLongEdge: Int): Int {
-    val safeMax = maxLongEdge.coerceAtLeast(512)
-    var sample = 1
-    val longest = maxOf(width, height).coerceAtLeast(1)
-    while (longest / sample > safeMax) {
-        sample *= 2
-    }
-    return sample.coerceAtLeast(1)
 }
 
 private fun isManagedScanCacheUri(uri: Uri): Boolean {

@@ -62,53 +62,60 @@ class PdfAnnotator(
 
         val sanitized = outputName.ifBlank { "annotated_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        val outputFile = resolveNonConflictingFile(outputDir, sanitized, "pdf")
 
-        context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_annotate_src_", suffix = ".pdf") { sourceFile ->
-            loadPdfDocument(sourceFile).use { sourceDoc ->
-                require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
+        val stagedResult = withStagedOutputFile(
+            directory = outputDir,
+            baseName = sanitized,
+            extension = "pdf"
+        ) { stagedFile ->
+            context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_annotate_src_", suffix = ".pdf") { sourceFile ->
+                loadPdfDocument(sourceFile).use { sourceDoc ->
+                    require(sourceDoc.numberOfPages > 0) { "Input PDF has no pages." }
 
-                annotations.forEach { command ->
-                    require(command.pageOneBased in 1..sourceDoc.numberOfPages) {
-                        "Annotation page ${command.pageOneBased} is out of bounds."
-                    }
-                }
-
-                val commandsByPage = annotations.groupBy { it.pageOneBased }
-
-                PDDocument().use { outDoc ->
-                    repeat(sourceDoc.numberOfPages) { pageIndex ->
-                        checkCancelled()
-                        val sourcePage = sourceDoc.getPage(pageIndex)
-                        val importedPage = importPage(outDoc, sourcePage)
-
-                        val pageCommands = commandsByPage[pageIndex + 1].orEmpty()
-                        if (pageCommands.isNotEmpty()) {
-                            PDPageContentStream(
-                                outDoc,
-                                importedPage,
-                                PDPageContentStream.AppendMode.APPEND,
-                                true,
-                                true
-                            ).use { stream ->
-                                pageCommands.forEach { command ->
-                                    checkCancelled()
-                                    drawAnnotation(stream, importedPage, command)
-                                }
-                            }
+                    annotations.forEach { command ->
+                        require(command.pageOneBased in 1..sourceDoc.numberOfPages) {
+                            "Annotation page ${command.pageOneBased} is out of bounds."
                         }
                     }
 
-                    outDoc.save(outputFile)
-                }
+                    val commandsByPage = annotations.groupBy { it.pageOneBased }
 
-                PdfCreationResult(
-                    outputFile = outputFile,
-                    pageCount = sourceDoc.numberOfPages,
-                    outputSizeBytes = outputFile.length()
-                )
+                    PDDocument().use { outDoc ->
+                        repeat(sourceDoc.numberOfPages) { pageIndex ->
+                            checkCancelled()
+                            val sourcePage = sourceDoc.getPage(pageIndex)
+                            val importedPage = importPage(outDoc, sourcePage)
+
+                            val pageCommands = commandsByPage[pageIndex + 1].orEmpty()
+                            if (pageCommands.isNotEmpty()) {
+                                PDPageContentStream(
+                                    outDoc,
+                                    importedPage,
+                                    PDPageContentStream.AppendMode.APPEND,
+                                    true,
+                                    true
+                                ).use { stream ->
+                                    pageCommands.forEach { command ->
+                                        checkCancelled()
+                                        drawAnnotation(stream, importedPage, command)
+                                    }
+                                }
+                            }
+                        }
+
+                        outDoc.save(stagedFile)
+                    }
+
+                    sourceDoc.numberOfPages
+                }
             }
         }
+
+        PdfCreationResult(
+            outputFile = stagedResult.outputFile,
+            pageCount = stagedResult.value,
+            outputSizeBytes = stagedResult.outputFile.length()
+        )
     }
 
     suspend fun getPageCount(inputUri: Uri): Int = withContext(Dispatchers.IO) {

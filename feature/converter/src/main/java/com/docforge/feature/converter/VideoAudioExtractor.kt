@@ -8,6 +8,8 @@ import android.media.MediaMuxer
 import android.net.Uri
 import com.docforge.core.domain.settings.DocForgeOutputBucket
 import com.docforge.core.domain.settings.DocForgeSettingsStore
+import com.docforge.core.pdf.resolveNonConflictingFile
+import com.docforge.core.pdf.withStagedOutputFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -56,11 +58,22 @@ class VideoAudioExtractor(
         outputFormat: AudioOutputFormat
     ): VideoAudioExtractionResult = withContext(Dispatchers.IO) {
         val checkCancelled = { coroutineContext.ensureActive() }
-        val outputFile = createOutputFile(outputBaseName, outputFormat)
-        when (outputFormat) {
-            AudioOutputFormat.M4A -> extractToM4a(inputUri, outputFile, checkCancelled)
-            AudioOutputFormat.MP3 -> extractToMp3Passthrough(inputUri, outputFile, checkCancelled)
+        val outputTarget = createOutputFile(outputBaseName, outputFormat)
+        val staged = withStagedOutputFile(
+            directory = requireNotNull(outputTarget.parentFile) { "Output directory unavailable." },
+            baseName = outputTarget.nameWithoutExtension,
+            extension = outputTarget.extension
+        ) { stagedFile ->
+            when (outputFormat) {
+                AudioOutputFormat.M4A -> extractToM4a(inputUri, stagedFile, checkCancelled)
+                AudioOutputFormat.MP3 -> extractToMp3Passthrough(inputUri, stagedFile, checkCancelled)
+            }
         }
+        val outputFile = staged.outputFile
+        staged.value.copy(
+            outputFile = outputFile,
+            outputSizeBytes = outputFile.length()
+        )
     }
 
     private fun extractToM4a(
@@ -165,20 +178,16 @@ class VideoAudioExtractor(
             AudioOutputFormat.MP3 -> "mp3"
         }
 
-        return File(outputDir, "$base.$extension").also { file ->
-            if (file.exists()) {
-                file.delete()
-            }
-        }
+        return resolveNonConflictingFile(outputDir, base, extension)
     }
 
-    private fun selectBufferSize(trackFormat: MediaFormat): Int {
-        val fallback = 256 * 1024
-        return if (trackFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
-            trackFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE).coerceAtLeast(fallback)
+    internal fun selectBufferSize(trackFormat: MediaFormat): Int {
+        val requested = if (trackFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+            trackFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
         } else {
-            fallback
+            null
         }
+        return selectExtractorBufferSize(requested)
     }
 
     private inline fun <T> withAudioTrack(
@@ -223,4 +232,14 @@ class VideoAudioExtractor(
             null
         }
     }
+}
+
+internal fun selectExtractorBufferSize(requested: Int?): Int {
+    val fallback = 256 * 1024
+    val maximum = 8 * 1024 * 1024
+    if (requested == null) return fallback
+    require(requested <= maximum) {
+        "Audio sample buffer demand exceeds the supported 8 MiB limit."
+    }
+    return requested.coerceAtLeast(fallback)
 }

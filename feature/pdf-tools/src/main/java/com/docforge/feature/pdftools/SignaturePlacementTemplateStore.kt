@@ -37,7 +37,7 @@ class SignaturePlacementTemplateStore(
         return template.placements
     }
 
-    fun saveTemplate(name: String, placements: List<PdfSignaturePlacementUi>) {
+    fun saveTemplate(name: String, placements: List<PdfSignaturePlacementUi>) = synchronized(TEMPLATE_LOCK) {
         val normalized = normalizeName(name)
         require(placements.isNotEmpty()) { "Template placements cannot be empty." }
         require(placements.size <= MAX_TEMPLATE_PLACEMENTS) {
@@ -71,7 +71,7 @@ class SignaturePlacementTemplateStore(
         writeTemplates(existing)
     }
 
-    fun deleteTemplate(name: String) {
+    fun deleteTemplate(name: String) = synchronized(TEMPLATE_LOCK) {
         val normalized = normalizeName(name)
         val remaining = readTemplates().filterNot { template ->
             template.name.equals(normalized, ignoreCase = true)
@@ -81,41 +81,52 @@ class SignaturePlacementTemplateStore(
 
     private fun readTemplates(): List<TemplateRecord> {
         if (!templatesFile.exists()) return emptyList()
-        val raw = runCatching { templatesFile.readText() }.getOrNull().orEmpty()
-        if (raw.isBlank()) return emptyList()
-        val root = runCatching { JSONObject(raw) }.getOrNull() ?: return emptyList()
-        val templates = root.optJSONArray("templates") ?: JSONArray()
-        val output = mutableListOf<TemplateRecord>()
-        for (index in 0 until templates.length()) {
-            val obj = templates.optJSONObject(index) ?: continue
-            val name = obj.optString("name").trim()
-            if (name.isBlank()) continue
-            val updatedAt = obj.optLong("updatedAtMillis", 0L).coerceAtLeast(0L)
-            val placementsArray = obj.optJSONArray("placements") ?: JSONArray()
-            val placements = mutableListOf<PdfSignaturePlacementUi>()
-            for (placementIndex in 0 until placementsArray.length()) {
-                val placementObj = placementsArray.optJSONObject(placementIndex) ?: continue
-                val page = placementObj.optInt("pageOneBased", 0)
-                val x = placementObj.optDouble("xRatio", Double.NaN).toFloat()
-                val y = placementObj.optDouble("yRatio", Double.NaN).toFloat()
-                val width = placementObj.optDouble("widthRatio", Double.NaN).toFloat()
-                if (page <= 0 || x.isNaN() || y.isNaN() || width.isNaN()) continue
-                placements += PdfSignaturePlacementUi(
-                    pageOneBased = page,
-                    xRatio = x.coerceIn(0f, 1f),
-                    yRatio = y.coerceIn(0f, 1f),
-                    widthRatio = width.coerceIn(0.1f, 0.8f)
-                )
+        try {
+            val root = JSONObject(templatesFile.readText())
+            val templates = root.getJSONArray("templates")
+            require(templates.length() <= MAX_TEMPLATES) { "Too many stored templates." }
+            val output = mutableListOf<TemplateRecord>()
+            for (index in 0 until templates.length()) {
+                val obj = templates.getJSONObject(index)
+                val rawName = obj.get("name")
+                require(rawName is String) { "Invalid stored template name." }
+                val name = rawName.trim()
+                require(name.isNotEmpty() && name.length <= MAX_NAME_LENGTH) {
+                    "Invalid stored template name."
+                }
+                require(output.none { it.name.equals(name, ignoreCase = true) }) {
+                    "Duplicate stored template name."
+                }
+                val rawTimestamp = obj.get("updatedAtMillis")
+                require(rawTimestamp is Number) { "Invalid stored template timestamp." }
+                val updatedAt = rawTimestamp.toLong().coerceAtLeast(0L)
+                val placementsArray = obj.getJSONArray("placements")
+                require(placementsArray.length() in 1..MAX_TEMPLATE_PLACEMENTS) {
+                    "Invalid stored template placements."
+                }
+                val placements = mutableListOf<PdfSignaturePlacementUi>()
+                for (placementIndex in 0 until placementsArray.length()) {
+                    val placementObj = placementsArray.getJSONObject(placementIndex)
+                    val page = placementObj.getInt("pageOneBased")
+                    val x = placementObj.getDouble("xRatio").toFloat()
+                    val y = placementObj.getDouble("yRatio").toFloat()
+                    val width = placementObj.getDouble("widthRatio").toFloat()
+                    require(page > 0 && x.isFinite() && y.isFinite() && width.isFinite()) {
+                        "Invalid stored signature placement."
+                    }
+                    placements += PdfSignaturePlacementUi(
+                        pageOneBased = page,
+                        xRatio = x.coerceIn(0f, 1f),
+                        yRatio = y.coerceIn(0f, 1f),
+                        widthRatio = width.coerceIn(0.1f, 0.8f)
+                    )
+                }
+                output += TemplateRecord(name, updatedAt, placements)
             }
-            if (placements.isNotEmpty()) {
-                output += TemplateRecord(
-                    name = name,
-                    updatedAtMillis = updatedAt,
-                    placements = placements
-                )
-            }
+            return output
+        } catch (failure: Exception) {
+            throw java.io.IOException("Stored signature templates are unreadable or corrupt.", failure)
         }
-        return output
     }
 
     private fun writeTemplates(templates: List<TemplateRecord>) {
@@ -140,10 +151,7 @@ class SignaturePlacementTemplateStore(
         }
         root.put("templates", array)
 
-        templatesFile.parentFile?.mkdirs()
-        val tmpFile = File(templatesFile.parentFile, templatesFile.name + ".tmp")
-        tmpFile.writeText(root.toString())
-        tmpFile.renameTo(templatesFile)
+        writeJsonAtomically(templatesFile, root.toString())
     }
 
     private fun normalizeName(raw: String): String {
@@ -162,6 +170,8 @@ class SignaturePlacementTemplateStore(
     )
 
     companion object {
+        private val TEMPLATE_LOCK = Any()
+
         const val MAX_TEMPLATES: Int = 20
         const val MAX_TEMPLATE_PLACEMENTS: Int = 120
         const val MAX_NAME_LENGTH: Int = 40

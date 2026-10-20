@@ -107,6 +107,8 @@ data class BatchQueuePreset(
 data class BatchQueueUiState(
     val tasks: List<BatchQueueTask> = emptyList(),
     val isProcessing: Boolean = false,
+    val activeRunTaskIds: Set<Long> = emptySet(),
+    val activeRunId: Long = 0L,
     val processedCount: Int = 0,
     val successCount: Int = 0,
     val failureCount: Int = 0,

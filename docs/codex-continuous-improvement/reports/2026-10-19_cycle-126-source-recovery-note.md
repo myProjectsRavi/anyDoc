@@ -1,0 +1,9 @@
+# Cycle 126 source publication recovery — 2026-10-19 UTC
+- ACTIVE: E126/F128/US-R126-P2-01A. Canonical STATE.md activated in commit `f52187e49cf3f4ca9c2065c50f0f7b594687e814` before attempted production mutation.
+- Prior Cycle 125 exact production/test SHA `3854f24b68fd5a78c1eff236cdcf21723aeeac65` passed authoritative draft-PR Actions #919 / API `39181219306` (all nine gates). Documentation HEAD #920 also passed, but is not Cycle 126 validation.
+- Source review: `Context.copyUriToCacheFile` performs `preflightCacheCopy(uri)` before checking coroutine cancellation, so a cancelled operation may still query URI metadata or storage. The first chunk-level cancellation check occurs later.
+- Prepared bounded correction: add `withCacheCopyEntryPreflight` that calls `currentCoroutineContext().ensureActive()` before and after the metadata/storage preflight, and wrap `preflightCacheCopy(uri)` with it. Preserve temp-file registry, storage checks, cleanup and original exceptions.
+- Five focused JVM regression tests prepared. Supplementary isolated Kotlin coroutine smoke checks: 5/5 PASS. These are not authoritative Android CI.
+- GitHub connector safety rejected source/test tree creation, source blob creation, and source-file update. No Cycle 126 production/test SHA exists yet. Do not claim Cycle 126 CI success.
+- Next exact mutation: re-read branch HEAD and STATE; publish source change in `core/pdf/src/main/java/com/docforge/core/pdf/PdfIoUtils.kt` and new `core/pdf/src/test/java/com/docforge/core/pdf/PdfCacheCopyEntryPreflightTest.kt`, review diff, run authoritative draft-PR exact-SHA CI, and synchronize STATE/CURRENT_REPORT/BACKLOG/VALIDATION/Cycle 126 report only after terminal CI.
+- PR #1 must remain open/draft/unmerged. Never modify or merge main. Do not disable hourly automation for this transient blocker.

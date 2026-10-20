@@ -44,35 +44,43 @@ class PdfPageCropTool(
         require(leftPct + rightPct < 1f) { "Left + right crop exceeds 100 %." }
         require(topPct + bottomPct < 1f) { "Top + bottom crop exceeds 100 %." }
 
-        context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_crop_src_", suffix = ".pdf") { sourceFile ->
-            loadPdfDocument(sourceFile).use { document ->
-                require(document.numberOfPages > 0) { "Input PDF has no pages." }
+        val outputDir = outputDirectory()
+        val baseName = outputBaseName(outputName, "cropped")
+        val stagedResult = withStagedOutputFile(
+            directory = outputDir,
+            baseName = baseName,
+            extension = "pdf"
+        ) { stagedFile ->
+            context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_crop_src_", suffix = ".pdf") { sourceFile ->
+                loadPdfDocument(sourceFile).use { document ->
+                    require(document.numberOfPages > 0) { "Input PDF has no pages." }
 
-                for (i in 0 until document.numberOfPages) {
-                    coroutineContext.ensureActive()
-                    val page = document.getPage(i)
-                    val media = page.mediaBox ?: PDRectangle.A4
-                    val w = media.width
-                    val h = media.height
+                    for (i in 0 until document.numberOfPages) {
+                        coroutineContext.ensureActive()
+                        val page = document.getPage(i)
+                        val media = page.mediaBox ?: PDRectangle.A4
+                        val w = media.width
+                        val h = media.height
 
-                    page.cropBox = PDRectangle(
-                        media.lowerLeftX + w * leftPct,
-                        media.lowerLeftY + h * bottomPct,
-                        w * (1f - leftPct - rightPct),
-                        h * (1f - topPct - bottomPct)
-                    )
+                        page.cropBox = PDRectangle(
+                            media.lowerLeftX + w * leftPct,
+                            media.lowerLeftY + h * bottomPct,
+                            w * (1f - leftPct - rightPct),
+                            h * (1f - topPct - bottomPct)
+                        )
+                    }
+
+                    document.save(stagedFile)
+                    document.numberOfPages
                 }
-
-                val outputFile = outputFile(document, outputName, "cropped")
-                document.save(outputFile)
-
-                PdfCreationResult(
-                    outputFile = outputFile,
-                    pageCount = document.numberOfPages,
-                    outputSizeBytes = outputFile.length()
-                )
             }
         }
+
+        PdfCreationResult(
+            outputFile = stagedResult.outputFile,
+            pageCount = stagedResult.value,
+            outputSizeBytes = stagedResult.outputFile.length()
+        )
     }
 
     /**
@@ -87,45 +95,55 @@ class PdfPageCropTool(
     ): PdfCreationResult = withContext(Dispatchers.IO) {
         require(pagesToCropOneBased.isNotEmpty()) { "No pages specified for cropping." }
 
-        context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_crop_src_", suffix = ".pdf") { sourceFile ->
-            loadPdfDocument(sourceFile).use { document ->
-                require(document.numberOfPages > 0) { "Input PDF has no pages." }
+        val outputDir = outputDirectory()
+        val baseName = outputBaseName(outputName, "cropped")
+        val stagedResult = withStagedOutputFile(
+            directory = outputDir,
+            baseName = baseName,
+            extension = "pdf"
+        ) { stagedFile ->
+            context.withUriCopiedToCacheFile(inputUri, prefix = "docforge_crop_src_", suffix = ".pdf") { sourceFile ->
+                loadPdfDocument(sourceFile).use { document ->
+                    require(document.numberOfPages > 0) { "Input PDF has no pages." }
 
-                pagesToCropOneBased.forEach { (pageOneBased, insets) ->
-                    coroutineContext.ensureActive()
-                    require(pageOneBased in 1..document.numberOfPages) { "Page $pageOneBased out of bounds." }
+                    pagesToCropOneBased.forEach { (pageOneBased, insets) ->
+                        coroutineContext.ensureActive()
+                        require(pageOneBased in 1..document.numberOfPages) { "Page $pageOneBased out of bounds." }
 
-                    val page = document.getPage(pageOneBased - 1)
-                    val media = page.mediaBox ?: PDRectangle.A4
+                        val page = document.getPage(pageOneBased - 1)
+                        val media = page.mediaBox ?: PDRectangle.A4
 
-                    val newLx = (media.lowerLeftX + insets.left).coerceAtMost(media.upperRightX - 1f)
-                    val newLy = (media.lowerLeftY + insets.bottom).coerceAtMost(media.upperRightY - 1f)
-                    val newW = (media.width - insets.left - insets.right).coerceAtLeast(1f)
-                    val newH = (media.height - insets.top - insets.bottom).coerceAtLeast(1f)
+                        val newLx = (media.lowerLeftX + insets.left).coerceAtMost(media.upperRightX - 1f)
+                        val newLy = (media.lowerLeftY + insets.bottom).coerceAtMost(media.upperRightY - 1f)
+                        val newW = (media.width - insets.left - insets.right).coerceAtLeast(1f)
+                        val newH = (media.height - insets.top - insets.bottom).coerceAtLeast(1f)
 
-                    page.cropBox = PDRectangle(newLx, newLy, newW, newH)
+                        page.cropBox = PDRectangle(newLx, newLy, newW, newH)
+                    }
+
+                    document.save(stagedFile)
+                    document.numberOfPages
                 }
-
-                val outputFile = outputFile(document, outputName, "cropped")
-                document.save(outputFile)
-
-                PdfCreationResult(
-                    outputFile = outputFile,
-                    pageCount = document.numberOfPages,
-                    outputSizeBytes = outputFile.length()
-                )
             }
         }
+
+        PdfCreationResult(
+            outputFile = stagedResult.outputFile,
+            pageCount = stagedResult.value,
+            outputSizeBytes = stagedResult.outputFile.length()
+        )
     }
 
-    private fun outputFile(document: PDDocument, outputName: String, fallback: String): File {
-        val outputDir = DocForgeSettingsStore.resolveOutputDirectory(
+    private fun outputDirectory(): File {
+        return DocForgeSettingsStore.resolveOutputDirectory(
             context = context,
             bucket = DocForgeOutputBucket.DOCUMENTS
         )
-        val sanitized = outputName.ifBlank { "${fallback}_${System.currentTimeMillis()}" }
+    }
+
+    private fun outputBaseName(outputName: String, fallback: String): String {
+        return outputName.ifBlank { "${fallback}_${System.currentTimeMillis()}" }
             .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-        return resolveNonConflictingFile(outputDir, sanitized, "pdf")
     }
 
     private fun requireValidPercent(value: Float, name: String) {

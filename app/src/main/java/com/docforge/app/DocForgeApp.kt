@@ -8,13 +8,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.io.File
 
 @HiltAndroidApp
 class DocForgeApp : Application() {
 
     val dependencies: AppDependencies by lazy { AppDependencies(this) }
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Work needed after a service start is rejected must survive onDestroy().
+    internal fun launchBatchQueueRecovery(block: suspend () -> Unit) {
+        appScope.launch { block() }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -45,7 +49,7 @@ class DocForgeApp : Application() {
             ComponentCallbacks2.TRIM_MEMORY_MODERATE,
             ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
                 appScope.launch {
-                    cleanStaleTempFiles(maxAgeMs = 0L)
+                    cleanStaleTempFiles(maxAgeMs = TEMP_FILE_MAX_AGE_MS)
                 }
             }
         }
@@ -59,15 +63,8 @@ class DocForgeApp : Application() {
 
     private fun cleanStaleTempFiles(maxAgeMs: Long) {
         val now = System.currentTimeMillis()
-        val cutoff = now - maxAgeMs
-        cacheDir.listFiles()
-            ?.filter { file -> file.name.startsWith(TEMP_FILE_PREFIX) && file.lastModified() < cutoff }
-            ?.forEach { file -> runCatching { file.delete() } }
-
-        val externalCache = externalCacheDir
-        externalCache?.listFiles()
-            ?.filter { file -> file.name.startsWith(TEMP_FILE_PREFIX) && file.lastModified() < cutoff }
-            ?.forEach { file -> runCatching { file.delete() } }
+        DocForgeTempFileCleanup.clean(cacheDir, now, maxAgeMs)
+        DocForgeTempFileCleanup.clean(externalCacheDir, now, maxAgeMs)
     }
 
     companion object {
